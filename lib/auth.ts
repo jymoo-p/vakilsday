@@ -5,6 +5,18 @@ import { authPrisma, prisma } from '@/lib/prisma'
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(authPrisma) as any,
+  debug: true,
+  logger: {
+    error(code, metadata) {
+      console.error('NextAuth Error:', code, metadata)
+    },
+    warn(code) {
+      console.warn('NextAuth Warning:', code)
+    },
+    debug(code, metadata) {
+      console.log('NextAuth Debug:', code, metadata)
+    }
+  },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
