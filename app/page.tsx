@@ -1,65 +1,107 @@
-import Image from "next/image";
+import { getServerSession } from 'next-auth'
+import { redirect } from 'next/navigation'
+import { authOptions } from '@/lib/auth'
+import { Button } from '@/components/ui/button'
+import { Scale, Calendar, FileText, Users, Search } from 'lucide-react'
+import Link from 'next/link'
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerSession(authOptions)
+
+  if (session) {
+    redirect('/onboarding')
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* Header */}
+      <header className="border-b bg-white/80 backdrop-blur">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Scale className="w-8 h-8 text-primary" />
+            <span className="text-2xl font-bold">VakilsDay</span>
+          </div>
+          <Link href="/auth/signin">
+            <Button size="lg">Sign In</Button>
+          </Link>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="container mx-auto px-4 py-20 text-center">
+        <h1 className="text-5xl font-bold tracking-tight mb-6">
+          Daily Practice Management
+          <br />
+          <span className="text-primary">for Indian Lawyers</span>
+        </h1>
+        <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          Replace your paper diary with a digital system. Track cases, manage hearings,
+          and access legal research—all in one place.
+        </p>
+        <Link href="/auth/signin">
+          <Button size="lg" className="text-lg px-8 py-6">
+            Get Started - It's Free
+          </Button>
+        </Link>
+      </section>
+
+      {/* Features */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <FeatureCard
+            icon={<Calendar className="w-8 h-8" />}
+            title="Today's Schedule"
+            description="See all your hearings for today with court and item numbers"
+          />
+          <FeatureCard
+            icon={<FileText className="w-8 h-8" />}
+            title="Case Management"
+            description="Track all case details, documents, and hearing history"
+          />
+          <FeatureCard
+            icon={<Search className="w-8 h-8" />}
+            title="Legal Research"
+            description="Search Indian bare acts and judgments instantly"
+          />
+          <FeatureCard
+            icon={<Users className="w-8 h-8" />}
+            title="Team Collaboration"
+            description="Share cases with associates and clerks in your firm"
+          />
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="container mx-auto px-4 py-20 text-center">
+        <div className="bg-primary text-primary-foreground rounded-2xl p-12">
+          <h2 className="text-3xl font-bold mb-4">Ready to go digital?</h2>
+          <p className="text-lg mb-6 opacity-90">
+            Create your law firm workspace in 30 seconds
           </p>
+          <Link href="/auth/signin">
+            <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
+              Sign In with Google
+            </Button>
+          </Link>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t bg-white py-8">
+        <div className="container mx-auto px-4 text-center text-muted-foreground">
+          <p>© 2026 VakilsDay. Built for Indian litigation lawyers.</p>
         </div>
-      </main>
+      </footer>
     </div>
-  );
+  )
+}
+
+function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+      <div className="text-primary mb-4">{icon}</div>
+      <h3 className="text-xl font-semibold mb-2">{title}</h3>
+      <p className="text-muted-foreground">{description}</p>
+    </div>
+  )
 }

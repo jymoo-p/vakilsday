@@ -1,0 +1,237 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  ASSOCIATE
+  CLERK
+}
+
+enum CaseStatus {
+  ACTIVE
+  PENDING
+  CLOSED
+  ARCHIVED
+}
+
+enum DocumentType {
+  PETITION
+  EVIDENCE
+  ANNEXURE
+  ORDER
+  OTHER
+}
+
+model Organization {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+
+  subscriptionTier String   @default("FREE")
+  maxUsers         Int      @default(5)
+
+  users            User[]
+  cases            Case[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("organizations")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime?
+  image          String?
+  role           Role      @default(ASSOCIATE)
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  accounts       Account[]
+  sessions       Session[]
+
+  assignedCases  CaseAssignment[]
+  hearingNotes   HearingNote[]
+  researchBookmarks ResearchBookmark[]
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Case {
+  id              String      @id @default(cuid())
+  caseNumber      String
+  courtName       String
+  courtNumber     String?
+
+  petitionerName  String
+  respondentName  String
+
+  judgeName       String?
+  opposingCounselName  String?
+  opposingCounselPhone String?
+
+  status          CaseStatus  @default(ACTIVE)
+  filingDate      DateTime
+  nextHearingDate DateTime?
+
+  synopsis        String?     @db.Text
+
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  assignments     CaseAssignment[]
+  hearings        Hearing[]
+  documents       Document[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([caseNumber, organizationId])
+  @@index([organizationId])
+  @@index([nextHearingDate])
+  @@index([status])
+  @@map("cases")
+}
+
+model CaseAssignment {
+  id        String   @id @default(cuid())
+  caseId    String
+  userId    String
+
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+
+  @@unique([caseId, userId])
+  @@map("case_assignments")
+}
+
+model Hearing {
+  id              String        @id @default(cuid())
+  caseId          String
+  hearingDate     DateTime
+  itemNumber      String?
+
+  outcome         String?       @db.Text
+  nextHearingDate DateTime?
+
+  case            Case          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  notes           HearingNote[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([caseId, hearingDate])
+  @@map("hearings")
+}
+
+model HearingNote {
+  id        String   @id @default(cuid())
+  hearingId String
+  userId    String
+  content   String   @db.Text
+
+  isPrivate Boolean  @default(false)
+
+  hearing   Hearing  @relation(fields: [hearingId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("hearing_notes")
+}
+
+model Document {
+  id           String       @id @default(cuid())
+  caseId       String
+
+  title        String
+  documentType DocumentType
+
+  storageUrl   String
+  fileSize     Int?
+  mimeType     String?
+
+  uploadedBy   String
+
+  case         Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([caseId, documentType])
+  @@map("documents")
+}
+
+model ResearchBookmark {
+  id          String   @id @default(cuid())
+  userId      String
+
+  title       String
+  sourceType  String
+  sourceUrl   String?
+  content     String   @db.Text
+
+  tags        String[]
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@map("research_bookmarks")
+}
