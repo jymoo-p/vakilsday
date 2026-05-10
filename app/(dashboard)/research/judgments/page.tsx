@@ -87,7 +87,7 @@ export default function JudgmentsPage() {
             </Button>
           </div>
 
-          <Select value={court} onValueChange={setCourt}>
+          <Select value={court} onValueChange={(value) => setCourt(value || '')}>
             <SelectTrigger className="w-full md:w-64">
               <SelectValue placeholder="Filter by court" />
             </SelectTrigger>
