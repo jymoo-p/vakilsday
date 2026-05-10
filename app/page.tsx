@@ -21,7 +21,7 @@ export default async function Home() {
             <Scale className="w-8 h-8 text-primary" />
             <span className="text-2xl font-bold">VakilsDay</span>
           </div>
-          <Link href="/auth/signin">
+          <Link href="/signin">
             <Button size="lg">Sign In</Button>
           </Link>
         </div>
@@ -38,7 +38,7 @@ export default async function Home() {
           Replace your paper diary with a digital system. Track cases, manage hearings,
           and access legal research—all in one place.
         </p>
-        <Link href="/auth/signin">
+        <Link href="/signin">
           <Button size="lg" className="text-lg px-8 py-6">
             Get Started - It's Free
           </Button>
@@ -78,7 +78,7 @@ export default async function Home() {
           <p className="text-lg mb-6 opacity-90">
             Create your law firm workspace in 30 seconds
           </p>
-          <Link href="/auth/signin">
+          <Link href="/signin">
             <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
               Sign In with Google
             </Button>

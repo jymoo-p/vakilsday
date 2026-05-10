@@ -13,7 +13,7 @@ export default async function DashboardLayout({
   const session = await getServerSession(authOptions)
 
   if (!session || !session.user?.email) {
-    redirect('/auth/signin')
+    redirect('/signin')
   }
 
   // Check if user has an organization
