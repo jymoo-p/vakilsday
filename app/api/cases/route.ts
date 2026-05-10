@@ -19,15 +19,18 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
+      select: { id: true, role: true, organizationId: true },
     })
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: 'User not found or no organization' }, { status: 404 })
     }
 
     const isAdmin = canViewAllCases(user.role)
 
-    let whereClause: any = {}
+    let whereClause: any = {
+      organizationId: user.organizationId, // Filter by organization
+    }
 
     if (status) {
       whereClause.status = status
@@ -93,10 +96,11 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
+      select: { id: true, role: true, organizationId: true },
     })
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: 'User not found or no organization' }, { status: 404 })
     }
 
     if (user.role === 'CLERK') {
@@ -128,15 +132,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const existingCase = await prisma.case.findUnique({
-      where: { caseNumber },
-    })
+    // Check if case number already exists in this organization
+    if (user.organizationId) {
+      const existingCase = await prisma.case.findUnique({
+        where: {
+          caseNumber_organizationId: {
+            caseNumber,
+            organizationId: user.organizationId,
+          },
+        },
+      })
 
-    if (existingCase) {
-      return NextResponse.json(
-        { error: 'Case number already exists' },
-        { status: 409 }
-      )
+      if (existingCase) {
+        return NextResponse.json(
+          { error: 'Case number already exists in your organization' },
+          { status: 409 }
+        )
+      }
     }
 
     const newCase = await prisma.case.create({
@@ -153,6 +165,7 @@ export async function POST(request: NextRequest) {
         nextHearingDate: nextHearingDate ? new Date(nextHearingDate) : null,
         synopsis,
         status: CaseStatus.ACTIVE,
+        organizationId: user.organizationId, // Link to organization
         assignments: {
           create: {
             userId: user.id,
