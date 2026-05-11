@@ -13,6 +13,12 @@ enum Role {
   CLERK
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
 enum CaseStatus {
   ACTIVE
   PENDING
@@ -20,11 +26,22 @@ enum CaseStatus {
   ARCHIVED
 }
 
+enum AppearingFor {
+  PETITIONER
+  RESPONDENT
+}
+
 enum DocumentType {
   PETITION
   EVIDENCE
   ANNEXURE
   ORDER
+  OTHER
+}
+
+enum AppointmentType {
+  HEARING
+  CLIENT_MEETING
   OTHER
 }
 
@@ -38,6 +55,11 @@ model Organization {
 
   users            User[]
   cases            Case[]
+  clients          Client[]
+  customRoles      CustomRole[]
+  courts           Court[]
+  caseTypes        CaseType[]
+  appointments     Appointment[]
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -52,9 +74,13 @@ model User {
   emailVerified  DateTime?
   image          String?
   role           Role      @default(ASSOCIATE)
+  phone          String?
 
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  customRoleId   String?
+  customRole     CustomRole? @relation(fields: [customRoleId], references: [id], onDelete: SetNull)
 
   accounts       Account[]
   sessions       Session[]
@@ -62,6 +88,7 @@ model User {
   assignedCases  CaseAssignment[]
   hearingNotes   HearingNote[]
   researchBookmarks ResearchBookmark[]
+  appointments   Appointment[]
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -70,53 +97,103 @@ model User {
   @@map("users")
 }
 
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
+model CustomRole {
+  id             String   @id @default(cuid())
+  name           String
+  permissions    String[]
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  @@unique([provider, providerAccountId])
-  @@map("accounts")
+  users          User[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([name, organizationId])
+  @@index([organizationId])
+  @@map("custom_roles")
 }
 
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Client {
+  id                String   @id @default(cuid())
+  firstName         String
+  lastName          String
+  gender            Gender
+  age               Int?
+  phone             String
+  otherPhone        String?
+  email             String?
+  address           String?   @db.Text
+  lawyerNotes       String?   @db.Text
 
-  @@map("sessions")
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  cases             Case[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([firstName, lastName])
+  @@map("clients")
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
+model Court {
+  id             String   @id @default(cuid())
+  name           String
 
-  @@unique([identifier, token])
-  @@map("verification_tokens")
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  cases          Case[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([name, organizationId])
+  @@index([organizationId])
+  @@map("courts")
+}
+
+model CaseType {
+  id             String   @id @default(cuid())
+  name           String
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  cases          Case[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([name, organizationId])
+  @@index([organizationId])
+  @@map("case_types")
 }
 
 model Case {
   id              String      @id @default(cuid())
   caseNumber      String
-  courtName       String
+  year            Int?
+  appearingFor    AppearingFor
+
+  clientId        String?
+  client          Client?     @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  otherParties    String[]
+
+  opponentMainParty String
+  opponentOtherParties String[]
+
+  courtId         String?
+  court           Court?      @relation(fields: [courtId], references: [id], onDelete: SetNull)
   courtNumber     String?
 
-  petitionerName  String
-  respondentName  String
+  caseTypeId      String?
+  caseType        CaseType?   @relation(fields: [caseTypeId], references: [id], onDelete: SetNull)
 
   judgeName       String?
   opposingCounselName  String?
@@ -140,9 +217,34 @@ model Case {
 
   @@unique([caseNumber, organizationId])
   @@index([organizationId])
+  @@index([clientId])
   @@index([nextHearingDate])
   @@index([status])
   @@map("cases")
+}
+
+model Appointment {
+  id              String          @id @default(cuid())
+  title           String
+  type            AppointmentType
+  startTime       DateTime
+  endTime         DateTime?
+  location        String?
+  notes           String?         @db.Text
+
+  caseId          String?
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  organizationId  String
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([userId, startTime])
+  @@index([organizationId])
+  @@map("appointments")
 }
 
 model CaseAssignment {
@@ -235,4 +337,43 @@ model ResearchBookmark {
 
   @@index([userId])
   @@map("research_bookmarks")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
 }
