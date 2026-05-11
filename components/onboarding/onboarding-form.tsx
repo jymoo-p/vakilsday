@@ -36,6 +36,7 @@ export default function OnboardingForm({ userName, userEmail }: OnboardingFormPr
         body: JSON.stringify({
           firmName: formData.firmName,
           userName: formData.yourName,
+          userEmail: userEmail,
         }),
       })
 

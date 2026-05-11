@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Role } from '@prisma/client'
 
@@ -15,14 +13,12 @@ function slugify(text: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session || !session.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const body = await request.json()
-    const { firmName, userName } = body
+    const { firmName, userName, userEmail } = body
+
+    if (!userEmail) {
+      return NextResponse.json({ error: 'User email required' }, { status: 401 })
+    }
 
     if (!firmName || firmName.trim().length < 2) {
       return NextResponse.json(
@@ -33,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user already has an organization
     const existingUser = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: userEmail },
       include: { organization: true },
     })
 
@@ -64,11 +60,11 @@ export async function POST(request: NextRequest) {
     })
 
     await prisma.user.update({
-      where: { email: session.user.email },
+      where: { email: userEmail },
       data: {
         organizationId: organization.id,
         role: Role.ADMIN,
-        name: userName || session.user.name,
+        name: userName || existingUser?.name,
       },
     })
 
