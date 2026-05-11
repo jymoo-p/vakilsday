@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { canViewAllCases } from '@/lib/utils/rbac'
 import { CaseStatus } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const userEmail = request.nextUrl.searchParams.get('email')
 
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!userEmail) {
+      return NextResponse.json({ error: 'Email required' }, { status: 401 })
     }
 
     const searchParams = request.nextUrl.searchParams
@@ -18,7 +16,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: userEmail },
       select: { id: true, role: true, organizationId: true },
     })
 
@@ -88,14 +86,28 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const body = await request.json()
+    const {
+      userEmail,
+      caseNumber,
+      courtName,
+      courtNumber,
+      petitionerName,
+      respondentName,
+      judgeName,
+      opposingCounselName,
+      opposingCounselPhone,
+      filingDate,
+      nextHearingDate,
+      synopsis,
+    } = body
 
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!userEmail) {
+      return NextResponse.json({ error: 'User email required' }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: userEmail },
       select: { id: true, role: true, organizationId: true },
     })
 
@@ -109,21 +121,6 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       )
     }
-
-    const body = await request.json()
-    const {
-      caseNumber,
-      courtName,
-      courtNumber,
-      petitionerName,
-      respondentName,
-      judgeName,
-      opposingCounselName,
-      opposingCounselPhone,
-      filingDate,
-      nextHearingDate,
-      synopsis,
-    } = body
 
     if (!caseNumber || !courtName || !petitionerName || !respondentName || !filingDate) {
       return NextResponse.json(

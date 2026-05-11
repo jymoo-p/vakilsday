@@ -53,8 +53,10 @@ export default function CasesPage() {
   }, [user])
 
   const fetchCases = async () => {
+    if (!user?.email) return
+
     try {
-      const res = await fetch('/api/cases')
+      const res = await fetch(`/api/cases?email=${encodeURIComponent(user.email)}`)
       const data = await res.json()
       setCases(data.cases || [])
     } catch (error) {

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/hooks/useAuth'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -31,6 +32,7 @@ type CaseFormData = z.infer<typeof caseSchema>
 
 export default function NewCasePage() {
   const router = useRouter()
+  const { user } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -54,6 +56,7 @@ export default function NewCasePage() {
         },
         body: JSON.stringify({
           ...data,
+          userEmail: user?.email,
           filingDate: new Date(data.filingDate).toISOString(),
           nextHearingDate: data.nextHearingDate
             ? new Date(data.nextHearingDate).toISOString()
