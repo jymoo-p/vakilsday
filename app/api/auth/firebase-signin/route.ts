@@ -25,14 +25,31 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Create user if doesn't exist
+    // Create or update user
     if (!user) {
+      // New user - create with default role
       user = await prisma.user.create({
         data: {
           email,
           name: name || email,
           image,
-          role: 'ASSOCIATE', // Default role
+          role: 'ASSOCIATE', // Default role (may have been invited with specific role)
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          organizationId: true,
+        },
+      })
+    } else {
+      // Existing user - update name and image if provided
+      user = await prisma.user.update({
+        where: { email },
+        data: {
+          name: name || user.name,
+          image: image || undefined,
         },
         select: {
           id: true,
