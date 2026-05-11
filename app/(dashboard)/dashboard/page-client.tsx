@@ -36,20 +36,30 @@ export default function DashboardPageClient() {
   const [todaysCases, setTodaysCases] = useState<CaseData[]>([])
   const [upcomingCases, setUpcomingCases] = useState<CaseData[]>([])
   const [loadingData, setLoadingData] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchDashboardData() {
       if (!user?.email) return
 
       try {
+        console.log('Fetching dashboard for:', user.email)
         const response = await fetch(`/api/dashboard?email=${encodeURIComponent(user.email)}`)
+        console.log('Dashboard response status:', response.status)
+
         if (response.ok) {
           const data = await response.json()
+          console.log('Dashboard data:', data)
           setTodaysCases(data.todaysCases || [])
           setUpcomingCases(data.upcomingCases || [])
+        } else {
+          const errorData = await response.json()
+          console.error('Dashboard error:', errorData)
+          setError(errorData.error || 'Failed to load dashboard')
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error)
+        setError(error instanceof Error ? error.message : 'Failed to load dashboard')
       } finally {
         setLoadingData(false)
       }
@@ -68,6 +78,21 @@ export default function DashboardPageClient() {
           <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
         </div>
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center py-12">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-900">{error}</p>
+              <p className="text-sm text-red-700 mt-2">Check browser console for details</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
