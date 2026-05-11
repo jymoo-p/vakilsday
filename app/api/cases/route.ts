@@ -90,13 +90,15 @@ export async function POST(request: NextRequest) {
     const {
       userEmail,
       caseNumber,
-      courtName,
+      year,
+      appearingFor,
+      clientId,
+      otherParties,
+      opponentMainParty,
+      opponentOtherParties,
+      courtId,
       courtNumber,
-      petitionerName,
-      respondentName,
-      judgeName,
-      opposingCounselName,
-      opposingCounselPhone,
+      caseTypeId,
       filingDate,
       nextHearingDate,
       synopsis,
@@ -122,47 +124,47 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!caseNumber || !courtName || !petitionerName || !respondentName || !filingDate) {
+    if (!caseNumber || !appearingFor || !opponentMainParty || !filingDate) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: caseNumber, appearingFor, opponentMainParty, filingDate' },
         { status: 400 }
       )
     }
 
     // Check if case number already exists in this organization
-    if (user.organizationId) {
-      const existingCase = await prisma.case.findUnique({
-        where: {
-          caseNumber_organizationId: {
-            caseNumber,
-            organizationId: user.organizationId,
-          },
+    const existingCase = await prisma.case.findUnique({
+      where: {
+        caseNumber_organizationId: {
+          caseNumber,
+          organizationId: user.organizationId,
         },
-      })
+      },
+    })
 
-      if (existingCase) {
-        return NextResponse.json(
-          { error: 'Case number already exists in your organization' },
-          { status: 409 }
-        )
-      }
+    if (existingCase) {
+      return NextResponse.json(
+        { error: 'Case number already exists in your organization' },
+        { status: 409 }
+      )
     }
 
     const newCase = await prisma.case.create({
       data: {
         caseNumber,
-        courtName,
+        year,
+        appearingFor,
+        clientId,
+        otherParties: otherParties || [],
+        opponentMainParty,
+        opponentOtherParties: opponentOtherParties || [],
+        courtId,
         courtNumber,
-        petitionerName,
-        respondentName,
-        judgeName,
-        opposingCounselName,
-        opposingCounselPhone,
+        caseTypeId,
         filingDate: new Date(filingDate),
         nextHearingDate: nextHearingDate ? new Date(nextHearingDate) : null,
         synopsis,
         status: CaseStatus.ACTIVE,
-        organizationId: user.organizationId, // Link to organization
+        organizationId: user.organizationId,
         assignments: {
           create: {
             userId: user.id,
@@ -170,6 +172,9 @@ export async function POST(request: NextRequest) {
         },
       },
       include: {
+        client: true,
+        court: true,
+        caseType: true,
         assignments: {
           include: {
             user: true,
