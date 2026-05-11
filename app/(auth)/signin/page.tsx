@@ -51,32 +51,32 @@ export default function SignInPage() {
   }
 
   return (
-    <Card className="shadow-xl">
-      <CardHeader className="space-y-4 text-center">
-        <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-          <Scale className="w-8 h-8 text-primary-foreground" />
+    <Card className="shadow-2xl">
+      <CardHeader className="space-y-6 text-center pb-8">
+        <div className="mx-auto w-20 h-20 bg-white/10 backdrop-blur-sm rounded-3xl flex items-center justify-center border border-white/20">
+          <Scale className="w-10 h-10 text-white" />
         </div>
         <div>
-          <CardTitle className="text-3xl font-bold">VakilsDay</CardTitle>
-          <CardDescription className="mt-2 text-base">
+          <CardTitle className="text-4xl font-bold mb-3 text-white">VakilsDay</CardTitle>
+          <CardDescription className="text-lg text-white/70">
             Your daily companion for legal practice management
           </CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6 pb-8">
         {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+          <Alert variant="destructive" className="bg-destructive/20 border-destructive/50">
+            <AlertCircle className="h-5 w-5" />
+            <AlertDescription className="text-base">{error}</AlertDescription>
           </Alert>
         )}
         <Button
           onClick={handleSignIn}
           disabled={loading}
-          className="w-full h-12 text-base"
+          className="w-full"
           size="lg"
         >
-          <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
+          <svg className="mr-3 h-6 w-6" viewBox="0 0 24 24">
             <path
               fill="currentColor"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -96,7 +96,7 @@ export default function SignInPage() {
           </svg>
           {loading ? 'Signing in...' : 'Sign in with Google'}
         </Button>
-        <p className="text-center text-sm text-muted-foreground px-4">
+        <p className="text-center text-base text-white/60 px-4">
           Securely access your case files, hearings, and legal research
         </p>
       </CardContent>
