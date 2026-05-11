@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { canViewAllCases } from '@/lib/utils/rbac'
 
@@ -9,14 +7,15 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const userEmail = request.nextUrl.searchParams.get('email')
 
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!userEmail) {
+      return NextResponse.json({ error: 'Email required' }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: userEmail },
+      select: { id: true, role: true, organizationId: true },
     })
 
     if (!user) {
@@ -91,14 +90,16 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const body = await request.json()
+    const { userEmail } = body
 
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!userEmail) {
+      return NextResponse.json({ error: 'User email required' }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: userEmail },
+      select: { id: true, role: true, organizationId: true },
     })
 
     if (!user) {
@@ -132,8 +133,6 @@ export async function PATCH(
       )
     }
 
-    const body = await request.json()
-
     const updatedCase = await prisma.case.update({
       where: { id },
       data: {
@@ -162,14 +161,15 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const userEmail = request.nextUrl.searchParams.get('email')
 
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!userEmail) {
+      return NextResponse.json({ error: 'Email required' }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: userEmail },
+      select: { id: true, role: true, organizationId: true },
     })
 
     if (!user || user.role !== 'ADMIN') {

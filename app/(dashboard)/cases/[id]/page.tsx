@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/hooks/useAuth'
 import { format } from 'date-fns'
 import {
   Tabs,
@@ -73,13 +74,16 @@ interface Case {
 export default function CaseDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { user } = useAuth()
   const [caseData, setCaseData] = useState<Case | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const fetchCase = async () => {
+    if (!user?.email) return
+
     try {
-      const res = await fetch(`/api/cases/${params.id}`)
+      const res = await fetch(`/api/cases/${params.id}?email=${encodeURIComponent(user.email)}`)
       if (!res.ok) {
         throw new Error('Failed to fetch case')
       }
@@ -93,8 +97,10 @@ export default function CaseDetailPage() {
   }
 
   useEffect(() => {
-    fetchCase()
-  }, [params.id])
+    if (user?.email) {
+      fetchCase()
+    }
+  }, [params.id, user])
 
   if (loading) {
     return (
