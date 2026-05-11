@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,14 +32,25 @@ interface Case {
 }
 
 export default function CasesPage() {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const [cases, setCases] = useState<Case[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [userRole, setUserRole] = useState<string>('ASSOCIATE')
 
   useEffect(() => {
+    async function fetchUserData() {
+      if (user?.email) {
+        const response = await fetch(`/api/users/${encodeURIComponent(user.email)}`)
+        if (response.ok) {
+          const data = await response.json()
+          setUserRole(data.user?.role || 'ASSOCIATE')
+        }
+      }
+    }
+    fetchUserData()
     fetchCases()
-  }, [])
+  }, [user])
 
   const fetchCases = async () => {
     try {
@@ -60,7 +71,7 @@ export default function CasesPage() {
       c.respondentName.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const canCreateCase = session?.user?.role !== 'CLERK'
+  const canCreateCase = userRole !== 'CLERK'
 
   return (
     <div className="space-y-6">
