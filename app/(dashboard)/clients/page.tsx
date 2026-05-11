@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, User, Phone, Mail, Edit, Trash2 } from 'lucide-react'
+import { Plus, Search, User, Phone, Mail, Edit, Trash2, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 
 interface Client {
   id: string
@@ -95,15 +96,22 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold text-slate-900">Clients</h2>
-          <p className="text-lg text-slate-600">Manage your client information</p>
+      <div className="flex items-center gap-4 mb-6">
+        <Link href="/dashboard">
+          <Button variant="ghost" size="icon">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Link>
+        <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900">Clients</h2>
+            <p className="text-lg text-slate-600">Manage your client information</p>
+          </div>
+          <Button onClick={() => router.push('/clients/new')}>
+            <Plus className="mr-2 h-5 w-5" />
+            Add Client
+          </Button>
         </div>
-        <Button onClick={() => router.push('/clients/new')}>
-          <Plus className="mr-2 h-5 w-5" />
-          Add Client
-        </Button>
       </div>
 
       <div className="flex items-center space-x-2">

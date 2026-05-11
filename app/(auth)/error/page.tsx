@@ -38,7 +38,7 @@ function ErrorContent() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Button render={<Link href="/signin" />} className="w-full" size="lg">
+        <Button render={<Link href="/signin" />} nativeButton={false} className="w-full" size="lg">
           Try Again
         </Button>
         <p className="text-center text-sm text-muted-foreground">

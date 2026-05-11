@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Trash2, Users, Mail, Phone, Shield } from 'lucide-react'
+import { Plus, Trash2, Users, Mail, Phone, Shield, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import {
   Select,
   SelectContent,
@@ -167,15 +168,22 @@ export default function TeamPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-slate-900">My Team</h2>
-          <p className="text-lg text-slate-600">Manage lawyers and clerks</p>
+      <div className="flex items-center gap-4 mb-6">
+        <Link href="/dashboard">
+          <Button variant="ghost" size="icon">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Link>
+        <div className="flex-1 flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900">My Team</h2>
+            <p className="text-lg text-slate-600">Manage lawyers and clerks</p>
+          </div>
+          <Button onClick={() => setShowAddMember(!showAddMember)}>
+            <Plus className="mr-2 h-5 w-5" />
+            Add Member
+          </Button>
         </div>
-        <Button onClick={() => setShowAddMember(!showAddMember)}>
-          <Plus className="mr-2 h-5 w-5" />
-          Add Member
-        </Button>
       </div>
 
       {showAddMember && (

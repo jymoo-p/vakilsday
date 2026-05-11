@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Trash2, Shield, CheckSquare, Square } from 'lucide-react'
+import { Plus, Trash2, Shield, CheckSquare, Square, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 
 interface CustomRole {
   id: string
@@ -129,15 +130,22 @@ export default function RolesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-slate-900">Roles</h2>
-          <p className="text-lg text-slate-600">Manage custom roles and permissions</p>
+      <div className="flex items-center gap-4 mb-6">
+        <Link href="/admin">
+          <Button variant="ghost" size="icon">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Link>
+        <div className="flex-1 flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900">Roles</h2>
+            <p className="text-lg text-slate-600">Manage custom roles and permissions</p>
+          </div>
+          <Button onClick={() => setShowAddRole(!showAddRole)}>
+            <Plus className="mr-2 h-5 w-5" />
+            Create Role
+          </Button>
         </div>
-        <Button onClick={() => setShowAddRole(!showAddRole)}>
-          <Plus className="mr-2 h-5 w-5" />
-          Create Role
-        </Button>
       </div>
 
       {showAddRole && (

@@ -1,22 +1,18 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
-import { User } from 'firebase/auth'
+import { useEffect, useState } from 'react'
+import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
-import { onAuthStateChanged } from 'firebase/auth'
 
-interface AuthContextType {
-  user: User | null
-  loading: boolean
+export interface AuthUser {
+  uid: string
+  email: string
+  displayName: string | null
+  photoURL: string | null
 }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-})
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+export function useAuth() {
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -25,25 +21,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser)
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email!,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+        })
+      } else {
+        setUser(null)
+      }
       setLoading(false)
     })
 
     return () => unsubscribe()
   }, [])
 
-  return (
-    <AuthContext.Provider value={{ user, loading }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return { user, loading }
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
+// Simple provider wrapper (no-op, just for compatibility)
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  return <>{children}</>
 }

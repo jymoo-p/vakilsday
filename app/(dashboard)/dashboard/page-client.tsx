@@ -2,64 +2,61 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-import { Calendar, Users } from 'lucide-react'
-import { format } from 'date-fns'
+import { Calendar, Clock, Building2, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react'
+import { format, parseISO } from 'date-fns'
 
-type CaseData = {
+type HearingWithCase = {
   id: string
-  caseNumber: string
-  courtName: string
-  courtNumber: string | null
-  petitionerName: string
-  respondentName: string
-  judgeName: string | null
-  status: string
-  nextHearingDate: string | null
-  assignments: Array<{
-    user: {
-      name: string | null
-      role: string
-    }
-  }>
-  hearings: Array<{
+  hearingDate: string
+  itemNumber: string | null
+  case: {
     id: string
-    hearingDate: string
-    itemNumber: string | null
-  }>
+    caseNumber: string
+    status: string
+    courtNumber: string | null
+    client: {
+      firstName: string
+      lastName: string
+    } | null
+    otherParties: string[]
+    opponentMainParty: string
+    court: {
+      name: string
+    } | null
+  }
 }
 
 export default function DashboardPageClient() {
   const { user, loading } = useAuth()
-  const [todaysCases, setTodaysCases] = useState<CaseData[]>([])
-  const [upcomingCases, setUpcomingCases] = useState<CaseData[]>([])
+  const [todaysHearings, setTodaysHearings] = useState<HearingWithCase[]>([])
+  const [weekHearings, setWeekHearings] = useState<HearingWithCase[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showAllToday, setShowAllToday] = useState(false)
+  const [showAllWeek, setShowAllWeek] = useState(false)
 
   useEffect(() => {
     async function fetchDashboardData() {
       if (!user?.email) return
 
       try {
-        console.log('Fetching dashboard for:', user.email)
         const response = await fetch(`/api/dashboard?email=${encodeURIComponent(user.email)}`)
-        console.log('Dashboard response status:', response.status)
 
         if (response.ok) {
           const data = await response.json()
-          console.log('Dashboard data:', data)
-          setTodaysCases(data.todaysCases || [])
-          setUpcomingCases(data.upcomingCases || [])
+          setTodaysHearings(data.todaysHearings || [])
+          setWeekHearings(data.weekHearings || [])
         } else {
           const errorData = await response.json()
-          console.error('Dashboard error:', errorData)
           setError(errorData.error || 'Failed to load dashboard')
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error)
-        setError(error instanceof Error ? error.message : 'Failed to load dashboard')
+        setError('Failed to load dashboard')
       } finally {
         setLoadingData(false)
       }
@@ -73,10 +70,7 @@ export default function DashboardPageClient() {
   if (loading || loadingData) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
-        </div>
+        <p className="text-slate-600">Loading dashboard...</p>
       </div>
     )
   }
@@ -86,128 +80,237 @@ export default function DashboardPageClient() {
       <Card>
         <CardContent className="pt-6">
           <div className="text-center py-12">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-900">{error}</p>
-              <p className="text-sm text-red-700 mt-2">Check browser console for details</p>
-            </div>
+            <p className="text-red-600">{error}</p>
           </div>
         </CardContent>
       </Card>
     )
   }
 
+  // Determine how many to show
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  const todayLimit = isMobile ? 3 : 10
+  const weekLimit = isMobile ? 3 : 10
+
+  const displayedTodayHearings = showAllToday
+    ? todaysHearings
+    : todaysHearings.slice(0, todayLimit)
+
+  const displayedWeekHearings = showAllWeek
+    ? weekHearings
+    : weekHearings.slice(0, weekLimit)
+
+  const getClientName = (hearing: HearingWithCase) => {
+    if (hearing.case.client) {
+      return `${hearing.case.client.firstName} ${hearing.case.client.lastName}`
+    }
+    return hearing.case.otherParties[0] || 'Unknown'
+  }
+
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Today's Schedule</h2>
-        <p className="text-muted-foreground">
-          {format(new Date(), 'EEEE, MMMM d, yyyy')}
-        </p>
+      <div className="flex items-center gap-4">
+        <Link href="/dashboard">
+          <Button variant="ghost" size="icon">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Link>
+        <div>
+          <h2 className="text-3xl font-bold text-slate-900">Today's Schedule</h2>
+          <p className="text-lg text-slate-600">
+            {format(new Date(), 'EEEE, MMMM d, yyyy')}
+          </p>
+        </div>
       </div>
 
-      {todaysCases.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-semibold">No hearings today</h3>
-              <p className="text-sm text-muted-foreground mt-2">
-                You have no scheduled hearings for today. Enjoy your day!
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4">
-          {todaysCases.map((caseItem) => (
-            <Link key={caseItem.id} href={`/cases/${caseItem.id}`}>
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle className="text-xl">{caseItem.caseNumber}</CardTitle>
-                      <CardDescription className="text-base">
-                        {caseItem.petitionerName} vs {caseItem.respondentName}
-                      </CardDescription>
-                    </div>
-                    <Badge variant="outline" className="ml-4">
-                      {caseItem.status}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Court</p>
-                      <p className="font-medium">{caseItem.courtName}</p>
-                    </div>
-                    {caseItem.courtNumber && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Court No.</p>
-                        <p className="font-medium">{caseItem.courtNumber}</p>
-                      </div>
-                    )}
-                    {caseItem.hearings[0]?.itemNumber && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Item No.</p>
-                        <p className="font-medium">{caseItem.hearings[0].itemNumber}</p>
-                      </div>
-                    )}
-                    {caseItem.judgeName && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Judge</p>
-                        <p className="font-medium">{caseItem.judgeName}</p>
-                      </div>
-                    )}
-                  </div>
-                  {caseItem.assignments.length > 0 && (
-                    <div className="mt-4 flex items-center text-sm text-muted-foreground">
-                      <Users className="h-4 w-4 mr-2" />
-                      {caseItem.assignments.map((a) => a.user.name).join(', ')}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+      {/* Today's Hearings */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-2xl font-semibold text-slate-900">Today's Hearings</h3>
+          <Badge variant="secondary" className="text-base px-3 py-1">
+            {todaysHearings.length} hearing{todaysHearings.length !== 1 ? 's' : ''}
+          </Badge>
         </div>
-      )}
 
-      <div className="mt-8">
-        <h3 className="text-2xl font-bold tracking-tight mb-4">Upcoming This Week</h3>
-        {upcomingCases.length === 0 ? (
+        {todaysHearings.length === 0 ? (
           <Card>
-            <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground py-8">
-                No upcoming hearings in the next 7 days
-              </p>
+            <CardContent className="pt-12 pb-12 text-center">
+              <Calendar className="h-12 w-12 mx-auto mb-4 text-slate-400" />
+              <p className="text-lg text-slate-600">No hearings today</p>
+              <p className="text-base text-slate-500 mt-2">Enjoy your day!</p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-3">
-            {upcomingCases.map((caseItem) => (
-              <Link key={caseItem.id} href={`/cases/${caseItem.id}`}>
-                <Card className="hover:bg-accent transition-colors cursor-pointer">
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="font-medium">{caseItem.caseNumber}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {caseItem.petitionerName} vs {caseItem.respondentName}
-                        </p>
+          <>
+            <div className="grid gap-4">
+              {displayedTodayHearings.map((hearing) => (
+                <Link key={hearing.id} href={`/cases/${hearing.case.id}`}>
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h4 className="text-xl font-semibold text-slate-900 mb-1">
+                            {hearing.case.caseNumber}
+                          </h4>
+                          <p className="text-base text-slate-600">
+                            {getClientName(hearing)} vs {hearing.case.opponentMainParty}
+                          </p>
+                        </div>
+                        <Badge variant={hearing.case.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                          {hearing.case.status}
+                        </Badge>
                       </div>
-                      <div className="text-right ml-4">
-                        <p className="text-sm font-medium">
-                          {caseItem.nextHearingDate && format(new Date(caseItem.nextHearingDate), 'MMM d, yyyy')}
-                        </p>
-                        <p className="text-sm text-muted-foreground">{caseItem.courtName}</p>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-base">
+                        <div className="flex items-start gap-2">
+                          <Building2 className="h-5 w-5 text-slate-400 mt-0.5" />
+                          <div>
+                            <p className="text-sm text-slate-500">Court</p>
+                            <p className="font-medium text-slate-900">
+                              {hearing.case.court?.name || 'Not specified'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {hearing.case.courtNumber && (
+                          <div className="flex items-start gap-2">
+                            <Clock className="h-5 w-5 text-slate-400 mt-0.5" />
+                            <div>
+                              <p className="text-sm text-slate-500">Court No.</p>
+                              <p className="font-medium text-slate-900">{hearing.case.courtNumber}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {hearing.itemNumber && (
+                          <div>
+                            <p className="text-sm text-slate-500">Item No.</p>
+                            <p className="font-medium text-slate-900">{hearing.itemNumber}</p>
+                          </div>
+                        )}
+
+                        <div>
+                          <p className="text-sm text-slate-500">Time</p>
+                          <p className="font-medium text-slate-900">
+                            {format(parseISO(hearing.hearingDate), 'h:mm a')}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+
+            {todaysHearings.length > todayLimit && (
+              <div className="flex justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAllToday(!showAllToday)}
+                  className="gap-2"
+                >
+                  {showAllToday ? (
+                    <>
+                      <ChevronUp className="h-4 w-4" />
+                      Show Less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-4 w-4" />
+                      Show All ({todaysHearings.length - todayLimit} more)
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* This Week */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-2xl font-semibold text-slate-900">Your Week</h3>
+          <Badge variant="secondary" className="text-base px-3 py-1">
+            {weekHearings.length} upcoming
+          </Badge>
+        </div>
+
+        {weekHearings.length === 0 ? (
+          <Card>
+            <CardContent className="pt-12 pb-12 text-center">
+              <Calendar className="h-12 w-12 mx-auto mb-4 text-slate-400" />
+              <p className="text-lg text-slate-600">No upcoming hearings this week</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <div className="space-y-3">
+              {displayedWeekHearings.map((hearing) => (
+                <Link key={hearing.id} href={`/cases/${hearing.case.id}`}>
+                  <Card className="hover:bg-slate-50 transition-colors cursor-pointer">
+                    <CardContent className="py-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-lg font-semibold text-slate-900 truncate">
+                            {hearing.case.caseNumber}
+                          </p>
+                          <p className="text-base text-slate-600 truncate">
+                            {getClientName(hearing)} vs {hearing.case.opponentMainParty}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className="text-base font-medium text-slate-900">
+                              {format(parseISO(hearing.hearingDate), 'MMM d')}
+                            </p>
+                            <p className="text-sm text-slate-500">
+                              {format(parseISO(hearing.hearingDate), 'EEEE')}
+                            </p>
+                          </div>
+
+                          <div className="text-right min-w-[120px]">
+                            <p className="text-sm text-slate-500">Court</p>
+                            <p className="text-base font-medium text-slate-900">
+                              {hearing.case.court?.name || 'Not specified'}
+                            </p>
+                          </div>
+
+                          <Badge variant={hearing.case.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                            {hearing.case.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+
+            {weekHearings.length > weekLimit && (
+              <div className="flex justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAllWeek(!showAllWeek)}
+                  className="gap-2"
+                >
+                  {showAllWeek ? (
+                    <>
+                      <ChevronUp className="h-4 w-4" />
+                      Show Less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-4 w-4" />
+                      Show All ({weekHearings.length - weekLimit} more)
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

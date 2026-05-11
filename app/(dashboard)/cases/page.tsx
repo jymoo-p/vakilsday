@@ -85,6 +85,7 @@ export default function CasesPage() {
         {canCreateCase && (
           <Button
             render={<Link href="/cases/new" />}
+            nativeButton={false}
             size="lg"
             className="text-base w-full sm:w-auto"
           >

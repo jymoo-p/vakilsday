@@ -12,15 +12,17 @@ import {
   Users,
   Shield,
   UserCircle,
+  Calendar,
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Cases', href: '/cases', icon: FolderOpen },
   { name: 'Clients', href: '/clients', icon: UserCircle },
+  { name: 'Calendar', href: '/calendar', icon: Calendar },
   { name: 'Research', href: '/research', icon: Search },
   { name: 'My Team', href: '/team', icon: Users },
-  { name: 'Admin', href: '/admin/roles', icon: Shield },
+  { name: 'Admin', href: '/admin', icon: Shield },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 

@@ -2,56 +2,64 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { signInWithGoogle } from '@/lib/firebase-auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Scale, AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { signInWithGoogle } from '@/lib/firebase-auth'
 
 export default function SignInPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
 
-  async function handleSignIn() {
+  async function handleGoogleSignIn() {
     setLoading(true)
     setError(null)
 
     try {
       const result = await signInWithGoogle()
 
-      if (result.ok) {
-        // Save user to database
-        const response = await fetch('/api/auth/firebase-signin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            uid: result.uid,
-            email: result.email,
-            name: result.name,
-            image: result.photoURL,
-          }),
-        })
+      if (!result.ok) {
+        setError(result.error)
+        setLoading(false)
+        return
+      }
 
-        if (response.ok) {
-          // Redirect to onboarding or dashboard
-          router.push('/onboarding')
+      // Sync with database
+      const response = await fetch('/api/auth/sync-firebase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: result.uid,
+          email: result.email,
+          name: result.name,
+          photoURL: result.photoURL,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Check if user has organization
+        if (data.organizationId) {
+          router.push('/dashboard')
         } else {
-          const data = await response.json()
-          setError(data.error || 'Failed to create user account')
+          router.push('/onboarding')
         }
       } else {
-        setError(result.error)
+        setError(data.error || 'Failed to sync user')
+        setLoading(false)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign-in failed')
-    } finally {
+      console.error('Sign in error:', err)
+      setError('An error occurred during sign in')
       setLoading(false)
     }
   }
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-lg max-w-md mx-auto">
       <CardHeader className="space-y-6 text-center pb-8">
         <div className="mx-auto w-20 h-20 bg-slate-900 rounded-3xl flex items-center justify-center">
           <Scale className="w-10 h-10 text-white" />
@@ -59,7 +67,7 @@ export default function SignInPage() {
         <div>
           <CardTitle className="text-4xl font-bold mb-3 text-slate-900">VakilsDay</CardTitle>
           <CardDescription className="text-lg text-slate-600">
-            Your daily companion for legal practice management
+            Sign in to your account
           </CardDescription>
         </div>
       </CardHeader>
@@ -70,13 +78,15 @@ export default function SignInPage() {
             <AlertDescription className="text-base">{error}</AlertDescription>
           </Alert>
         )}
+
         <Button
-          onClick={handleSignIn}
+          onClick={handleGoogleSignIn}
           disabled={loading}
           className="w-full"
-          size="xl"
+          size="lg"
+          variant="outline"
         >
-          <svg className="mr-3 h-6 w-6" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
             <path
               fill="currentColor"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -96,9 +106,6 @@ export default function SignInPage() {
           </svg>
           {loading ? 'Signing in...' : 'Sign in with Google'}
         </Button>
-        <p className="text-center text-base text-slate-500 px-4">
-          Securely access your case files, hearings, and legal research
-        </p>
       </CardContent>
     </Card>
   )

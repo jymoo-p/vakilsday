@@ -5,9 +5,15 @@ import { canViewAllCases } from '@/lib/utils/rbac'
 export async function GET(request: NextRequest) {
   try {
     const userEmail = request.nextUrl.searchParams.get('email')
+    const start = request.nextUrl.searchParams.get('start')
+    const end = request.nextUrl.searchParams.get('end')
 
     if (!userEmail) {
       return NextResponse.json({ error: 'Email required' }, { status: 401 })
+    }
+
+    if (!start || !end) {
+      return NextResponse.json({ error: 'Start and end dates required' }, { status: 400 })
     }
 
     const user = await prisma.user.findUnique({
@@ -20,16 +26,6 @@ export async function GET(request: NextRequest) {
     }
 
     const isAdmin = canViewAllCases(user.role)
-
-    // Get today's date range
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-
-    // Get next week's date
-    const nextWeek = new Date(tomorrow)
-    nextWeek.setDate(nextWeek.getDate() + 7)
 
     // First, get the case IDs the user can access
     let caseIds: string[] = []
@@ -65,13 +61,13 @@ export async function GET(request: NextRequest) {
         .map(a => a.case.id)
     }
 
-    // Fetch today's hearings
-    const todaysHearings = await prisma.hearing.findMany({
+    // Fetch hearings for the date range
+    const hearings = await prisma.hearing.findMany({
       where: {
         caseId: { in: caseIds },
         hearingDate: {
-          gte: today,
-          lt: tomorrow,
+          gte: new Date(start),
+          lte: new Date(end),
         },
       },
       include: {
@@ -91,49 +87,14 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: [
-        { hearingDate: 'asc' },
-      ],
+      orderBy: {
+        hearingDate: 'asc',
+      },
     })
 
-    // Fetch this week's hearings
-    const weekHearings = await prisma.hearing.findMany({
-      where: {
-        caseId: { in: caseIds },
-        hearingDate: {
-          gte: tomorrow,
-          lt: nextWeek,
-        },
-      },
-      include: {
-        case: {
-          include: {
-            client: {
-              select: {
-                firstName: true,
-                lastName: true,
-              },
-            },
-            court: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: [
-        { hearingDate: 'asc' },
-      ],
-      take: 20,
-    })
-
-    return NextResponse.json({
-      todaysHearings,
-      weekHearings,
-    })
+    return NextResponse.json({ hearings })
   } catch (error) {
-    console.error('Dashboard API error:', error)
+    console.error('Calendar API error:', error)
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
