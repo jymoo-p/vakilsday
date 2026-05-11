@@ -43,13 +43,13 @@ export function Header() {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'ADMIN':
-        return 'bg-white/20 text-white border border-white/30'
+        return 'bg-slate-900 text-white'
       case 'ASSOCIATE':
-        return 'bg-white/10 text-white border border-white/20'
+        return 'bg-slate-100 text-slate-900'
       case 'CLERK':
-        return 'bg-white/10 text-white border border-white/20'
+        return 'bg-slate-100 text-slate-900'
       default:
-        return 'bg-white/10 text-white border border-white/20'
+        return 'bg-slate-100 text-slate-900'
     }
   }
 
@@ -64,10 +64,10 @@ export function Header() {
   }
 
   return (
-    <header className="bg-black/40 backdrop-blur-xl border-b border-white/10 sticky top-0 z-10">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
       <div className="flex items-center justify-between h-20 px-8">
         <div className="flex-1">
-          <h1 className="text-xl font-semibold text-white/90">
+          <h1 className="text-xl font-semibold text-slate-900">
             {new Date().toLocaleDateString('en-IN', {
               weekday: 'long',
               year: 'numeric',
@@ -80,19 +80,19 @@ export function Header() {
         <div className="flex items-center space-x-4">
           {user && (
             <>
-              <Badge className={`${getRoleBadgeColor(userRole)} text-sm font-semibold px-4 py-1.5 rounded-full`}>
+              <Badge className={`${getRoleBadgeColor(userRole)} text-sm font-semibold px-4 py-1.5 rounded-lg`}>
                 {userRole}
               </Badge>
 
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={
-                    <Button variant="ghost" className="relative h-12 w-12 rounded-full p-0 hover:bg-white/5" />
+                    <Button variant="ghost" className="relative h-11 w-11 rounded-full p-0 hover:bg-slate-100" />
                   }
                 >
-                  <Avatar className="h-12 w-12 ring-2 ring-white/20">
+                  <Avatar className="h-11 w-11 ring-2 ring-slate-200">
                     <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
-                    <AvatarFallback className="bg-white/10 text-white font-semibold text-base backdrop-blur-sm">
+                    <AvatarFallback className="bg-slate-100 text-slate-900 font-semibold text-base">
                       {getInitials(user.displayName)}
                     </AvatarFallback>
                   </Avatar>

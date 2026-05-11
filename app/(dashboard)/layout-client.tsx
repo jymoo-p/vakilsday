@@ -22,10 +22,10 @@ export default function DashboardLayoutClient({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-black">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white mx-auto"></div>
-          <p className="mt-6 text-white/70 text-lg font-medium">Loading...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-slate-900 mx-auto"></div>
+          <p className="mt-6 text-slate-600 text-lg font-medium">Loading...</p>
         </div>
       </div>
     )
@@ -36,7 +36,7 @@ export default function DashboardLayoutClient({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black">
+    <div className="min-h-screen bg-slate-50">
       <Sidebar />
       <div className="md:pl-72 flex flex-col flex-1">
         <Header />

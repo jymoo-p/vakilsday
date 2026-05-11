@@ -51,21 +51,21 @@ export default function SignInPage() {
   }
 
   return (
-    <Card className="shadow-2xl">
+    <Card className="shadow-lg">
       <CardHeader className="space-y-6 text-center pb-8">
-        <div className="mx-auto w-20 h-20 bg-white/10 backdrop-blur-sm rounded-3xl flex items-center justify-center border border-white/20">
+        <div className="mx-auto w-20 h-20 bg-slate-900 rounded-3xl flex items-center justify-center">
           <Scale className="w-10 h-10 text-white" />
         </div>
         <div>
-          <CardTitle className="text-4xl font-bold mb-3 text-white">VakilsDay</CardTitle>
-          <CardDescription className="text-lg text-white/70">
+          <CardTitle className="text-4xl font-bold mb-3 text-slate-900">VakilsDay</CardTitle>
+          <CardDescription className="text-lg text-slate-600">
             Your daily companion for legal practice management
           </CardDescription>
         </div>
       </CardHeader>
       <CardContent className="space-y-6 pb-8">
         {error && (
-          <Alert variant="destructive" className="bg-destructive/20 border-destructive/50">
+          <Alert variant="destructive" className="bg-red-50 border-red-200">
             <AlertCircle className="h-5 w-5" />
             <AlertDescription className="text-base">{error}</AlertDescription>
           </Alert>
@@ -74,7 +74,7 @@ export default function SignInPage() {
           onClick={handleSignIn}
           disabled={loading}
           className="w-full"
-          size="lg"
+          size="xl"
         >
           <svg className="mr-3 h-6 w-6" viewBox="0 0 24 24">
             <path
@@ -96,7 +96,7 @@ export default function SignInPage() {
           </svg>
           {loading ? 'Signing in...' : 'Sign in with Google'}
         </Button>
-        <p className="text-center text-base text-white/60 px-4">
+        <p className="text-center text-base text-slate-500 px-4">
           Securely access your case files, hearings, and legal research
         </p>
       </CardContent>

@@ -4,20 +4,20 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-base font-semibold whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5 shadow-sm",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-base font-semibold whitespace-nowrap transition-all outline-none select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
   {
     variants: {
       variant: {
-        default: "bg-white text-black hover:bg-white/90 shadow-md",
+        default: "bg-slate-900 text-white hover:bg-slate-800 shadow-sm",
         outline:
-          "border-2 border-white/20 bg-transparent text-white hover:bg-white/10 hover:border-white/30",
+          "border-2 border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
         secondary:
-          "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm",
+          "bg-slate-100 text-slate-900 hover:bg-slate-200",
         ghost:
-          "hover:bg-white/5 text-white/90 hover:text-white shadow-none",
+          "hover:bg-slate-100 text-slate-700",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90",
-        link: "text-white underline-offset-4 hover:underline shadow-none",
+          "bg-red-500 text-white hover:bg-red-600",
+        link: "text-slate-900 underline-offset-4 hover:underline",
       },
       size: {
         default:
@@ -25,6 +25,7 @@ const buttonVariants = cva(
         xs: "h-8 gap-1.5 rounded-lg px-3 text-sm [&_svg:not([class*='size-'])]:size-4",
         sm: "h-9 gap-1.5 rounded-lg px-4 text-sm [&_svg:not([class*='size-'])]:size-4",
         lg: "h-12 gap-2.5 px-6 text-lg [&_svg:not([class*='size-'])]:size-5",
+        xl: "h-14 gap-3 px-8 text-lg [&_svg:not([class*='size-'])]:size-6",
         icon: "size-11",
         "icon-xs": "size-8 rounded-lg [&_svg:not([class*='size-'])]:size-4",
         "icon-sm": "size-9 rounded-lg [&_svg:not([class*='size-'])]:size-4",
