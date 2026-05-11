@@ -1,11 +1,55 @@
 'use client'
 
-import { signIn } from 'next-auth/react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { signInWithGoogle } from '@/lib/firebase-auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Scale } from 'lucide-react'
+import { Scale, AlertCircle } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function SignInPage() {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
+
+  async function handleSignIn() {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const result = await signInWithGoogle()
+
+      if (result.ok) {
+        // Save user to database
+        const response = await fetch('/api/auth/firebase-signin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uid: result.uid,
+            email: result.email,
+            name: result.name,
+            image: result.photoURL,
+          }),
+        })
+
+        if (response.ok) {
+          // Redirect to onboarding or dashboard
+          router.push('/onboarding')
+        } else {
+          const data = await response.json()
+          setError(data.error || 'Failed to create user account')
+        }
+      } else {
+        setError(result.error)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign-in failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <Card className="shadow-xl">
       <CardHeader className="space-y-4 text-center">
@@ -20,8 +64,15 @@ export default function SignInPage() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <Button
-          onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+          onClick={handleSignIn}
+          disabled={loading}
           className="w-full h-12 text-base"
           size="lg"
         >
@@ -43,7 +94,7 @@ export default function SignInPage() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Sign in with Google
+          {loading ? 'Signing in...' : 'Sign in with Google'}
         </Button>
         <p className="text-center text-sm text-muted-foreground px-4">
           Securely access your case files, hearings, and legal research
