@@ -27,8 +27,10 @@ export async function GET() {
         k.includes('DATABASE') ||
         k.includes('POSTGRES') ||
         k.includes('GOOGLE') ||
-        k.includes('NEXTAUTH')
-      ).sort()
+        k.includes('NEXTAUTH') ||
+        k.includes('FIREBASE')
+      ).sort(),
+      firebaseConfigured: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? 'YES' : 'NO'
     })
   } catch (error) {
     return NextResponse.json({ error: 'Failed to read env' }, { status: 500 })
