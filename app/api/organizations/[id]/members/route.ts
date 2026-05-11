@@ -80,7 +80,7 @@ export async function POST(
           organizationId: id,
           role,
         },
-        select: { id: true, name: true, email: true, role: true },
+        select: { id: true, name: true, email: true, role: true, organizationId: true },
       })
     } else {
       // User doesn't exist - create placeholder (will be completed on first sign-in)
@@ -91,7 +91,7 @@ export async function POST(
           role,
           organizationId: id,
         },
-        select: { id: true, name: true, email: true, role: true },
+        select: { id: true, name: true, email: true, role: true, organizationId: true },
       })
     }
 
