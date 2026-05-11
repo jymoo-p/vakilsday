@@ -11,11 +11,13 @@ import {
   Scale,
   Users,
   Shield,
+  UserCircle,
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Cases', href: '/cases', icon: FolderOpen },
+  { name: 'Clients', href: '/clients', icon: UserCircle },
   { name: 'Research', href: '/research', icon: Search },
   { name: 'My Team', href: '/team', icon: Users },
   { name: 'Admin', href: '/admin/roles', icon: Shield },
