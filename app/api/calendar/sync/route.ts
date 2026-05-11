@@ -23,6 +23,10 @@ export async function POST(request: NextRequest) {
 
     const caseData = await prisma.case.findUnique({
       where: { id: caseId },
+      include: {
+        court: true,
+        client: true,
+      },
     })
 
     if (!caseData) {
@@ -54,12 +58,16 @@ export async function POST(request: NextRequest) {
       googleAccount.refresh_token
     )
 
+    const clientName = caseData.client
+      ? `${caseData.client.firstName} ${caseData.client.lastName}`
+      : caseData.otherParties[0] || 'Unknown'
+
     const calendarEvent = {
       caseId: caseData.id,
       caseNumber: caseData.caseNumber,
-      courtName: caseData.courtName,
+      courtName: caseData.court?.name || 'Court',
       hearingDate: new Date(nextHearingDate),
-      parties: `${caseData.petitionerName} vs ${caseData.respondentName}`,
+      parties: `${clientName} vs ${caseData.opponentMainParty}`,
     }
 
     let result
