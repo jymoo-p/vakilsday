@@ -137,7 +137,7 @@ export async function PATCH(
     const { assignedUserIds, userEmail: _userEmail, ...caseUpdateData } = body
 
     // Update case data
-    const updatedCase = await prisma.case.update({
+    await prisma.case.update({
       where: { id },
       data: {
         ...caseUpdateData,
