@@ -29,7 +29,9 @@ import {
   Gavel,
   Phone,
   Clock,
+  Edit,
 } from 'lucide-react'
+import Link from 'next/link'
 import { HearingTimeline } from '@/components/cases/hearing-timeline'
 import { HearingForm } from '@/components/cases/hearing-form'
 
@@ -165,7 +167,15 @@ export default function CaseDetailPage() {
             </p>
           </div>
 
-          <HearingForm caseId={caseData.id} userEmail={user?.email || ''} onSuccess={fetchCase} />
+          <div className="flex gap-2">
+            <Link href={`/cases/${caseData.id}/edit`}>
+              <Button variant="outline" size="lg" className="text-base">
+                <Edit className="mr-2 h-5 w-5" />
+                Edit Case
+              </Button>
+            </Link>
+            <HearingForm caseId={caseData.id} userEmail={user?.email || ''} onSuccess={fetchCase} />
+          </div>
         </div>
       </div>
 

@@ -133,23 +133,57 @@ export async function PATCH(
       )
     }
 
+    // Handle team assignments separately
+    const { assignedUserIds, userEmail: _userEmail, ...caseUpdateData } = body
+
+    // Update case data
     const updatedCase = await prisma.case.update({
       where: { id },
       data: {
-        ...body,
+        ...caseUpdateData,
         filingDate: body.filingDate ? new Date(body.filingDate) : undefined,
         nextHearingDate: body.nextHearingDate ? new Date(body.nextHearingDate) : undefined,
       },
+    })
+
+    // Update team assignments if provided
+    if (assignedUserIds && Array.isArray(assignedUserIds)) {
+      // Delete existing assignments
+      await prisma.caseAssignment.deleteMany({
+        where: { caseId: id },
+      })
+
+      // Create new assignments
+      if (assignedUserIds.length > 0) {
+        await prisma.caseAssignment.createMany({
+          data: assignedUserIds.map((userId: string) => ({
+            caseId: id,
+            userId,
+          })),
+        })
+      }
+    }
+
+    // Fetch updated case with assignments
+    const finalCase = await prisma.case.findUnique({
+      where: { id },
       include: {
         assignments: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+              },
+            },
           },
         },
       },
     })
 
-    return NextResponse.json({ case: updatedCase })
+    return NextResponse.json({ case: finalCase })
   } catch (error) {
     console.error('Error updating case:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
