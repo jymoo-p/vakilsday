@@ -165,7 +165,7 @@ export default function CaseDetailPage() {
             </p>
           </div>
 
-          <HearingForm caseId={caseData.id} onSuccess={fetchCase} />
+          <HearingForm caseId={caseData.id} userEmail={user?.email || ''} onSuccess={fetchCase} />
         </div>
       </div>
 

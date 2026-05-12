@@ -31,10 +31,11 @@ type HearingFormData = z.infer<typeof hearingSchema>
 
 interface HearingFormProps {
   caseId: string
+  userEmail: string
   onSuccess?: () => void
 }
 
-export function HearingForm({ caseId, onSuccess }: HearingFormProps) {
+export function HearingForm({ caseId, userEmail, onSuccess }: HearingFormProps) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -60,6 +61,7 @@ export function HearingForm({ caseId, onSuccess }: HearingFormProps) {
         },
         body: JSON.stringify({
           caseId,
+          userEmail,
           hearingDate: new Date(data.hearingDate).toISOString(),
           itemNumber: data.itemNumber || null,
           outcome: data.outcome || null,

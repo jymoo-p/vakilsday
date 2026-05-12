@@ -1,31 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { canUpdateHearingDate, canViewAllCases } from '@/lib/utils/rbac'
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const body = await request.json()
+    const { caseId, hearingDate, itemNumber, outcome, nextHearingDate, userEmail } = body
 
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!userEmail) {
+      return NextResponse.json({ error: 'User email required' }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: userEmail },
+      select: { id: true, role: true, organizationId: true },
     })
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: 'User not found or no organization' }, { status: 404 })
     }
 
     if (!canUpdateHearingDate(user.role)) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
-
-    const body = await request.json()
-    const { caseId, hearingDate, itemNumber, outcome, nextHearingDate } = body
 
     if (!caseId || !hearingDate) {
       return NextResponse.json(
