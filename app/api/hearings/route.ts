@@ -49,15 +49,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
-    const hearing = await prisma.hearing.create({
-      data: {
+    const currentHearingDate = new Date(hearingDate)
+    const startOfDay = new Date(currentHearingDate)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(currentHearingDate)
+    endOfDay.setHours(23, 59, 59, 999)
+
+    // Check if a hearing entry already exists for today (from previous "next hearing date")
+    const existingHearing = await prisma.hearing.findFirst({
+      where: {
         caseId,
-        hearingDate: new Date(hearingDate),
-        itemNumber,
-        outcome,
-        nextHearingDate: nextHearingDate ? new Date(nextHearingDate) : null,
+        hearingDate: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
       },
     })
+
+    let hearing
+    if (existingHearing) {
+      // Update existing hearing entry (this was previously created as a placeholder)
+      hearing = await prisma.hearing.update({
+        where: { id: existingHearing.id },
+        data: {
+          itemNumber,
+          outcome,
+          nextHearingDate: nextHearingDate ? new Date(nextHearingDate) : null,
+        },
+      })
+    } else {
+      // First time - create new hearing entry for today
+      hearing = await prisma.hearing.create({
+        data: {
+          caseId,
+          hearingDate: currentHearingDate,
+          itemNumber,
+          outcome,
+          nextHearingDate: nextHearingDate ? new Date(nextHearingDate) : null,
+        },
+      })
+    }
 
     // Update case with next hearing date and create calendar appointment
     if (nextHearingDate) {
@@ -70,16 +101,34 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      // Create a new hearing entry for the next hearing date (as a calendar placeholder)
-      await prisma.hearing.create({
-        data: {
+      // Check if next hearing date already has an entry (avoid duplicates)
+      const nextStartOfDay = new Date(nextDate)
+      nextStartOfDay.setHours(0, 0, 0, 0)
+      const nextEndOfDay = new Date(nextDate)
+      nextEndOfDay.setHours(23, 59, 59, 999)
+
+      const existingNextHearing = await prisma.hearing.findFirst({
+        where: {
           caseId,
-          hearingDate: nextDate,
-          itemNumber: null,
-          outcome: null,
-          nextHearingDate: null,
+          hearingDate: {
+            gte: nextStartOfDay,
+            lte: nextEndOfDay,
+          },
         },
       })
+
+      // Only create if doesn't exist
+      if (!existingNextHearing) {
+        await prisma.hearing.create({
+          data: {
+            caseId,
+            hearingDate: nextDate,
+            itemNumber: null,
+            outcome: null,
+            nextHearingDate: null,
+          },
+        })
+      }
     }
 
     return NextResponse.json({ hearing }, { status: 201 })
