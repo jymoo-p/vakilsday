@@ -22,12 +22,16 @@ export async function GET(
       select: { organizationId: true },
     })
 
+    if (!user?.organizationId) {
+      return NextResponse.json({ error: 'No organization found' }, { status: 400 })
+    }
+
     // Get document
     const document = await prisma.document.findFirst({
       where: {
         id,
         case: {
-          organizationId: user?.organizationId,
+          organizationId: user.organizationId,
         },
       },
       include: {

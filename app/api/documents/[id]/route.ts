@@ -22,8 +22,12 @@ export async function DELETE(
       select: { id: true, role: true, organizationId: true },
     })
 
+    if (!user?.organizationId) {
+      return NextResponse.json({ error: 'No organization found' }, { status: 400 })
+    }
+
     // Only ADMIN can delete documents
-    if (user?.role !== 'ADMIN') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Only admin can delete documents' },
         { status: 403 }
@@ -86,12 +90,16 @@ export async function GET(
       select: { organizationId: true },
     })
 
+    if (!user?.organizationId) {
+      return NextResponse.json({ error: 'No organization found' }, { status: 400 })
+    }
+
     // Get document metadata
     const document = await prisma.document.findFirst({
       where: {
         id,
         case: {
-          organizationId: user?.organizationId,
+          organizationId: user.organizationId,
         },
       },
     })

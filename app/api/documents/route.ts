@@ -16,6 +16,10 @@ export async function GET(request: NextRequest) {
       select: { organizationId: true },
     })
 
+    if (!user?.organizationId) {
+      return NextResponse.json({ error: 'No organization found' }, { status: 400 })
+    }
+
     const { searchParams } = new URL(request.url)
     const caseId = searchParams.get('caseId')
 
@@ -30,7 +34,7 @@ export async function GET(request: NextRequest) {
     const caseData = await prisma.case.findFirst({
       where: {
         id: caseId,
-        organizationId: user?.organizationId,
+        organizationId: user.organizationId,
       },
     })
 
