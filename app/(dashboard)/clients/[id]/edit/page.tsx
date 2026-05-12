@@ -24,7 +24,7 @@ import {
 const clientSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
-  gender: z.enum(['MALE', 'FEMALE', 'OTHER'], { required_error: 'Gender is required' }),
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER'], { message: 'Gender is required' }),
   age: z.string().optional(),
   phone: z.string().min(10, 'Phone number is required'),
   otherPhone: z.string().optional(),

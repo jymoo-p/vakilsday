@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
           email: true,
           phone: true,
           role: true,
+          organizationId: true,
           customRole: {
             select: {
               id: true,
@@ -93,6 +94,7 @@ export async function POST(request: NextRequest) {
           email: true,
           phone: true,
           role: true,
+          organizationId: true,
           customRole: {
             select: {
               id: true,
