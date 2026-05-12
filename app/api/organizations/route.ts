@@ -27,11 +27,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if user already has an organization
-    const existingUser = await prisma.user.findUnique({
+    // Check if user exists, if not create them
+    let existingUser = await prisma.user.findUnique({
       where: { email: userEmail },
       include: { organization: true },
     })
+
+    if (!existingUser) {
+      // Create user if they don't exist (Firebase user that wasn't synced)
+      existingUser = await prisma.user.create({
+        data: {
+          email: userEmail,
+          name: userName || userEmail,
+          role: Role.ADMIN,
+          emailVerified: new Date(),
+        },
+        include: { organization: true },
+      })
+    }
 
     if (existingUser?.organizationId) {
       return NextResponse.json(

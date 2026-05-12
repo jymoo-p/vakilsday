@@ -24,7 +24,9 @@ import {
 const caseSchema = z.object({
   caseNumber: z.string().min(1, 'Case number is required'),
   year: z.string().optional(),
-  appearingFor: z.enum(['PETITIONER', 'RESPONDENT'], { required_error: 'Appearing for is required' }),
+  appearingFor: z.enum(['PETITIONER', 'RESPONDENT'], {
+    message: 'Appearing for is required',
+  }),
   clientId: z.string().optional(),
   courtId: z.string().optional(),
   courtNumber: z.string().optional(),
