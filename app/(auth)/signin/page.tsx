@@ -26,7 +26,7 @@ export default function SignInPage() {
         return
       }
 
-      // Sync with database
+      // Sync with database (including Google Drive access token)
       const response = await fetch('/api/auth/sync-firebase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,6 +35,7 @@ export default function SignInPage() {
           email: result.email,
           name: result.name,
           photoURL: result.photoURL,
+          accessToken: result.accessToken,
         }),
       })
 

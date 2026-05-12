@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {
-    const { uid, email, name, photoURL } = await request.json()
+    const { uid, email, name, photoURL, accessToken } = await request.json()
 
     if (!uid || !email) {
       return NextResponse.json(
@@ -61,6 +61,42 @@ export async function POST(request: NextRequest) {
           organizationId: true,
         },
       })
+    }
+
+    // Store Google OAuth tokens for Drive access
+    if (accessToken) {
+      // Check if Account record exists
+      const existingAccount = await prisma.account.findFirst({
+        where: {
+          userId: user.id,
+          provider: 'google',
+        },
+      })
+
+      if (existingAccount) {
+        // Update existing account
+        await prisma.account.update({
+          where: { id: existingAccount.id },
+          data: {
+            access_token: accessToken,
+            expires_at: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+          },
+        })
+      } else {
+        // Create new account record
+        await prisma.account.create({
+          data: {
+            userId: user.id,
+            type: 'oauth',
+            provider: 'google',
+            providerAccountId: uid,
+            access_token: accessToken,
+            token_type: 'Bearer',
+            scope: 'openid email profile https://www.googleapis.com/auth/drive.file',
+            expires_at: Math.floor(Date.now() / 1000) + 3600,
+          },
+        })
+      }
     }
 
     return NextResponse.json({
