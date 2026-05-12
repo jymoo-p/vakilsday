@@ -55,6 +55,13 @@ interface CaseType {
   name: string
 }
 
+interface TeamMember {
+  id: string
+  name: string
+  email: string
+  role: string
+}
+
 export default function NewCasePageNew() {
   const router = useRouter()
   const { user } = useAuth()
@@ -65,6 +72,8 @@ export default function NewCasePageNew() {
   const [clients, setClients] = useState<Client[]>([])
   const [courts, setCourts] = useState<Court[]>([])
   const [caseTypes, setCaseTypes] = useState<CaseType[]>([])
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>([])
 
   // Dynamic party lists
   const [otherParties, setOtherParties] = useState<string[]>([])
@@ -96,6 +105,13 @@ export default function NewCasePageNew() {
     if (!user?.email) return
 
     try {
+      // Fetch team members
+      const teamRes = await fetch(`/api/team?email=${encodeURIComponent(user.email)}`)
+      if (teamRes.ok) {
+        const teamData = await teamRes.json()
+        setTeamMembers(teamData.users || [])
+      }
+
       // Fetch clients
       const clientsRes = await fetch(`/api/clients?email=${encodeURIComponent(user.email)}`)
       if (clientsRes.ok) {
@@ -143,6 +159,14 @@ export default function NewCasePageNew() {
     setOpponentOtherParties(opponentOtherParties.filter((_, i) => i !== index))
   }
 
+  function toggleAssignee(userId: string) {
+    setSelectedAssignees(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    )
+  }
+
   const onSubmit = async (data: CaseFormData) => {
     setError(null)
     setIsSubmitting(true)
@@ -162,6 +186,7 @@ export default function NewCasePageNew() {
           caseTypeId: data.caseTypeId || null,
           otherParties,
           opponentOtherParties,
+          assignedUserIds: selectedAssignees,
           filingDate: new Date(data.filingDate).toISOString(),
           nextHearingDate: data.nextHearingDate
             ? new Date(data.nextHearingDate).toISOString()
@@ -510,6 +535,39 @@ export default function NewCasePageNew() {
               rows={6}
               {...register('synopsis')}
             />
+          </CardContent>
+        </Card>
+
+        {/* Team Assignment */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Assign Team Members</CardTitle>
+            <CardDescription>Select team members who can access this case</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {teamMembers.length === 0 ? (
+              <p className="text-slate-500">No team members available</p>
+            ) : (
+              <div className="space-y-2">
+                {teamMembers.map((member) => (
+                  <label
+                    key={member.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border hover:bg-slate-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedAssignees.includes(member.id)}
+                      onChange={() => toggleAssignee(member.id)}
+                      className="h-4 w-4"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium">{member.name}</p>
+                      <p className="text-sm text-slate-500">{member.email} • {member.role}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

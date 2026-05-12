@@ -102,6 +102,7 @@ export async function POST(request: NextRequest) {
       filingDate,
       nextHearingDate,
       synopsis,
+      assignedUserIds,
     } = body
 
     if (!userEmail) {
@@ -148,6 +149,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Prepare assignments - always include creator, plus any assigned users
+    const assignmentUserIds = new Set<string>([user.id]) // Creator is always assigned
+    if (assignedUserIds && Array.isArray(assignedUserIds)) {
+      assignedUserIds.forEach((id: string) => assignmentUserIds.add(id))
+    }
+
     const newCase = await prisma.case.create({
       data: {
         caseNumber,
@@ -166,9 +173,7 @@ export async function POST(request: NextRequest) {
         status: CaseStatus.ACTIVE,
         organizationId: user.organizationId,
         assignments: {
-          create: {
-            userId: user.id,
-          },
+          create: Array.from(assignmentUserIds).map(userId => ({ userId })),
         },
       },
       include: {

@@ -1,6 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export async function GET(request: NextRequest) {
+  try {
+    const userEmail = request.nextUrl.searchParams.get('email')
+
+    if (!userEmail) {
+      return NextResponse.json({ error: 'Email required' }, { status: 401 })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail },
+      select: { id: true, role: true, organizationId: true },
+    })
+
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: 'User not found or no organization' }, { status: 404 })
+    }
+
+    // Fetch all team members in the organization
+    const users = await prisma.user.findMany({
+      where: {
+        organizationId: user.organizationId,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        customRole: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    })
+
+    return NextResponse.json({ users })
+  } catch (error) {
+    console.error('Error fetching team members:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
