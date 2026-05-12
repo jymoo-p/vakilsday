@@ -323,7 +323,7 @@ export default function EditCasePage() {
                 <Label htmlFor="courtId">Court</Label>
                 <Select
                   value={watch('courtId')}
-                  onValueChange={(value) => setValue('courtId', value)}
+                  onValueChange={(value) => setValue('courtId', value || undefined)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select court" />
@@ -347,7 +347,7 @@ export default function EditCasePage() {
                 <Label htmlFor="caseTypeId">Case Type</Label>
                 <Select
                   value={watch('caseTypeId')}
-                  onValueChange={(value) => setValue('caseTypeId', value)}
+                  onValueChange={(value) => setValue('caseTypeId', value || undefined)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
