@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
+import { MobileNav } from '@/components/layout/mobile-nav'
 
 export default function DashboardLayoutClient({
   children,
@@ -40,12 +41,13 @@ export default function DashboardLayoutClient({
       <Sidebar />
       <div className="md:pl-72 flex flex-col flex-1">
         <Header />
-        <main className="flex-1">
+        <main className="flex-1 pb-20 md:pb-0">
           <div className="py-8 px-6 sm:px-8 lg:px-12">
             {children}
           </div>
         </main>
       </div>
+      <MobileNav />
     </div>
   )
 }
