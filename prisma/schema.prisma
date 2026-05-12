@@ -262,6 +262,8 @@ model CaseAssignment {
   assignedAt DateTime @default(now())
 
   @@unique([caseId, userId])
+  @@index([userId]) // For fast lookup of user's assigned cases
+  @@index([caseId]) // For fast lookup of case assignments
   @@map("case_assignments")
 }
 
@@ -281,6 +283,7 @@ model Hearing {
   updatedAt       DateTime      @updatedAt
 
   @@index([caseId, hearingDate])
+  @@index([hearingDate]) // For fast calendar queries
   @@map("hearings")
 }
 

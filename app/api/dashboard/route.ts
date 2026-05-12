@@ -31,102 +31,101 @@ export async function GET(request: NextRequest) {
     const nextWeek = new Date(tomorrow)
     nextWeek.setDate(nextWeek.getDate() + 7)
 
-    // First, get the case IDs the user can access
-    let caseIds: string[] = []
+    // Build optimized query conditions based on role
+    const hearingBaseWhere = isAdmin
+      ? {
+          case: {
+            organizationId: user.organizationId,
+            status: 'ACTIVE',
+          },
+        }
+      : {
+          case: {
+            organizationId: user.organizationId,
+            status: 'ACTIVE',
+            assignments: {
+              some: {
+                userId: user.id,
+              },
+            },
+          },
+        }
 
-    if (isAdmin) {
-      // Admin sees all cases in their organization
-      const cases = await prisma.case.findMany({
+    // Fetch today's and week's hearings in parallel
+    const [todaysHearings, weekHearings] = await Promise.all([
+      // Today's hearings
+      prisma.hearing.findMany({
         where: {
-          organizationId: user.organizationId,
-          status: 'ACTIVE',
-        },
-        select: { id: true },
-      })
-      caseIds = cases.map(c => c.id)
-    } else {
-      // Non-admin only sees assigned cases
-      const assignments = await prisma.caseAssignment.findMany({
-        where: {
-          userId: user.id,
+          ...hearingBaseWhere,
+          hearingDate: {
+            gte: today,
+            lt: tomorrow,
+          },
         },
         include: {
           case: {
             select: {
               id: true,
-              organizationId: true,
-              status: true,
+              caseNumber: true,
+              courtNumber: true,
+              client: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+              court: {
+                select: {
+                  name: true,
+                },
+              },
+              otherParties: true,
+              opponentMainParty: true,
             },
           },
         },
-      })
-      caseIds = assignments
-        .filter(a => a.case.organizationId === user.organizationId && a.case.status === 'ACTIVE')
-        .map(a => a.case.id)
-    }
+        orderBy: {
+          hearingDate: 'asc',
+        },
+      }),
 
-    // Fetch today's hearings
-    const todaysHearings = await prisma.hearing.findMany({
-      where: {
-        caseId: { in: caseIds },
-        hearingDate: {
-          gte: today,
-          lt: tomorrow,
+      // This week's hearings
+      prisma.hearing.findMany({
+        where: {
+          ...hearingBaseWhere,
+          hearingDate: {
+            gte: tomorrow,
+            lt: nextWeek,
+          },
         },
-      },
-      include: {
-        case: {
-          include: {
-            client: {
-              select: {
-                firstName: true,
-                lastName: true,
+        include: {
+          case: {
+            select: {
+              id: true,
+              caseNumber: true,
+              courtNumber: true,
+              client: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                },
               },
-            },
-            court: {
-              select: {
-                name: true,
+              court: {
+                select: {
+                  name: true,
+                },
               },
+              otherParties: true,
+              opponentMainParty: true,
             },
           },
         },
-      },
-      orderBy: [
-        { hearingDate: 'asc' },
-      ],
-    })
-
-    // Fetch this week's hearings
-    const weekHearings = await prisma.hearing.findMany({
-      where: {
-        caseId: { in: caseIds },
-        hearingDate: {
-          gte: tomorrow,
-          lt: nextWeek,
+        orderBy: {
+          hearingDate: 'asc',
         },
-      },
-      include: {
-        case: {
-          include: {
-            client: {
-              select: {
-                firstName: true,
-                lastName: true,
-              },
-            },
-            court: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: [
-        { hearingDate: 'asc' },
-      ],
-      take: 20,
-    })
+        take: 20,
+      }),
+    ])
 
     return NextResponse.json({
       todaysHearings,
