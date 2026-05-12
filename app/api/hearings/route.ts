@@ -59,11 +59,25 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Update case with next hearing date and create calendar appointment
     if (nextHearingDate) {
+      const nextDate = new Date(nextHearingDate)
+
       await prisma.case.update({
         where: { id: caseId },
         data: {
-          nextHearingDate: new Date(nextHearingDate),
+          nextHearingDate: nextDate,
+        },
+      })
+
+      // Create a new hearing entry for the next hearing date (as a calendar placeholder)
+      await prisma.hearing.create({
+        data: {
+          caseId,
+          hearingDate: nextDate,
+          itemNumber: null,
+          outcome: null,
+          nextHearingDate: null,
         },
       })
     }

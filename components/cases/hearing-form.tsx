@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert } from '@/components/ui/alert'
 import { Plus } from 'lucide-react'
+import { format } from 'date-fns'
 
 const hearingSchema = z.object({
   hearingDate: z.string().min(1, 'Hearing date is required'),
@@ -45,15 +46,38 @@ export function HearingForm({ caseId, userEmail, onSuccess }: HearingFormProps) 
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<HearingFormData>({
     resolver: zodResolver(hearingSchema),
+    defaultValues: {
+      hearingDate: format(new Date(), "yyyy-MM-dd"),
+    },
   })
+
+  // Reset form with current date when dialog opens
+  useEffect(() => {
+    if (open) {
+      setValue('hearingDate', format(new Date(), "yyyy-MM-dd"))
+    }
+  }, [open, setValue])
 
   const onSubmit = async (data: HearingFormData) => {
     setError(null)
     setIsSubmitting(true)
 
     try {
+      // Create hearing date with current time
+      const hearingDateTime = new Date(data.hearingDate)
+      const now = new Date()
+      hearingDateTime.setHours(now.getHours(), now.getMinutes(), 0, 0)
+
+      // Create next hearing date with 10 AM time if provided
+      let nextHearingDateTime = null
+      if (data.nextHearingDate) {
+        nextHearingDateTime = new Date(data.nextHearingDate)
+        nextHearingDateTime.setHours(10, 0, 0, 0)
+      }
+
       const response = await fetch('/api/hearings', {
         method: 'POST',
         headers: {
@@ -62,12 +86,10 @@ export function HearingForm({ caseId, userEmail, onSuccess }: HearingFormProps) 
         body: JSON.stringify({
           caseId,
           userEmail,
-          hearingDate: new Date(data.hearingDate).toISOString(),
+          hearingDate: hearingDateTime.toISOString(),
           itemNumber: data.itemNumber || null,
           outcome: data.outcome || null,
-          nextHearingDate: data.nextHearingDate
-            ? new Date(data.nextHearingDate).toISOString()
-            : null,
+          nextHearingDate: nextHearingDateTime?.toISOString() || null,
         }),
       })
 
@@ -113,10 +135,13 @@ export function HearingForm({ caseId, userEmail, onSuccess }: HearingFormProps) 
             </Label>
             <Input
               id="hearingDate"
-              type="datetime-local"
+              type="date"
               {...register('hearingDate')}
               className="text-base h-12"
             />
+            <p className="text-xs text-slate-500">
+              Time will be set to current time
+            </p>
             {errors.hearingDate && (
               <p className="text-sm text-destructive">
                 {errors.hearingDate.message}
@@ -159,10 +184,13 @@ export function HearingForm({ caseId, userEmail, onSuccess }: HearingFormProps) 
             </Label>
             <Input
               id="nextHearingDate"
-              type="datetime-local"
+              type="date"
               {...register('nextHearingDate')}
               className="text-base h-12"
             />
+            <p className="text-xs text-slate-500">
+              Time will be set to 10:00 AM (automatically added to calendar)
+            </p>
           </div>
 
           <DialogFooter>
