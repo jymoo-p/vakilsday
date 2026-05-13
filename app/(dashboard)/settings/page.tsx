@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { User, Shield, Calendar, Building2, Plus, Users, Mail, Trash2 } from 'lucide-react'
+import { User, Shield, Calendar, Building2, Plus, Users, Mail, Trash2, HardDrive } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -46,6 +46,8 @@ export default function SettingsPage() {
   const [newMemberRole, setNewMemberRole] = useState('ASSOCIATE')
   const [addingMember, setAddingMember] = useState(false)
   const [memberError, setMemberError] = useState<string | null>(null)
+  const [driveConnected, setDriveConnected] = useState<boolean | null>(null)
+  const [connectingDrive, setConnectingDrive] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -72,6 +74,13 @@ export default function SettingsPage() {
               fetchTeamMembers(data.user.organizationId)
             }
           }
+        }
+
+        // Check Google Drive connection status
+        const driveResponse = await fetch(`/api/auth/google-drive/status?email=${encodeURIComponent(user.email)}`)
+        if (driveResponse.ok) {
+          const driveData = await driveResponse.json()
+          setDriveConnected(driveData.connected)
         }
       } catch (error) {
         console.error('Error fetching settings data:', error)
@@ -212,6 +221,26 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Error updating role:', error)
       alert('Failed to update role')
+    }
+  }
+
+  async function handleConnectDrive() {
+    if (!user?.email) return
+
+    setConnectingDrive(true)
+    try {
+      const response = await fetch(`/api/auth/google-drive/connect?email=${encodeURIComponent(user.email)}`)
+      if (response.ok) {
+        const data = await response.json()
+        window.location.href = data.authUrl
+      } else {
+        alert('Failed to initiate Google Drive connection')
+      }
+    } catch (error) {
+      console.error('Error connecting Drive:', error)
+      alert('Failed to connect Google Drive')
+    } finally {
+      setConnectingDrive(false)
     }
   }
 
@@ -504,6 +533,58 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Google Drive Integration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <HardDrive className="h-5 w-5" />
+            Google Drive Integration
+          </CardTitle>
+          <CardDescription>
+            Store case documents in your Google Drive
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Status</p>
+              <p className="text-sm text-muted-foreground">
+                {driveConnected === null
+                  ? 'Checking...'
+                  : driveConnected
+                  ? 'Connected - Documents will be saved to your Google Drive'
+                  : 'Not connected - Connect to upload documents'}
+              </p>
+            </div>
+            {driveConnected !== null && (
+              <Badge
+                variant="outline"
+                className={
+                  driveConnected
+                    ? 'bg-green-50 text-green-700 border-green-200'
+                    : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                }
+              >
+                {driveConnected ? 'Active' : 'Inactive'}
+              </Badge>
+            )}
+          </div>
+
+          {!driveConnected && driveConnected !== null && (
+            <Button onClick={handleConnectDrive} disabled={connectingDrive}>
+              <HardDrive className="h-4 w-4 mr-2" />
+              {connectingDrive ? 'Connecting...' : 'Connect Google Drive'}
+            </Button>
+          )}
+
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p>• Documents are organized by case in your Drive</p>
+            <p>• Files are automatically shared with your team</p>
+            <p>• You maintain full control of your data</p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Calendar Integration */}
       <Card>
