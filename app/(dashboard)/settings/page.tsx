@@ -48,6 +48,8 @@ export default function SettingsPage() {
   const [memberError, setMemberError] = useState<string | null>(null)
   const [driveConnected, setDriveConnected] = useState<boolean | null>(null)
   const [connectingDrive, setConnectingDrive] = useState(false)
+  const [calendarConnected, setCalendarConnected] = useState<boolean | null>(null)
+  const [connectingCalendar, setConnectingCalendar] = useState(false)
   const [calendarSyncEnabled, setCalendarSyncEnabled] = useState<boolean>(false)
   const [togglingCalendar, setTogglingCalendar] = useState(false)
 
@@ -88,6 +90,13 @@ export default function SettingsPage() {
         if (driveResponse.ok) {
           const driveData = await driveResponse.json()
           setDriveConnected(driveData.connected)
+        }
+
+        // Check Google Calendar connection status
+        const calendarResponse = await fetch(`/api/auth/google-calendar/status?email=${encodeURIComponent(user.email)}`)
+        if (calendarResponse.ok) {
+          const calendarData = await calendarResponse.json()
+          setCalendarConnected(calendarData.connected)
         }
       } catch (error) {
         console.error('Error fetching settings data:', error)
@@ -248,6 +257,26 @@ export default function SettingsPage() {
       alert('Failed to connect Google Drive')
     } finally {
       setConnectingDrive(false)
+    }
+  }
+
+  async function handleConnectCalendar() {
+    if (!user?.email) return
+
+    setConnectingCalendar(true)
+    try {
+      const response = await fetch(`/api/auth/google-calendar/connect?email=${encodeURIComponent(user.email)}`)
+      if (response.ok) {
+        const data = await response.json()
+        window.location.href = data.authUrl
+      } else {
+        alert('Failed to initiate Google Calendar connection')
+      }
+    } catch (error) {
+      console.error('Error connecting Calendar:', error)
+      alert('Failed to connect Google Calendar')
+    } finally {
+      setConnectingCalendar(false)
     }
   }
 
@@ -635,36 +664,75 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Connection status */}
           <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="font-medium">Auto-sync hearings</p>
+            <div>
+              <p className="font-medium">Connection Status</p>
               <p className="text-sm text-muted-foreground">
-                {calendarSyncEnabled
-                  ? 'New hearings are automatically added to Google Calendar'
-                  : 'Enable to sync hearings to Google Calendar'}
+                {calendarConnected === null
+                  ? 'Checking...'
+                  : calendarConnected
+                  ? 'Connected with calendar access'
+                  : 'Not connected - Connect to enable sync'}
               </p>
             </div>
-            <button
-              onClick={handleToggleCalendarSync}
-              disabled={togglingCalendar}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                calendarSyncEnabled ? 'bg-green-600' : 'bg-gray-200'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  calendarSyncEnabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
+            {calendarConnected !== null && (
+              <Badge
+                variant="outline"
+                className={
+                  calendarConnected
+                    ? 'bg-green-50 text-green-700 border-green-200'
+                    : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                }
+              >
+                {calendarConnected ? 'Connected' : 'Not Connected'}
+              </Badge>
+            )}
           </div>
 
-          {calendarSyncEnabled && (
-            <div className="text-sm text-muted-foreground space-y-1 pt-2 border-t">
-              <p>• Hearings are synced in real-time</p>
-              <p>• Reminders: 1 day before (email), 1 hour before (popup)</p>
-              <p>• Updates automatically when hearing dates change</p>
-            </div>
+          {/* Connect button if not connected */}
+          {!calendarConnected && calendarConnected !== null && (
+            <Button onClick={handleConnectCalendar} disabled={connectingCalendar}>
+              <Calendar className="h-4 w-4 mr-2" />
+              {connectingCalendar ? 'Connecting...' : 'Connect Google Calendar'}
+            </Button>
+          )}
+
+          {/* Toggle if connected */}
+          {calendarConnected && (
+            <>
+              <div className="flex items-center justify-between pt-2 border-t">
+                <div className="flex-1">
+                  <p className="font-medium">Auto-sync hearings</p>
+                  <p className="text-sm text-muted-foreground">
+                    {calendarSyncEnabled
+                      ? 'New hearings are automatically added to Google Calendar'
+                      : 'Enable to sync hearings to Google Calendar'}
+                  </p>
+                </div>
+                <button
+                  onClick={handleToggleCalendarSync}
+                  disabled={togglingCalendar}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    calendarSyncEnabled ? 'bg-green-600' : 'bg-gray-200'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      calendarSyncEnabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {calendarSyncEnabled && (
+                <div className="text-sm text-muted-foreground space-y-1 pt-2 border-t">
+                  <p>• Hearings are synced in real-time</p>
+                  <p>• Reminders: 1 day before (email), 1 hour before (popup)</p>
+                  <p>• Updates automatically when hearing dates change</p>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
