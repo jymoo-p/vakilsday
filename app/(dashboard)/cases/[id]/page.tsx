@@ -105,6 +105,7 @@ interface Case {
     title: string
     documentType: string
     filePath: string | null
+    driveUrl: string | null
     createdAt: string
   }>
 }
