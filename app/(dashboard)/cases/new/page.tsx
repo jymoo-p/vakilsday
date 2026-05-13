@@ -28,7 +28,7 @@ const caseSchema = z.object({
   appearingFor: z.enum(['PETITIONER', 'RESPONDENT'], {
     message: 'Appearing for is required',
   }),
-  clientId: z.string().optional(),
+  clientId: z.string().min(1, 'Please select a client from the list or create a new one'),
   courtId: z.string().optional(),
   courtNumber: z.string().optional(),
   caseTypeId: z.string().optional(),
@@ -89,6 +89,8 @@ export default function NewCasePageNew() {
   const [selectedCourt, setSelectedCourt] = useState<string>('')
   const [selectedCaseType, setSelectedCaseType] = useState<string>('')
   const [clientSearchQuery, setClientSearchQuery] = useState('')
+  const [clientValidationError, setClientValidationError] = useState<string | null>(null)
+  const [showClientDropdown, setShowClientDropdown] = useState(false)
 
   const {
     register,
@@ -380,15 +382,45 @@ export default function NewCasePageNew() {
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="clientSearch">Client (Start typing to search)</Label>
+              <Label htmlFor="clientSearch">
+                Client <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="clientSearch"
-                placeholder="Search clients..."
+                placeholder="Start typing to search clients..."
                 value={clientSearchQuery}
-                onChange={(e) => setClientSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setClientSearchQuery(e.target.value)
+                  setShowClientDropdown(true)
+                  if (!e.target.value) {
+                    setSelectedClient('')
+                    setValue('clientId', '')
+                    setClientValidationError(null)
+                  }
+                }}
+                onBlur={() => {
+                  setTimeout(() => {
+                    setShowClientDropdown(false)
+                    // Validate if there's text but no valid client selected
+                    if (clientSearchQuery && !selectedClient) {
+                      setClientValidationError('Please select a client from the list or create a new one')
+                    }
+                  }, 200)
+                }}
+                onFocus={() => {
+                  if (clientSearchQuery) {
+                    setShowClientDropdown(true)
+                  }
+                }}
+                className={clientValidationError || errors.clientId ? 'border-red-500' : ''}
               />
-              {clientSearchQuery && (
-                <div className="border border-slate-200 rounded-lg mt-2">
+              {(clientValidationError || errors.clientId) && (
+                <p className="text-sm text-red-500">
+                  {clientValidationError || errors.clientId?.message}
+                </p>
+              )}
+              {clientSearchQuery && showClientDropdown && (
+                <div className="border border-slate-200 rounded-lg mt-2 shadow-lg">
                   {filteredClients.length > 0 ? (
                     <div className="max-h-48 overflow-y-auto">
                       {filteredClients.map((client) => (
@@ -398,6 +430,8 @@ export default function NewCasePageNew() {
                             setSelectedClient(client.id)
                             setValue('clientId', client.id)
                             setClientSearchQuery(`${client.firstName} ${client.lastName}`)
+                            setClientValidationError(null)
+                            setShowClientDropdown(false)
                           }}
                           className="p-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0"
                         >
@@ -406,11 +440,15 @@ export default function NewCasePageNew() {
                       ))}
                     </div>
                   ) : (
-                    <div className="p-3 text-center space-y-3">
-                      <p className="text-sm text-slate-500">No clients found matching "{clientSearchQuery}"</p>
+                    <div className="p-4 text-center space-y-3 bg-gradient-to-br from-indigo-50 to-purple-50">
+                      <p className="text-sm text-slate-700 font-medium">
+                        No clients found matching "{clientSearchQuery}"
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Create a new client record to continue
+                      </p>
                       <Button
                         type="button"
-                        variant="outline"
                         size="sm"
                         onClick={() => {
                           // Save current form state in localStorage
@@ -433,10 +471,10 @@ export default function NewCasePageNew() {
                           localStorage.setItem('newCaseFormState', JSON.stringify(formState))
                           router.push(`/clients/new?prefillName=${encodeURIComponent(clientSearchQuery)}`)
                         }}
-                        className="gap-2"
+                        className="gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md"
                       >
                         <Plus className="h-4 w-4" />
-                        Create New Client
+                        Create New Client "{clientSearchQuery}"
                       </Button>
                     </div>
                   )}
