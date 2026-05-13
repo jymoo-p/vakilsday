@@ -30,18 +30,37 @@ import {
   Phone,
   Clock,
   Edit,
+  Upload,
+  Download,
+  Trash2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { HearingTimeline } from '@/components/cases/hearing-timeline'
 import { HearingForm } from '@/components/cases/hearing-form'
+import { toast } from 'sonner'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 
 interface Case {
   id: string
   caseNumber: string
-  courtName: string
+  appearingFor: string
   courtNumber: string | null
-  petitionerName: string
-  respondentName: string
   judgeName: string | null
   opposingCounselName: string | null
   opposingCounselPhone: string | null
@@ -49,6 +68,21 @@ interface Case {
   filingDate: string
   nextHearingDate: string | null
   synopsis: string | null
+  otherParties: string[]
+  opponentMainParty: string
+  client: {
+    id: string
+    firstName: string
+    lastName: string
+  } | null
+  court: {
+    id: string
+    name: string
+  } | null
+  caseType: {
+    id: string
+    name: string
+  } | null
   assignments: Array<{
     user: {
       id: string
@@ -69,6 +103,7 @@ interface Case {
     id: string
     title: string
     documentType: string
+    filePath: string | null
     createdAt: string
   }>
 }
@@ -80,6 +115,13 @@ export default function CaseDetailPage() {
   const [caseData, setCaseData] = useState<Case | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showUploadDialog, setShowUploadDialog] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadData, setUploadData] = useState({
+    title: '',
+    documentType: 'OTHER',
+    file: null as File | null,
+  })
 
   const fetchCase = async () => {
     if (!user?.email) return
@@ -103,6 +145,46 @@ export default function CaseDetailPage() {
       fetchCase()
     }
   }, [params.id, user])
+
+  const handleUploadDocument = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!uploadData.file) {
+      toast.error('Please select a file')
+      return
+    }
+
+    setUploading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', uploadData.file)
+      formData.append('title', uploadData.title)
+      formData.append('documentType', uploadData.documentType)
+      formData.append('caseId', caseData!.id)
+      formData.append('userEmail', user?.email || '')
+
+      const response = await fetch('/api/documents/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        toast.success(`Sustained! Document "${uploadData.title}" was uploaded`)
+        setShowUploadDialog(false)
+        setUploadData({ title: '', documentType: 'OTHER', file: null })
+        fetchCase() // Refresh to show new document
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Failed to upload document')
+      }
+    } catch (error) {
+      console.error('Error uploading document:', error)
+      toast.error('Failed to upload document')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -128,6 +210,13 @@ export default function CaseDetailPage() {
         </div>
       </div>
     )
+  }
+
+  const getClientName = () => {
+    if (caseData.client) {
+      return `${caseData.client.firstName} ${caseData.client.lastName}`
+    }
+    return caseData.otherParties[0] || 'Unknown'
   }
 
   return (
@@ -162,9 +251,18 @@ export default function CaseDetailPage() {
                 {caseData.status}
               </Badge>
             </div>
-            <p className="text-xl text-muted-foreground">
-              {caseData.petitionerName} vs {caseData.respondentName}
-            </p>
+            <div className="space-y-1">
+              <p className="text-xl text-muted-foreground">
+                {getClientName()} <span className="text-slate-400">vs</span> {caseData.opponentMainParty}
+              </p>
+              {caseData.court && (
+                <p className="text-base text-muted-foreground flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  {caseData.court.name}
+                  {caseData.courtNumber && <span>• Court {caseData.courtNumber}</span>}
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-2">
@@ -207,14 +305,22 @@ export default function CaseDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Court Name</p>
-                  <p className="text-lg font-medium">{caseData.courtName}</p>
-                </div>
+                {caseData.court && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Court Name</p>
+                    <p className="text-lg font-medium">{caseData.court.name}</p>
+                  </div>
+                )}
                 {caseData.courtNumber && (
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Court Number</p>
                     <p className="text-lg font-medium">{caseData.courtNumber}</p>
+                  </div>
+                )}
+                {caseData.caseType && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Case Type</p>
+                    <p className="text-lg font-medium">{caseData.caseType.name}</p>
                   </div>
                 )}
                 {caseData.judgeName && (
@@ -350,13 +456,105 @@ export default function CaseDetailPage() {
         {/* Documents Tab */}
         <TabsContent value="documents">
           <Card>
-            <CardContent className="pt-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle>Documents</CardTitle>
+              <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+                <DialogTrigger>
+                  <Button className="gap-2">
+                    <Upload className="h-4 w-4" />
+                    Upload Document
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Upload Document</DialogTitle>
+                    <DialogDescription>
+                      Upload a document for this case. It will be saved to Google Drive.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleUploadDocument} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Document Title *</Label>
+                      <Input
+                        id="title"
+                        value={uploadData.title}
+                        onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })}
+                        placeholder="e.g., Petition Copy"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="documentType">Document Type *</Label>
+                      <Select
+                        value={uploadData.documentType}
+                        onValueChange={(value) => setUploadData({ ...uploadData, documentType: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PETITION">Petition</SelectItem>
+                          <SelectItem value="EVIDENCE">Evidence</SelectItem>
+                          <SelectItem value="ANNEXURE">Annexure</SelectItem>
+                          <SelectItem value="ORDER">Order</SelectItem>
+                          <SelectItem value="OTHER">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="file">File *</Label>
+                      <Input
+                        id="file"
+                        type="file"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null
+                          setUploadData({ ...uploadData, file })
+                        }}
+                        required
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Supported: PDF, DOC, DOCX, JPG, PNG (Max 10MB)
+                      </p>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowUploadDialog(false)
+                          setUploadData({ title: '', documentType: 'OTHER', file: null })
+                        }}
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={uploading}
+                        className="flex-1"
+                      >
+                        {uploading ? 'Uploading...' : 'Upload'}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
               {caseData.documents.length === 0 ? (
                 <div className="text-center py-12">
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-lg text-muted-foreground">
+                  <p className="text-lg text-muted-foreground mb-4">
                     No documents uploaded yet
                   </p>
+                  <Button onClick={() => setShowUploadDialog(true)} className="gap-2">
+                    <Upload className="h-4 w-4" />
+                    Upload First Document
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -365,16 +563,25 @@ export default function CaseDetailPage() {
                       key={doc.id}
                       className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                     >
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-base font-medium">{doc.title}</p>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-base font-medium truncate">{doc.title}</p>
                           <p className="text-sm text-muted-foreground">
                             {format(new Date(doc.createdAt), 'MMM d, yyyy')}
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline">{doc.documentType}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{doc.documentType}</Badge>
+                        {doc.filePath && (
+                          <a href={doc.filePath} target="_blank" rel="noopener noreferrer">
+                            <Button variant="ghost" size="sm">
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </a>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

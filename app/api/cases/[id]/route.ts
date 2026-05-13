@@ -28,6 +28,25 @@ export async function GET(
     const caseData = await prisma.case.findUnique({
       where: { id },
       include: {
+        client: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        court: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        caseType: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         assignments: {
           include: {
             user: {
