@@ -30,7 +30,6 @@ export async function POST(request: NextRequest) {
     // Check if user exists, if not create them
     let existingUser = await prisma.user.findUnique({
       where: { email: userEmail },
-      include: { organization: true },
     })
 
     if (!existingUser) {
@@ -42,7 +41,6 @@ export async function POST(request: NextRequest) {
           role: Role.ADMIN,
           emailVerified: new Date(),
         },
-        include: { organization: true },
       })
     }
 
