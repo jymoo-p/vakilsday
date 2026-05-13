@@ -41,8 +41,8 @@ export default function OnboardingWorkspacePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: formData.firmName,
-          slug: formData.slug,
+          firmName: formData.firmName,
+          userName: user.displayName || user.email,
           userEmail: user.email,
         }),
       })
