@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { Sidebar } from '@/components/layout/sidebar'
@@ -14,14 +14,37 @@ export default function DashboardLayoutClient({
 }) {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true)
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/signin')
+    async function checkOnboardingStatus() {
+      if (!loading && !user) {
+        router.push('/signin')
+        return
+      }
+
+      if (!loading && user?.email) {
+        try {
+          const response = await fetch(`/api/onboarding/status?email=${encodeURIComponent(user.email)}`)
+          if (response.ok) {
+            const data = await response.json()
+            if (data.needsOnboarding) {
+              router.push('/onboarding/welcome')
+              return
+            }
+          }
+        } catch (error) {
+          console.error('Error checking onboarding:', error)
+        } finally {
+          setCheckingOnboarding(false)
+        }
+      }
     }
+
+    checkOnboardingStatus()
   }, [user, loading, router])
 
-  if (loading) {
+  if (loading || checkingOnboarding) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
