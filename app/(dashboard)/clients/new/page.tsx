@@ -94,18 +94,22 @@ export default function NewClientPage() {
       }
 
       const result = await response.json()
+      const clientName = `${result.client.firstName} ${result.client.lastName}`
 
       // Check if we should return to case form
       const savedState = localStorage.getItem('newCaseFormState')
       if (savedState) {
-        toast.success('Client created! Returning to case form...')
+        toast.success(`Sustained! Client "${clientName}" was created`, {
+          description: 'Returning to case form...',
+        })
         // Update the saved state with the new client ID
         const state = JSON.parse(savedState)
         state.clientId = result.client.id
-        state.clientName = `${result.client.firstName} ${result.client.lastName}`
+        state.clientName = clientName
         localStorage.setItem('newCaseFormState', JSON.stringify(state))
         router.push('/cases/new')
       } else {
+        toast.success(`Sustained! Client "${clientName}" was created`)
         router.push('/clients')
       }
     } catch (err) {

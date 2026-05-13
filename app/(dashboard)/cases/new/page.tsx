@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, Plus, X } from 'lucide-react'
+import { toast } from 'sonner'
 import {
   Select,
   SelectContent,
@@ -258,6 +259,7 @@ export default function NewCasePageNew() {
       }
 
       const result = await response.json()
+      toast.success(`Sustained! Case "${result.case.caseNumber}" was created`)
       router.push(`/cases/${result.case.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')

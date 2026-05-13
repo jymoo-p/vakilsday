@@ -135,7 +135,8 @@ export default function TeamPage() {
       })
 
       if (response.ok) {
-        toast.success('Team member added successfully')
+        const result = await response.json()
+        toast.success(`Sustained! Team member "${result.member.name}" was added`)
         setShowAddDialog(false)
         setFormData({ name: '', email: '', phone: '', role: 'ASSOCIATE', customRoleId: '' })
         fetchData() // Refresh the list
