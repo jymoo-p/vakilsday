@@ -14,7 +14,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { LogOut, User } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 
 export function Header() {
   const { user } = useAuth()
