@@ -405,7 +405,7 @@ export default function NewCasePageNew() {
                     if (clientSearchQuery && !selectedClient) {
                       setClientValidationError('Please select a client from the list or create a new one')
                     }
-                  }, 200)
+                  }, 300)
                 }}
                 onFocus={() => {
                   if (clientSearchQuery) {
@@ -426,14 +426,23 @@ export default function NewCasePageNew() {
                       {filteredClients.map((client) => (
                         <div
                           key={client.id}
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            e.preventDefault()
                             setSelectedClient(client.id)
                             setValue('clientId', client.id)
                             setClientSearchQuery(`${client.firstName} ${client.lastName}`)
                             setClientValidationError(null)
                             setShowClientDropdown(false)
                           }}
-                          className="p-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0"
+                          onTouchStart={(e) => {
+                            e.preventDefault()
+                            setSelectedClient(client.id)
+                            setValue('clientId', client.id)
+                            setClientSearchQuery(`${client.firstName} ${client.lastName}`)
+                            setClientValidationError(null)
+                            setShowClientDropdown(false)
+                          }}
+                          className="p-3 hover:bg-slate-50 active:bg-slate-100 cursor-pointer border-b last:border-b-0"
                         >
                           {client.firstName} {client.lastName}
                         </div>
