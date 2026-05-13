@@ -1,20 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { uploadToUserDrive, shareWithTeam } from '@/lib/services/google-drive'
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    // Parse form data
+    const formData = await request.formData()
+    const file = formData.get('file') as File
+    const caseId = formData.get('caseId') as string
+    const documentType = formData.get('documentType') as string
+    const title = formData.get('title') as string
+    const userEmail = formData.get('userEmail') as string
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!file || !caseId || !documentType || !title || !userEmail) {
+      return NextResponse.json(
+        { error: 'Missing required fields: file, caseId, documentType, title, userEmail' },
+        { status: 400 }
+      )
     }
 
     // Get user with organization
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { email: userEmail },
       select: {
         id: true,
         role: true,
@@ -34,27 +41,6 @@ export async function POST(request: NextRequest) {
     if (!user?.organizationId) {
       return NextResponse.json(
         { error: 'No organization found. Please complete onboarding.' },
-        { status: 400 }
-      )
-    }
-
-    // Check if user is admin (only admin's Drive is used)
-    if (user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Only admin can upload files (admin\'s Google Drive is used for storage)' },
-        { status: 403 }
-      )
-    }
-
-    // Parse form data
-    const formData = await request.formData()
-    const file = formData.get('file') as File
-    const caseId = formData.get('caseId') as string
-    const documentType = formData.get('documentType') as string
-
-    if (!file || !caseId || !documentType) {
-      return NextResponse.json(
-        { error: 'Missing required fields: file, caseId, documentType' },
         { status: 400 }
       )
     }
@@ -94,7 +80,7 @@ export async function POST(request: NextRequest) {
     // Share with all team members
     const teamEmails = user.organization?.users
       .map((u) => u.email)
-      .filter((email) => email !== session.user.email) || []
+      .filter((email) => email !== userEmail) || []
 
     if (teamEmails.length > 0) {
       await shareWithTeam(user.id, driveFileId, teamEmails)
