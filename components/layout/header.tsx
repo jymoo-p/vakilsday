@@ -79,14 +79,21 @@ export function Header() {
         <div className="flex items-center space-x-4">
           {user && (
             <DropdownMenu>
-              <DropdownMenuTrigger className="relative h-10 w-10 rounded-full p-0 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300">
-                <Avatar className="h-10 w-10 ring-2 ring-slate-200">
-                  <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
-                  <AvatarFallback className="bg-slate-100 text-slate-900 font-semibold text-sm">
-                    {getInitials(user.displayName)}
-                  </AvatarFallback>
-                </Avatar>
-              </DropdownMenuTrigger>
+              <DropdownMenuTrigger
+                render={(props) => (
+                  <button
+                    {...props}
+                    className="relative h-10 w-10 rounded-full p-0 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                  >
+                    <Avatar className="h-10 w-10 ring-2 ring-slate-200">
+                      <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
+                      <AvatarFallback className="bg-slate-100 text-slate-900 font-semibold text-sm">
+                        {getInitials(user.displayName)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                )}
+              />
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
