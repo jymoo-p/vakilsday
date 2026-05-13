@@ -184,9 +184,17 @@ export async function PATCH(
     })
 
     return NextResponse.json({ case: finalCase })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating case:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+    })
+    return NextResponse.json(
+      { error: error.message || 'Internal server error' },
+      { status: 500 }
+    )
   }
 }
 

@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get('status') as CaseStatus | null
     const search = searchParams.get('search')
+    const clientId = searchParams.get('clientId')
 
     const user = await prisma.user.findUnique({
       where: { email: userEmail },
@@ -32,6 +33,10 @@ export async function GET(request: NextRequest) {
 
     if (status) {
       whereClause.status = status
+    }
+
+    if (clientId) {
+      whereClause.clientId = clientId
     }
 
     if (search) {
@@ -63,6 +68,18 @@ export async function GET(request: NextRequest) {
                 role: true,
               },
             },
+          },
+        },
+        court: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        caseType: {
+          select: {
+            id: true,
+            name: true,
           },
         },
         _count: {

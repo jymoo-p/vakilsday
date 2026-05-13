@@ -150,7 +150,8 @@ export default function ClientsPage() {
           {filteredClients.map((client) => (
             <Card
               key={client.id}
-              className="border-l-4 border-l-slate-900 hover:shadow-md transition-all duration-200 group"
+              className="border-l-4 border-l-slate-900 hover:shadow-md transition-all duration-200 group cursor-pointer"
+              onClick={() => router.push(`/clients/${client.id}`)}
             >
               <CardContent className="p-3 md:py-4 md:px-4">
                 {/* Mobile Layout */}
