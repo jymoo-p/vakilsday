@@ -1,56 +1,37 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Trash2, Users, Mail, Phone, Shield, ArrowLeft } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Plus, Users, Mail, Phone, Shield, Briefcase, Calendar } from 'lucide-react'
 import Link from 'next/link'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { format } from 'date-fns'
 
 interface TeamMember {
   id: string
   name: string | null
   email: string
+  image: string | null
   phone: string | null
   role: string
+  specialization: string | null
+  yearsOfService: number | null
+  joiningDate: string | null
   customRole?: {
     id: string
     name: string
   } | null
 }
 
-interface CustomRole {
-  id: string
-  name: string
-  permissions: string[]
-}
-
 export default function TeamPage() {
   const { user } = useAuth()
+  const router = useRouter()
   const [members, setMembers] = useState<TeamMember[]>([])
-  const [customRoles, setCustomRoles] = useState<CustomRole[]>([])
   const [loading, setLoading] = useState(true)
-  const [showAddMember, setShowAddMember] = useState(false)
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    role: 'ASSOCIATE',
-    customRoleId: '',
-  })
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [userRole, setUserRole] = useState<string>('')
 
   useEffect(() => {
@@ -67,7 +48,7 @@ export default function TeamPage() {
         const userData = await userResponse.json()
         setUserRole(userData.user?.role || '')
 
-        if (userData.user?.role === 'ADMIN' && userData.user?.organizationId) {
+        if (userData.user?.organizationId) {
           // Fetch team members
           const membersResponse = await fetch(
             `/api/organizations/${userData.user.organizationId}/members`
@@ -75,13 +56,6 @@ export default function TeamPage() {
           if (membersResponse.ok) {
             const membersData = await membersResponse.json()
             setMembers(membersData.members || [])
-          }
-
-          // Fetch custom roles
-          const rolesResponse = await fetch(`/api/roles?email=${encodeURIComponent(user.email)}`)
-          if (rolesResponse.ok) {
-            const rolesData = await rolesResponse.json()
-            setCustomRoles(rolesData.roles || [])
           }
         }
       }
@@ -92,56 +66,14 @@ export default function TeamPage() {
     }
   }
 
-  async function handleAddMember(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setSaving(true)
-
-    try {
-      const response = await fetch('/api/team', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adminEmail: user?.email,
-          ...formData,
-        }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setMembers([...members, data.member])
-        setFormData({ name: '', email: '', phone: '', role: 'ASSOCIATE', customRoleId: '' })
-        setShowAddMember(false)
-      } else {
-        const data = await response.json()
-        setError(data.error || 'Failed to add member')
-      }
-    } catch (err) {
-      setError('Failed to add member')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function handleRemoveMember(memberId: string) {
-    if (!confirm('Are you sure you want to remove this team member?')) return
-
-    try {
-      const response = await fetch(`/api/team/${memberId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminEmail: user?.email }),
-      })
-
-      if (response.ok) {
-        setMembers(members.filter(m => m.id !== memberId))
-      } else {
-        const data = await response.json()
-        alert(data.error || 'Failed to remove member')
-      }
-    } catch (err) {
-      alert('Failed to remove member')
-    }
+  const getInitials = (name: string | null) => {
+    if (!name) return 'U'
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
   }
 
   if (loading) {
@@ -152,214 +84,107 @@ export default function TeamPage() {
     )
   }
 
-  if (userRole !== 'ADMIN') {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <Shield className="h-12 w-12 mx-auto mb-4 text-slate-400" />
-            <p className="text-lg text-slate-600">Admin access required</p>
-            <p className="text-base text-slate-500 mt-2">Only admins can manage team members</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div className="flex-1 flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold text-slate-900">My Team</h2>
-            <p className="text-lg text-slate-600">Manage lawyers and clerks</p>
-          </div>
-          <Button onClick={() => setShowAddMember(!showAddMember)}>
-            <Plus className="mr-2 h-5 w-5" />
-            Add Member
-          </Button>
+    <div className="space-y-6 max-w-7xl px-4 md:px-0">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">My Team</h1>
+          <p className="text-sm md:text-base text-slate-600 mt-1">
+            {members.length} {members.length === 1 ? 'member' : 'members'}
+          </p>
         </div>
+        {userRole === 'ADMIN' && (
+          <Button className="gap-2 bg-slate-900 hover:bg-slate-800">
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Add Member</span>
+          </Button>
+        )}
       </div>
-
-      {showAddMember && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Add New Team Member
-            </CardTitle>
-            <CardDescription>Invite a lawyer or clerk to your firm</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleAddMember} className="space-y-6">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="grid gap-6 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name *</Label>
-                  <Input
-                    id="name"
-                    placeholder="Full name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="email@example.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+91 98765 43210"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="role">System Role *</Label>
-                  <Select
-                    value={formData.role}
-                    onValueChange={(value) => {
-                      if (value) setFormData({ ...formData, role: value })
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ADMIN">Admin - Full access</SelectItem>
-                      <SelectItem value="ASSOCIATE">Associate - Standard access</SelectItem>
-                      <SelectItem value="CLERK">Clerk - Limited access</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {customRoles.length > 0 && (
-                <div className="space-y-2">
-                  <Label htmlFor="customRole">Custom Role (Optional)</Label>
-                  <Select
-                    value={formData.customRoleId}
-                    onValueChange={(value) => {
-                      if (value) setFormData({ ...formData, customRoleId: value })
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a custom role (optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">None</SelectItem>
-                      {customRoles.map((role) => (
-                        <SelectItem key={role.id} value={role.id}>
-                          {role.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-sm text-slate-500">
-                    Custom roles define specific page access permissions
-                  </p>
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                <Button type="submit" disabled={saving}>
-                  {saving ? 'Adding...' : 'Add Member'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowAddMember(false)
-                    setFormData({ name: '', email: '', phone: '', role: 'ASSOCIATE', customRoleId: '' })
-                    setError(null)
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
 
       {members.length === 0 ? (
-        <Card>
-          <CardContent className="pt-12 pb-12 text-center">
-            <Users className="h-12 w-12 mx-auto mb-4 text-slate-400" />
-            <p className="text-lg text-slate-600">No team members yet</p>
-            <p className="text-base text-slate-500 mt-2">Add lawyers and clerks to start collaborating</p>
+        <Card className="border-slate-200">
+          <CardContent className="pt-8 pb-8 md:pt-12 md:pb-12 text-center">
+            <div className="p-3 md:p-4 bg-slate-100 rounded-full w-fit mx-auto mb-3 md:mb-4">
+              <Users className="h-8 w-8 md:h-12 md:w-12 text-slate-400" />
+            </div>
+            <p className="text-base md:text-lg font-medium text-slate-900">No team members yet</p>
+            <p className="text-sm md:text-base text-slate-600 mt-1">
+              Add lawyers and clerks to start collaborating
+            </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {members.map((member) => (
-            <Card key={member.id}>
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <h3 className="text-xl font-semibold text-slate-900">
-                        {member.name || member.email}
+            <Link key={member.id} href={`/team/${member.id}`}>
+              <Card className="border-l-4 border-l-slate-900 hover:shadow-md transition-all cursor-pointer group h-full">
+                <CardContent className="p-4 md:p-6">
+                  {/* Avatar & Name */}
+                  <div className="flex items-start gap-4 mb-4">
+                    <Avatar className="h-16 w-16 ring-2 ring-slate-100">
+                      <AvatarImage src={member.image || undefined} alt={member.name || 'User'} />
+                      <AvatarFallback className="bg-slate-900 text-white font-semibold text-lg">
+                        {getInitials(member.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-slate-900 group-hover:text-slate-700 truncate">
+                        {member.name || 'No name set'}
                       </h3>
-                      <Badge className="bg-slate-900 text-white">
-                        {member.role}
-                      </Badge>
-                      {member.customRole && (
-                        <Badge variant="secondary">
-                          {member.customRole.name}
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <Badge className="bg-slate-900 text-white text-xs px-2 py-0.5">
+                          {member.role}
                         </Badge>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-base text-slate-600">
-                        <Mail className="h-4 w-4" />
-                        {member.email}
+                        {member.customRole && (
+                          <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                            {member.customRole.name}
+                          </Badge>
+                        )}
                       </div>
-                      {member.phone && (
-                        <div className="flex items-center gap-2 text-base text-slate-600">
-                          <Phone className="h-4 w-4" />
-                          {member.phone}
-                        </div>
-                      )}
                     </div>
                   </div>
 
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveMember(member.id)}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                  {/* Contact Info */}
+                  <div className="space-y-2 mb-4 text-sm">
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <Mail className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                      <span className="truncate">{member.email}</span>
+                    </div>
+                    {member.phone && (
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <Phone className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                        <span>{member.phone}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Professional Info */}
+                  {(member.specialization || member.yearsOfService || member.joiningDate) && (
+                    <div className="pt-4 border-t border-slate-100 space-y-2 text-sm">
+                      {member.specialization && (
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <Briefcase className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                          <span className="truncate">{member.specialization}</span>
+                        </div>
+                      )}
+                      {member.yearsOfService && (
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <Calendar className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                          <span>{member.yearsOfService} years of service</span>
+                        </div>
+                      )}
+                      {member.joiningDate && !member.yearsOfService && (
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <Calendar className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                          <span>Since {format(new Date(member.joiningDate), 'MMM yyyy')}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}

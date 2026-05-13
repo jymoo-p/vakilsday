@@ -80,6 +80,13 @@ model User {
   role           Role      @default(ASSOCIATE)
   phone          String?
 
+  // Profile fields
+  bio            String?   @db.Text
+  specialization String?
+  yearsOfService Int?
+  joiningDate    DateTime?
+  otherInfo      String?   @db.Text
+
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 

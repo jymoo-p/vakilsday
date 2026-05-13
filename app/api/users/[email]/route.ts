@@ -18,8 +18,16 @@ export async function GET(
         id: true,
         email: true,
         name: true,
+        image: true,
+        phone: true,
         role: true,
+        bio: true,
+        specialization: true,
+        yearsOfService: true,
+        joiningDate: true,
+        otherInfo: true,
         organizationId: true,
+        createdAt: true,
         organization: {
           select: {
             id: true,
@@ -37,6 +45,65 @@ export async function GET(
     return NextResponse.json({ user })
   } catch (error) {
     console.error('Error fetching user:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ email: string }> }
+) {
+  try {
+    const { email } = await context.params
+
+    if (!email) {
+      return NextResponse.json({ error: 'Email required' }, { status: 400 })
+    }
+
+    const body = await request.json()
+    const {
+      name,
+      phone,
+      bio,
+      specialization,
+      yearsOfService,
+      joiningDate,
+      otherInfo,
+    } = body
+
+    const user = await prisma.user.update({
+      where: { email: decodeURIComponent(email) },
+      data: {
+        name,
+        phone,
+        bio,
+        specialization,
+        yearsOfService,
+        joiningDate,
+        otherInfo,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        image: true,
+        phone: true,
+        role: true,
+        bio: true,
+        specialization: true,
+        yearsOfService: true,
+        joiningDate: true,
+        otherInfo: true,
+        createdAt: true,
+      },
+    })
+
+    return NextResponse.json({ user })
+  } catch (error) {
+    console.error('Error updating user:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { LogOut, User } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export function Header() {
   const { user } = useAuth()
@@ -22,6 +23,10 @@ export function Header() {
   async function handleSignOut() {
     await signOutGoogle()
     router.push('/signin')
+  }
+
+  function goToProfile() {
+    router.push('/profile')
   }
 
   const getInitials = (name: string | null | undefined) => {
@@ -60,7 +65,7 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={goToProfile}>
                   <User className="mr-2 h-4 w-4" />
                   Profile
                 </DropdownMenuItem>

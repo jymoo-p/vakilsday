@@ -14,7 +14,18 @@ export async function GET(
         id: true,
         name: true,
         email: true,
+        image: true,
+        phone: true,
         role: true,
+        specialization: true,
+        yearsOfService: true,
+        joiningDate: true,
+        customRole: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       orderBy: {
         name: 'asc',
