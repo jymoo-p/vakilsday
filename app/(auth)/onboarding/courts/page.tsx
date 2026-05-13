@@ -38,7 +38,7 @@ export default function OnboardingCourtsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: courtName,
-          userEmail: user.email,
+          adminEmail: user.email,
         }),
       })
 
