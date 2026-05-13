@@ -76,6 +76,11 @@ export default function SettingsPage() {
               fetchTeamMembers(data.user.organizationId)
             }
           }
+
+          // Get calendar sync status
+          if (data.user?.calendarSyncEnabled !== undefined) {
+            setCalendarSyncEnabled(data.user.calendarSyncEnabled)
+          }
         }
 
         // Check Google Drive connection status
@@ -83,11 +88,6 @@ export default function SettingsPage() {
         if (driveResponse.ok) {
           const driveData = await driveResponse.json()
           setDriveConnected(driveData.connected)
-        }
-
-        // Get calendar sync status
-        if (data.user?.calendarSyncEnabled !== undefined) {
-          setCalendarSyncEnabled(data.user.calendarSyncEnabled)
         }
       } catch (error) {
         console.error('Error fetching settings data:', error)
