@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -48,10 +48,23 @@ export default function CalendarPage() {
   const [hearings, setHearings] = useState<HearingEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const selectedDateDetailsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchMonthHearings()
   }, [user, currentMonth])
+
+  useEffect(() => {
+    // Scroll to selected date details when a date is selected
+    if (selectedDate && selectedDateDetailsRef.current) {
+      setTimeout(() => {
+        selectedDateDetailsRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      }, 100)
+    }
+  }, [selectedDate])
 
   async function fetchMonthHearings() {
     if (!user?.email) return
@@ -260,7 +273,7 @@ export default function CalendarPage() {
 
       {/* Selected Date Details */}
       {selectedDate && (
-        <Card className="border-slate-200">
+        <Card ref={selectedDateDetailsRef} className="border-slate-200 scroll-mt-4">
           <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base md:text-xl font-bold text-slate-900">
