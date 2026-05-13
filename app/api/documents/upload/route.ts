@@ -2,15 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { uploadToUserDrive, shareWithTeam } from '@/lib/services/google-drive'
 
-// Allow larger file uploads (50MB)
-export const config = {
-  api: {
-    bodyParser: false,
-    responseLimit: false,
-  },
-}
-
+// Route segment config for App Router
 export const maxDuration = 60 // 60 seconds timeout
+export const dynamic = 'force-dynamic' // Don't cache this route
 
 export async function POST(request: NextRequest) {
   try {
