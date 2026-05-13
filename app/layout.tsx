@@ -19,6 +19,10 @@ const robotoMono = Roboto_Mono({
 export const metadata: Metadata = {
   title: "VakilsDay - Legal Practice Management",
   description: "Daily utility app for Indian litigation lawyers",
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
