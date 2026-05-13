@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { canViewAllCases } from '@/lib/utils/rbac'
+import { CaseStatus } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,13 +37,13 @@ export async function GET(request: NextRequest) {
       ? {
           case: {
             organizationId: user.organizationId,
-            status: 'ACTIVE',
+            status: CaseStatus.ACTIVE,
           },
         }
       : {
           case: {
             organizationId: user.organizationId,
-            status: 'ACTIVE',
+            status: CaseStatus.ACTIVE,
             assignments: {
               some: {
                 userId: user.id,
