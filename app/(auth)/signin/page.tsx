@@ -46,7 +46,7 @@ export default function SignInPage() {
         if (data.organizationId) {
           router.push('/dashboard')
         } else {
-          router.push('/onboarding')
+          router.push('/onboarding/welcome')
         }
       } else {
         setError(data.error || 'Failed to sync user')

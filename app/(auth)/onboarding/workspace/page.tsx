@@ -54,11 +54,12 @@ export default function OnboardingWorkspacePage() {
         router.push('/onboarding/team')
       } else {
         const data = await response.json()
+        console.error('API error response:', data)
         toast.error(data.error || 'Failed to create workspace')
       }
     } catch (error) {
       console.error('Error creating workspace:', error)
-      toast.error('Failed to create workspace')
+      toast.error('Failed to create workspace. Check console for details.')
     } finally {
       setLoading(false)
     }
