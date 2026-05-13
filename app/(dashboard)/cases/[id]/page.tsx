@@ -177,12 +177,25 @@ export default function CaseDetailPage() {
         setUploadData({ title: '', documentType: 'OTHER', file: null })
         fetchCase() // Refresh to show new document
       } else {
-        const data = await response.json()
-        toast.error(data.error || 'Failed to upload document')
+        // Try to parse error response
+        let errorMessage = 'Failed to upload document'
+        try {
+          const data = await response.json()
+          errorMessage = data.error || errorMessage
+        } catch {
+          // Response might be HTML or plain text (e.g., "Request Entity Too Large")
+          const text = await response.text()
+          if (text.includes('Request Entity Too Large')) {
+            errorMessage = 'File is too large. Maximum size is 50MB.'
+          } else if (text) {
+            errorMessage = text.substring(0, 100)
+          }
+        }
+        toast.error(errorMessage)
       }
     } catch (error) {
       console.error('Error uploading document:', error)
-      toast.error('Failed to upload document')
+      toast.error(error instanceof Error ? error.message : 'Failed to upload document')
     } finally {
       setUploading(false)
     }

@@ -1,4 +1,10 @@
 {
   "regions": ["bom1"],
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "functions": {
+    "app/api/documents/upload/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
 }
