@@ -33,6 +33,7 @@ import {
   Upload,
   Download,
   Trash2,
+  Eye,
 } from 'lucide-react'
 import Link from 'next/link'
 import { HearingTimeline } from '@/components/cases/hearing-timeline'
@@ -563,25 +564,35 @@ export default function CaseDetailPage() {
                   {caseData.documents.map((doc) => (
                     <div
                       key={doc.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group"
+                      onClick={() => doc.driveUrl && window.open(doc.driveUrl, '_blank')}
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-base font-medium truncate">{doc.title}</p>
+                          <p className="text-base font-medium truncate group-hover:text-primary">
+                            {doc.title}
+                          </p>
                           <p className="text-sm text-muted-foreground">
                             {format(new Date(doc.createdAt), 'MMM d, yyyy')}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         <Badge variant="outline">{doc.documentType}</Badge>
-                        {doc.filePath && (
-                          <a href={doc.filePath} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="sm">
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </a>
+                        {doc.driveUrl && (
+                          <>
+                            <a href={doc.driveUrl} target="_blank" rel="noopener noreferrer">
+                              <Button variant="ghost" size="sm" title="Preview in Google Drive">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </a>
+                            <a href={doc.driveUrl} target="_blank" rel="noopener noreferrer" download>
+                              <Button variant="ghost" size="sm" title="Download">
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </a>
+                          </>
                         )}
                       </div>
                     </div>
