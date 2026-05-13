@@ -61,14 +61,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Case not found' }, { status: 404 })
     }
 
-    // Convert file to buffer
+    // Convert file to buffer and create readable stream
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
+    const { Readable } = require('stream')
+    const stream = Readable.from(buffer)
 
     // Upload to admin's Google Drive
     const { driveFileId, driveUrl, fileSize } = await uploadToUserDrive(
       user.id,
-      buffer,
+      stream,
       {
         caseId: caseData.id,
         caseNumber: caseData.caseNumber,
