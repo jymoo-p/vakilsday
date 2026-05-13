@@ -13,7 +13,6 @@ import {
   Search,
   Users,
   Shield,
-  Settings,
   X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -35,7 +34,6 @@ const moreNavigation = [
   { name: 'Research', href: '/research', icon: Search },
   { name: 'My Team', href: '/team', icon: Users },
   { name: 'Admin', href: '/admin', icon: Shield },
-  { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
 export function MobileNav() {

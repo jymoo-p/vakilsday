@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   FolderOpen,
   Search,
-  Settings,
   Scale,
   Users,
   Shield,
@@ -23,7 +22,6 @@ const navigation = [
   { name: 'Research', href: '/research', icon: Search },
   { name: 'My Team', href: '/team', icon: Users },
   { name: 'Admin', href: '/admin', icon: Shield },
-  { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
 export function Sidebar() {

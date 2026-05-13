@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LogOut, User } from 'lucide-react'
+import { LogOut, User, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export function Header() {
@@ -48,6 +48,10 @@ export function Header() {
 
   function goToProfile() {
     router.push('/profile')
+  }
+
+  function goToSettings() {
+    router.push('/settings')
   }
 
   const getInitials = (name: string | null | undefined) => {
@@ -99,6 +103,10 @@ export function Header() {
                 <DropdownMenuItem onClick={goToProfile}>
                   <User className="mr-2 h-4 w-4" />
                   Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={goToSettings}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
