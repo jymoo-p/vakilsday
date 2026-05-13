@@ -88,7 +88,7 @@ export default function ClientsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-pulse space-y-3 w-full max-w-5xl">
+        <div className="animate-pulse space-y-3 w-full max-w-5xl px-4">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="h-20 bg-slate-200 rounded-lg" />
           ))}
@@ -98,43 +98,43 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl">
+    <div className="space-y-4 md:space-y-6 max-w-7xl px-4 md:px-0">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Clients</h1>
-          <p className="text-slate-600 mt-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Clients</h1>
+          <p className="text-sm md:text-base text-slate-600 mt-1">
             {filteredClients.length} {filteredClients.length === 1 ? 'client' : 'clients'}
           </p>
         </div>
-        <Button onClick={() => router.push('/clients/new')} className="gap-2 bg-slate-900 hover:bg-slate-800">
+        <Button onClick={() => router.push('/clients/new')} className="gap-2 bg-slate-900 hover:bg-slate-800 h-9 md:h-10 text-sm md:text-base">
           <Plus className="h-4 w-4" />
-          Add Client
+          <span className="hidden sm:inline">Add Client</span>
         </Button>
       </div>
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+        <Search className="absolute left-3 md:left-4 top-1/2 h-4 w-4 md:h-5 md:w-5 -translate-y-1/2 text-slate-400" />
         <Input
-          placeholder="Search by name, phone, or email..."
+          placeholder="Search clients..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-12 h-11 text-base border-slate-300 focus:border-slate-900 focus:ring-slate-900"
+          className="pl-10 md:pl-12 h-10 md:h-11 text-sm md:text-base border-slate-300 focus:border-slate-900 focus:ring-slate-900"
         />
       </div>
 
       {/* Clients List */}
       {filteredClients.length === 0 ? (
         <Card className="border-slate-200">
-          <CardContent className="pt-12 pb-12 text-center">
-            <div className="p-4 bg-slate-100 rounded-full w-fit mx-auto mb-4">
-              <User className="h-12 w-12 text-slate-400" />
+          <CardContent className="pt-8 pb-8 md:pt-12 md:pb-12 text-center">
+            <div className="p-3 md:p-4 bg-slate-100 rounded-full w-fit mx-auto mb-3 md:mb-4">
+              <User className="h-8 w-8 md:h-12 md:w-12 text-slate-400" />
             </div>
-            <p className="text-lg font-medium text-slate-900">
+            <p className="text-base md:text-lg font-medium text-slate-900">
               {searchQuery ? 'No clients found' : 'No clients yet'}
             </p>
-            <p className="text-slate-600 mt-1">
+            <p className="text-sm md:text-base text-slate-600 mt-1">
               {searchQuery ? 'Try a different search term' : 'Add your first client to get started'}
             </p>
             {!searchQuery && (
@@ -146,14 +146,88 @@ export default function ClientsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 md:space-y-2">
           {filteredClients.map((client) => (
             <Card
               key={client.id}
               className="border-l-4 border-l-slate-900 hover:shadow-md transition-all duration-200 group"
             >
-              <CardContent className="py-4">
-                <div className="flex items-center justify-between gap-6">
+              <CardContent className="p-3 md:py-4 md:px-4">
+                {/* Mobile Layout */}
+                <div className="md:hidden space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-base font-semibold text-slate-900">
+                        {client.firstName} {client.lastName}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="secondary" className="text-xs font-medium px-2 py-0.5">
+                          {client.gender}
+                        </Badge>
+                        {client.age && (
+                          <span className="text-xs text-slate-500">{client.age} years</span>
+                        )}
+                      </div>
+                    </div>
+                    {client._count && (
+                      <div className="text-center bg-slate-50 rounded-lg px-3 py-1">
+                        <p className="text-lg font-bold text-slate-900">{client._count.cases}</p>
+                        <p className="text-xs text-slate-500">Cases</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-slate-900">
+                      <Phone className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="font-medium">{client.phone}</span>
+                      {client.otherPhone && (
+                        <span className="text-slate-400">• {client.otherPhone}</span>
+                      )}
+                    </div>
+
+                    {client.email && (
+                      <div className="flex items-center gap-2 text-slate-900">
+                        <Mail className="h-3.5 w-3.5 text-slate-400" />
+                        <span className="font-medium truncate">{client.email}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1 h-9"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        router.push(`/clients/${client.id}/edit`)
+                      }}
+                    >
+                      <Edit className="h-4 w-4 mr-2 text-slate-600" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1 h-9 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        handleDelete(
+                          client.id,
+                          `${client.firstName} ${client.lastName}`,
+                          client._count?.cases || 0
+                        )
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Desktop Layout */}
+                <div className="hidden md:flex items-center justify-between gap-6">
                   {/* Left: Name & Gender */}
                   <div className="flex items-center gap-4 min-w-0 flex-shrink-0 w-64">
                     <div className="min-w-0">

@@ -104,20 +104,20 @@ export default function CasesPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl">
+    <div className="space-y-4 md:space-y-6 max-w-7xl px-4 md:px-0">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Cases</h1>
-          <p className="text-slate-600 mt-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Cases</h1>
+          <p className="text-sm md:text-base text-slate-600 mt-1">
             {filteredCases.length} {filteredCases.length === 1 ? 'case' : 'cases'}
           </p>
         </div>
         {canCreateCase && (
           <Link href="/cases/new">
-            <Button className="gap-2 bg-slate-900 hover:bg-slate-800">
+            <Button className="gap-2 bg-slate-900 hover:bg-slate-800 h-9 md:h-10 text-sm md:text-base">
               <Plus className="h-4 w-4" />
-              New Case
+              <span className="hidden sm:inline">New Case</span>
             </Button>
           </Link>
         )}
@@ -125,22 +125,22 @@ export default function CasesPage() {
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+        <Search className="absolute left-3 md:left-4 top-1/2 h-4 w-4 md:h-5 md:w-5 -translate-y-1/2 text-slate-400" />
         <Input
-          placeholder="Search cases by number, petitioner, or respondent..."
+          placeholder="Search cases..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-12 h-11 text-base border-slate-300 focus:border-slate-900 focus:ring-slate-900"
+          className="pl-10 md:pl-12 h-10 md:h-11 text-sm md:text-base border-slate-300 focus:border-slate-900 focus:ring-slate-900"
         />
       </div>
 
       {/* Status Filter Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200">
+      <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200 -mx-4 px-4 md:mx-0 md:px-0">
         {statusTabs.map((status) => (
           <button
             key={status}
             onClick={() => setStatusFilter(status)}
-            className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${
+            className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-xs md:text-sm whitespace-nowrap transition-all ${
               statusFilter === status
                 ? 'bg-slate-900 text-white'
                 : 'text-slate-600 hover:bg-slate-100'
@@ -148,7 +148,7 @@ export default function CasesPage() {
           >
             {status}
             <span
-              className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+              className={`ml-1.5 md:ml-2 px-1.5 md:px-2 py-0.5 rounded-full text-xs ${
                 statusFilter === status
                   ? 'bg-white/20 text-white'
                   : 'bg-slate-200 text-slate-700'
@@ -165,18 +165,18 @@ export default function CasesPage() {
         <div className="flex items-center justify-center py-12">
           <div className="animate-pulse space-y-3 w-full">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-20 bg-slate-200 rounded-lg" />
+              <div key={i} className="h-20 md:h-20 bg-slate-200 rounded-lg" />
             ))}
           </div>
         </div>
       ) : filteredCases.length === 0 ? (
         <Card className="border-slate-200">
-          <CardContent className="pt-12 pb-12 text-center">
-            <div className="p-4 bg-slate-100 rounded-full w-fit mx-auto mb-4">
-              <FileText className="h-12 w-12 text-slate-400" />
+          <CardContent className="pt-8 pb-8 md:pt-12 md:pb-12 text-center">
+            <div className="p-3 md:p-4 bg-slate-100 rounded-full w-fit mx-auto mb-3 md:mb-4">
+              <FileText className="h-8 w-8 md:h-12 md:w-12 text-slate-400" />
             </div>
-            <p className="text-lg font-medium text-slate-900">No cases found</p>
-            <p className="text-slate-600 mt-1">
+            <p className="text-base md:text-lg font-medium text-slate-900">No cases found</p>
+            <p className="text-sm md:text-base text-slate-600 mt-1">
               {searchQuery || statusFilter !== 'All'
                 ? 'Try adjusting your filters'
                 : 'Create your first case to get started'}
@@ -192,14 +192,73 @@ export default function CasesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 md:space-y-2">
           {filteredCases.map((caseItem) => (
             <Link key={caseItem.id} href={`/cases/${caseItem.id}`}>
               <Card
                 className={`border-l-4 ${statusBorderColors[caseItem.status as keyof typeof statusBorderColors]} hover:shadow-md transition-all duration-200 cursor-pointer group`}
               >
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between gap-6">
+                <CardContent className="p-3 md:py-4 md:px-4">
+                  {/* Mobile Layout */}
+                  <div className="md:hidden space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="text-base font-semibold text-slate-900 group-hover:text-slate-700">
+                          {caseItem.caseNumber}
+                        </h3>
+                        <Badge
+                          className={`${statusColors[caseItem.status as keyof typeof statusColors]} text-xs font-medium px-2 py-0.5 border mt-1`}
+                        >
+                          {caseItem.status}
+                        </Badge>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 flex-shrink-0" />
+                    </div>
+
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <p className="text-xs text-slate-500">Parties</p>
+                        <p className="text-slate-900 font-medium">
+                          {caseItem.petitionerName} <span className="text-slate-400">vs</span> {caseItem.respondentName}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-slate-500">Court</p>
+                        <p className="text-slate-900 font-medium">
+                          {caseItem.courtName}
+                          {caseItem.courtNumber && <span className="text-slate-500"> • Court {caseItem.courtNumber}</span>}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                        <div>
+                          <p className="text-xs text-slate-500">Next Hearing</p>
+                          <div className="flex items-center gap-1 text-sm font-medium text-slate-900">
+                            <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                            {caseItem.nextHearingDate
+                              ? format(new Date(caseItem.nextHearingDate), 'MMM d, yyyy')
+                              : 'Not scheduled'}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <div className="text-center">
+                            <p className="text-lg font-bold text-slate-900">{caseItem._count.hearings}</p>
+                            <p className="text-xs text-slate-500">Hearings</p>
+                          </div>
+                          <div className="w-px h-8 bg-slate-200"></div>
+                          <div className="text-center">
+                            <p className="text-lg font-bold text-slate-900">{caseItem._count.documents}</p>
+                            <p className="text-xs text-slate-500">Docs</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Desktop Layout */}
+                  <div className="hidden md:flex items-center justify-between gap-6">
                     {/* Left: Case Number & Status */}
                     <div className="flex items-center gap-4 min-w-0 flex-shrink-0 w-64">
                       <div className="min-w-0">
