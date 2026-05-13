@@ -14,10 +14,32 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { LogOut, User } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 export function Header() {
   const { user } = useAuth()
   const router = useRouter()
+  const [organizationName, setOrganizationName] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function fetchOrganizationName() {
+      if (!user?.email) return
+
+      try {
+        const response = await fetch(`/api/onboarding/status?email=${encodeURIComponent(user.email)}`)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.organizationName) {
+            setOrganizationName(data.organizationName)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch organization name:', error)
+      }
+    }
+
+    fetchOrganizationName()
+  }, [user])
 
   async function handleSignOut() {
     await signOutGoogle()
@@ -40,7 +62,17 @@ export function Header() {
 
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-      <div className="flex items-center justify-end h-16 px-8">
+      <div className="flex items-center justify-between h-16 px-8">
+        {/* Law Firm Name */}
+        <div className="flex-1 min-w-0">
+          {organizationName && (
+            <h2 className="text-lg font-semibold text-slate-900 truncate max-w-xs line-clamp-2">
+              {organizationName}
+            </h2>
+          )}
+        </div>
+
+        {/* User Profile */}
         <div className="flex items-center space-x-4">
           {user && (
             <DropdownMenu>
