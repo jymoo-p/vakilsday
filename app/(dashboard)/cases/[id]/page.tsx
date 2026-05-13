@@ -529,13 +529,21 @@ export default function CaseDetailPage() {
                         type="file"
                         onChange={(e) => {
                           const file = e.target.files?.[0] || null
+
+                          // Validate file size (4MB limit due to Vercel free tier)
+                          if (file && file.size > 4 * 1024 * 1024) {
+                            toast.error('File size must be less than 4MB on free plan')
+                            e.target.value = '' // Clear the input
+                            return
+                          }
+
                           setUploadData({ ...uploadData, file })
                         }}
                         required
                         accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Supported: PDF, DOC, DOCX, JPG, PNG (Max 10MB)
+                        Supported: PDF, DOC, DOCX, JPG, PNG (Max 4MB)
                       </p>
                     </div>
 
