@@ -326,7 +326,11 @@ export default function EditCasePage() {
                   onValueChange={(value) => setValue('courtId', value || undefined)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select court" />
+                    <SelectValue placeholder="Select court">
+                      {watch('courtId')
+                        ? courts.find(c => c.id === watch('courtId'))?.name || 'Select court'
+                        : 'Select court'}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {courts.map((court) => (
@@ -350,7 +354,11 @@ export default function EditCasePage() {
                   onValueChange={(value) => setValue('caseTypeId', value || undefined)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder="Select type">
+                      {watch('caseTypeId')
+                        ? caseTypes.find(t => t.id === watch('caseTypeId'))?.name || 'Select type'
+                        : 'Select type'}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {caseTypes.map((type) => (
