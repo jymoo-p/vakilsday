@@ -212,6 +212,19 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // If next hearing date is provided, create a hearing entry
+    if (nextHearingDate) {
+      await prisma.hearing.create({
+        data: {
+          caseId: newCase.id,
+          hearingDate: new Date(nextHearingDate),
+          itemNumber: null,
+          outcome: null,
+          nextHearingDate: null,
+        },
+      })
+    }
+
     return NextResponse.json({ case: newCase }, { status: 201 })
   } catch (error) {
     console.error('Error creating case:', error)
