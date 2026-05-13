@@ -7,9 +7,26 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Plus, Users, Mail, Phone, Shield, Briefcase, Calendar } from 'lucide-react'
+import { Plus, Users, Mail, Phone, Shield, Briefcase, Calendar, X } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { toast } from 'sonner'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface TeamMember {
   id: string
@@ -33,6 +50,14 @@ export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
   const [userRole, setUserRole] = useState<string>('')
+  const [showAddDialog, setShowAddDialog] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    role: 'ASSOCIATE',
+  })
 
   useEffect(() => {
     fetchData()
@@ -66,6 +91,43 @@ export default function TeamPage() {
     }
   }
 
+  async function handleAddMember(e: React.FormEvent) {
+    e.preventDefault()
+
+    if (!user?.email) {
+      toast.error('User not authenticated')
+      return
+    }
+
+    setSubmitting(true)
+
+    try {
+      const response = await fetch('/api/team', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminEmail: user.email,
+          ...formData,
+        }),
+      })
+
+      if (response.ok) {
+        toast.success('Team member added successfully')
+        setShowAddDialog(false)
+        setFormData({ name: '', email: '', phone: '', role: 'ASSOCIATE' })
+        fetchData() // Refresh the list
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Failed to add member')
+      }
+    } catch (error) {
+      console.error('Error adding member:', error)
+      toast.error('Failed to add member')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const getInitials = (name: string | null) => {
     if (!name) return 'U'
     return name
@@ -95,7 +157,10 @@ export default function TeamPage() {
           </p>
         </div>
         {userRole === 'ADMIN' && (
-          <Button className="gap-2 bg-slate-900 hover:bg-slate-800">
+          <Button
+            onClick={() => setShowAddDialog(true)}
+            className="gap-2 bg-slate-900 hover:bg-slate-800"
+          >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Add Member</span>
           </Button>
@@ -188,6 +253,93 @@ export default function TeamPage() {
           ))}
         </div>
       )}
+
+      {/* Add Member Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Team Member</DialogTitle>
+            <DialogDescription>
+              Invite a lawyer or clerk to join your team
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddMember} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Full name"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="email@example.com"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="+91 98765 43210"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role">Role *</Label>
+              <Select
+                value={formData.role}
+                onValueChange={(value) => {
+                  if (value) setFormData({ ...formData, role: value })
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="ASSOCIATE">Associate</SelectItem>
+                  <SelectItem value="CLERK">Clerk</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowAddDialog(false)
+                  setFormData({ name: '', email: '', phone: '', role: 'ASSOCIATE' })
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="flex-1 bg-slate-900 hover:bg-slate-800"
+              >
+                {submitting ? 'Adding...' : 'Add Member'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
