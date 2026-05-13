@@ -152,8 +152,8 @@ export async function PATCH(
       )
     }
 
-    // Handle team assignments separately
-    const { assignedUserIds, userEmail: _userEmail, ...caseUpdateData } = body
+    // Handle team assignments separately and exclude relation objects
+    const { assignedUserIds, userEmail: _userEmail, client, court, caseType, assignments, ...caseUpdateData } = body
 
     // Update case data
     await prisma.case.update({
