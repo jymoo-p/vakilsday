@@ -7,8 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, User, Phone, Mail, Edit, Trash2, FileText, ChevronRight } from 'lucide-react'
-import Link from 'next/link'
+import { Plus, Search, User, Phone, Mail, Edit, Trash2 } from 'lucide-react'
 
 interface Client {
   id: string
