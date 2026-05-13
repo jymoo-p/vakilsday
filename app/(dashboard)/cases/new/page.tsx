@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -64,6 +64,7 @@ interface TeamMember {
 
 export default function NewCasePageNew() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -100,6 +101,18 @@ export default function NewCasePageNew() {
   useEffect(() => {
     fetchDropdownData()
   }, [user])
+
+  // Pre-populate client from URL params
+  useEffect(() => {
+    const clientId = searchParams.get('clientId')
+    const clientName = searchParams.get('clientName')
+
+    if (clientId && clientName) {
+      setSelectedClient(clientId)
+      setValue('clientId', clientId)
+      setClientSearchQuery(decodeURIComponent(clientName))
+    }
+  }, [searchParams, setValue])
 
   // Restore form state if returning from client creation
   useEffect(() => {
