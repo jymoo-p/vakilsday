@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Calendar, Users, Building2, FileText } from 'lucide-react'
+import { Plus, Search, Calendar, FileText, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 
 interface Case {
@@ -130,7 +130,7 @@ export default function CasesPage() {
           placeholder="Search cases by number, petitioner, or respondent..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-12 h-12 text-base border-slate-300 focus:border-slate-900 focus:ring-slate-900"
+          className="pl-12 h-11 text-base border-slate-300 focus:border-slate-900 focus:ring-slate-900"
         />
       </div>
 
@@ -163,9 +163,9 @@ export default function CasesPage() {
       {/* Cases List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-pulse space-y-4 w-full">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-48 bg-slate-200 rounded-xl" />
+          <div className="animate-pulse space-y-3 w-full">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-20 bg-slate-200 rounded-lg" />
             ))}
           </div>
         </div>
@@ -192,98 +192,82 @@ export default function CasesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {filteredCases.map((caseItem) => (
             <Link key={caseItem.id} href={`/cases/${caseItem.id}`}>
               <Card
                 className={`border-l-4 ${statusBorderColors[caseItem.status as keyof typeof statusBorderColors]} hover:shadow-md transition-all duration-200 cursor-pointer group`}
               >
-                <CardContent className="pt-5 pb-5">
-                  <div className="flex items-start justify-between gap-4 mb-4">
-                    {/* Case Header */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-slate-900 group-hover:text-slate-700 transition-colors">
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between gap-6">
+                    {/* Left: Case Number & Status */}
+                    <div className="flex items-center gap-4 min-w-0 flex-shrink-0 w-64">
+                      <div className="min-w-0">
+                        <h3 className="text-base font-semibold text-slate-900 group-hover:text-slate-700 transition-colors truncate">
                           {caseItem.caseNumber}
                         </h3>
                         <Badge
-                          className={`${statusColors[caseItem.status as keyof typeof statusColors]} text-xs font-medium px-2 py-0.5 border`}
+                          className={`${statusColors[caseItem.status as keyof typeof statusColors]} text-xs font-medium px-2 py-0.5 border mt-1`}
                         >
                           {caseItem.status}
                         </Badge>
                       </div>
-                      <p className="text-sm text-slate-600">
-                        {caseItem.petitionerName} <span className="text-slate-400">vs</span>{' '}
-                        {caseItem.respondentName}
-                      </p>
                     </div>
 
-                    {/* Quick Stats */}
-                    <div className="flex items-center gap-4 text-sm">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-slate-900">
-                          {caseItem._count.hearings}
-                        </p>
-                        <p className="text-xs text-slate-500">Hearings</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-slate-900">
-                          {caseItem._count.documents}
-                        </p>
-                        <p className="text-xs text-slate-500">Documents</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Case Details Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <Building2 className="h-4 w-4 text-slate-400 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs text-slate-500">Court</p>
-                        <p className="font-medium text-slate-900 truncate">
-                          {caseItem.courtName}
-                        </p>
-                      </div>
-                    </div>
-
-                    {caseItem.courtNumber && (
-                      <div className="flex items-center gap-2 text-slate-600">
-                        <div className="p-1.5 bg-slate-100 rounded">
-                          <span className="text-xs font-bold text-slate-600">
-                            {caseItem.courtNumber}
-                          </span>
+                    {/* Middle: Parties & Court */}
+                    <div className="flex-1 min-w-0">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="min-w-0">
+                          <p className="text-xs text-slate-500 mb-0.5">Parties</p>
+                          <p className="text-sm text-slate-900 font-medium truncate">
+                            {caseItem.petitionerName} <span className="text-slate-400 font-normal">vs</span> {caseItem.respondentName}
+                          </p>
                         </div>
-                        <div>
-                          <p className="text-xs text-slate-500">Court Number</p>
+                        <div className="min-w-0">
+                          <p className="text-xs text-slate-500 mb-0.5">Court</p>
+                          <p className="text-sm text-slate-900 font-medium truncate">
+                            {caseItem.courtName}
+                            {caseItem.courtNumber && (
+                              <span className="text-slate-500 font-normal ml-1">
+                                • Court {caseItem.courtNumber}
+                              </span>
+                            )}
+                          </p>
                         </div>
                       </div>
-                    )}
+                    </div>
 
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <Calendar className="h-4 w-4 text-slate-400 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs text-slate-500">Next Hearing</p>
-                        <p className="font-medium text-slate-900">
+                    {/* Right: Next Hearing & Stats */}
+                    <div className="flex items-center gap-6 flex-shrink-0">
+                      <div className="text-right">
+                        <p className="text-xs text-slate-500 mb-0.5">Next Hearing</p>
+                        <div className="flex items-center gap-1.5 text-sm font-medium text-slate-900">
+                          <Calendar className="h-3.5 w-3.5 text-slate-400" />
                           {caseItem.nextHearingDate
                             ? format(new Date(caseItem.nextHearingDate), 'MMM d, yyyy')
                             : 'Not scheduled'}
-                        </p>
+                        </div>
                       </div>
+
+                      <div className="flex items-center gap-4 px-4 py-2 bg-slate-50 rounded-lg">
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-slate-900">
+                            {caseItem._count.hearings}
+                          </p>
+                          <p className="text-xs text-slate-500">Hearings</p>
+                        </div>
+                        <div className="w-px h-8 bg-slate-200"></div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-slate-900">
+                            {caseItem._count.documents}
+                          </p>
+                          <p className="text-xs text-slate-500">Docs</p>
+                        </div>
+                      </div>
+
+                      <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
                     </div>
                   </div>
-
-                  {/* Assigned Team */}
-                  {caseItem.assignments.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-slate-100">
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <Users className="h-4 w-4 text-slate-400" />
-                        <span className="truncate">
-                          {caseItem.assignments.map((a) => a.user.name).join(', ')}
-                        </span>
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </Link>
