@@ -44,12 +44,18 @@ interface TeamMember {
   } | null
 }
 
+interface CustomRole {
+  id: string
+  name: string
+}
+
 export default function TeamPage() {
   const { user } = useAuth()
   const router = useRouter()
   const [members, setMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
   const [userRole, setUserRole] = useState<string>('')
+  const [customRoles, setCustomRoles] = useState<CustomRole[]>([])
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -57,6 +63,7 @@ export default function TeamPage() {
     email: '',
     phone: '',
     role: 'ASSOCIATE',
+    customRoleId: '',
   })
 
   useEffect(() => {
@@ -82,6 +89,13 @@ export default function TeamPage() {
             const membersData = await membersResponse.json()
             setMembers(membersData.members || [])
           }
+
+          // Fetch custom roles
+          const rolesResponse = await fetch(`/api/roles?email=${encodeURIComponent(user.email)}`)
+          if (rolesResponse.ok) {
+            const rolesData = await rolesResponse.json()
+            setCustomRoles(rolesData.roles || [])
+          }
         }
       }
     } catch (err) {
@@ -102,19 +116,28 @@ export default function TeamPage() {
     setSubmitting(true)
 
     try {
+      const payload: any = {
+        adminEmail: user.email,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+      }
+
+      if (formData.customRoleId) {
+        payload.customRoleId = formData.customRoleId
+      }
+
       const response = await fetch('/api/team', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adminEmail: user.email,
-          ...formData,
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (response.ok) {
         toast.success('Team member added successfully')
         setShowAddDialog(false)
-        setFormData({ name: '', email: '', phone: '', role: 'ASSOCIATE' })
+        setFormData({ name: '', email: '', phone: '', role: 'ASSOCIATE', customRoleId: '' })
         fetchData() // Refresh the list
       } else {
         const data = await response.json()
@@ -317,13 +340,37 @@ export default function TeamPage() {
               </Select>
             </div>
 
+            {customRoles.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="customRole">Custom Role (Optional)</Label>
+                <Select
+                  value={formData.customRoleId}
+                  onValueChange={(value) => {
+                    setFormData({ ...formData, customRoleId: value || '' })
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select custom role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {customRoles.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="flex gap-3 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => {
                   setShowAddDialog(false)
-                  setFormData({ name: '', email: '', phone: '', role: 'ASSOCIATE' })
+                  setFormData({ name: '', email: '', phone: '', role: 'ASSOCIATE', customRoleId: '' })
                 }}
                 className="flex-1"
               >

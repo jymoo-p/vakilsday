@@ -329,27 +329,40 @@ export default function NewCasePageNew() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="appearingFor">
+            <div className="space-y-3">
+              <Label>
                 Appearing For <span className="text-red-500">*</span>
               </Label>
-              <Select
-                value={selectedAppearingFor}
-                onValueChange={(value) => {
-                  if (value) {
-                    setSelectedAppearingFor(value)
-                    setValue('appearingFor', value as 'PETITIONER' | 'RESPONDENT')
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select appearing for" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PETITIONER">Petitioner</SelectItem>
-                  <SelectItem value="RESPONDENT">Respondent</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="appearingFor"
+                    value="PETITIONER"
+                    checked={selectedAppearingFor === 'PETITIONER'}
+                    onChange={(e) => {
+                      setSelectedAppearingFor(e.target.value)
+                      setValue('appearingFor', 'PETITIONER')
+                    }}
+                    className="w-4 h-4 text-slate-900 focus:ring-slate-900"
+                  />
+                  <span className="text-sm font-medium text-slate-900">Petitioner</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="appearingFor"
+                    value="RESPONDENT"
+                    checked={selectedAppearingFor === 'RESPONDENT'}
+                    onChange={(e) => {
+                      setSelectedAppearingFor(e.target.value)
+                      setValue('appearingFor', 'RESPONDENT')
+                    }}
+                    className="w-4 h-4 text-slate-900 focus:ring-slate-900"
+                  />
+                  <span className="text-sm font-medium text-slate-900">Respondent</span>
+                </label>
+              </div>
               {errors.appearingFor && (
                 <p className="text-sm text-red-500">{errors.appearingFor.message}</p>
               )}
