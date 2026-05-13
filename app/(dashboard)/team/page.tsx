@@ -207,7 +207,7 @@ export default function TeamPage() {
           {members.map((member) => (
             <Link key={member.id} href={`/team/${member.id}`}>
               <Card className="border-l-4 border-l-slate-900 hover:shadow-md transition-all cursor-pointer group h-full">
-                <CardContent className="p-4 md:p-6">
+                <CardContent className="p-3 md:p-4">
                   {/* Avatar & Name */}
                   <div className="flex items-start gap-4 mb-4">
                     <Avatar className="h-16 w-16 ring-2 ring-slate-100">

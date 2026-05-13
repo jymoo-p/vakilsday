@@ -153,7 +153,7 @@ export default function ClientsPage() {
               className="border-l-4 border-l-slate-900 hover:shadow-md transition-all duration-200 group cursor-pointer"
               onClick={() => router.push(`/clients/${client.id}`)}
             >
-              <CardContent className="p-3 md:py-4 md:px-4">
+              <CardContent className="p-2.5 md:py-3 md:px-4">
                 {/* Mobile Layout */}
                 <div className="md:hidden space-y-3">
                   <div className="flex items-start justify-between">

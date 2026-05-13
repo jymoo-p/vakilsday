@@ -58,6 +58,13 @@ export async function GET(request: NextRequest) {
     const cases = await prisma.case.findMany({
       where: whereClause,
       include: {
+        client: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
         assignments: {
           include: {
             user: {

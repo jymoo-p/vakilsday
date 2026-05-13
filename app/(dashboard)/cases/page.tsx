@@ -13,12 +13,21 @@ import { format } from 'date-fns'
 interface Case {
   id: string
   caseNumber: string
-  courtName: string
+  appearingFor: string
   courtNumber: string | null
-  petitionerName: string
-  respondentName: string
   status: string
   nextHearingDate: string | null
+  otherParties: string[]
+  opponentMainParty: string
+  client: {
+    id: string
+    firstName: string
+    lastName: string
+  } | null
+  court: {
+    id: string
+    name: string
+  } | null
   assignments: Array<{
     user: {
       name: string
@@ -81,11 +90,19 @@ export default function CasesPage() {
     }
   }
 
+  const getClientName = (caseItem: Case) => {
+    if (caseItem.client) {
+      return `${caseItem.client.firstName} ${caseItem.client.lastName}`
+    }
+    return caseItem.otherParties[0] || 'Unknown'
+  }
+
   const filteredCases = cases.filter((c) => {
+    const clientName = getClientName(c)
     const matchesSearch =
       c.caseNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.petitionerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.respondentName.toLowerCase().includes(searchQuery.toLowerCase())
+      clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.opponentMainParty.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesStatus = statusFilter === 'All' || c.status === statusFilter
 
@@ -198,9 +215,9 @@ export default function CasesPage() {
               <Card
                 className={`border-l-4 ${statusBorderColors[caseItem.status as keyof typeof statusBorderColors]} hover:shadow-md transition-all duration-200 cursor-pointer group`}
               >
-                <CardContent className="p-3 md:py-4 md:px-4">
+                <CardContent className="p-2.5 md:py-3 md:px-4">
                   {/* Mobile Layout */}
-                  <div className="md:hidden space-y-3">
+                  <div className="md:hidden space-y-2">
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="text-base font-semibold text-slate-900 group-hover:text-slate-700">
@@ -215,18 +232,18 @@ export default function CasesPage() {
                       <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 flex-shrink-0" />
                     </div>
 
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-1.5 text-sm">
                       <div>
                         <p className="text-xs text-slate-500">Parties</p>
                         <p className="text-slate-900 font-medium">
-                          {caseItem.petitionerName} <span className="text-slate-400">vs</span> {caseItem.respondentName}
+                          {getClientName(caseItem)} <span className="text-slate-400">vs</span> {caseItem.opponentMainParty}
                         </p>
                       </div>
 
                       <div>
                         <p className="text-xs text-slate-500">Court</p>
                         <p className="text-slate-900 font-medium">
-                          {caseItem.courtName}
+                          {caseItem.court?.name || 'Not assigned'}
                           {caseItem.courtNumber && <span className="text-slate-500"> • Court {caseItem.courtNumber}</span>}
                         </p>
                       </div>
@@ -279,13 +296,13 @@ export default function CasesPage() {
                         <div className="min-w-0">
                           <p className="text-xs text-slate-500 mb-0.5">Parties</p>
                           <p className="text-sm text-slate-900 font-medium truncate">
-                            {caseItem.petitionerName} <span className="text-slate-400 font-normal">vs</span> {caseItem.respondentName}
+                            {getClientName(caseItem)} <span className="text-slate-400 font-normal">vs</span> {caseItem.opponentMainParty}
                           </p>
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs text-slate-500 mb-0.5">Court</p>
                           <p className="text-sm text-slate-900 font-medium truncate">
-                            {caseItem.courtName}
+                            {caseItem.court?.name || 'Not assigned'}
                             {caseItem.courtNumber && (
                               <span className="text-slate-500 font-normal ml-1">
                                 • Court {caseItem.courtNumber}
