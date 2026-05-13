@@ -101,6 +101,51 @@ export default function NewCasePageNew() {
     fetchDropdownData()
   }, [user])
 
+  // Restore form state if returning from client creation
+  useEffect(() => {
+    const savedState = localStorage.getItem('newCaseFormState')
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState)
+        // Restore form values
+        if (state.caseNumber) setValue('caseNumber', state.caseNumber)
+        if (state.year) setValue('year', state.year)
+        if (state.appearingFor) {
+          setSelectedAppearingFor(state.appearingFor)
+          setValue('appearingFor', state.appearingFor)
+        }
+        if (state.clientId) {
+          setSelectedClient(state.clientId)
+          setValue('clientId', state.clientId)
+          if (state.clientName) {
+            setClientSearchQuery(state.clientName)
+          }
+        }
+        if (state.courtId) {
+          setSelectedCourt(state.courtId)
+          setValue('courtId', state.courtId)
+        }
+        if (state.courtNumber) setValue('courtNumber', state.courtNumber)
+        if (state.caseTypeId) {
+          setSelectedCaseType(state.caseTypeId)
+          setValue('caseTypeId', state.caseTypeId)
+        }
+        if (state.opponentMainParty) setValue('opponentMainParty', state.opponentMainParty)
+        if (state.filingDate) setValue('filingDate', state.filingDate)
+        if (state.nextHearingDate) setValue('nextHearingDate', state.nextHearingDate)
+        if (state.synopsis) setValue('synopsis', state.synopsis)
+        if (state.otherParties) setOtherParties(state.otherParties)
+        if (state.opponentOtherParties) setOpponentOtherParties(state.opponentOtherParties)
+        if (state.selectedAssignees) setSelectedAssignees(state.selectedAssignees)
+
+        // Clear saved state
+        localStorage.removeItem('newCaseFormState')
+      } catch (err) {
+        console.error('Failed to restore form state:', err)
+      }
+    }
+  }, [setValue])
+
   async function fetchDropdownData() {
     if (!user?.email) return
 
@@ -314,21 +359,59 @@ export default function NewCasePageNew() {
                 value={clientSearchQuery}
                 onChange={(e) => setClientSearchQuery(e.target.value)}
               />
-              {clientSearchQuery && filteredClients.length > 0 && (
-                <div className="border border-slate-200 rounded-lg mt-2 max-h-48 overflow-y-auto">
-                  {filteredClients.map((client) => (
-                    <div
-                      key={client.id}
-                      onClick={() => {
-                        setSelectedClient(client.id)
-                        setValue('clientId', client.id)
-                        setClientSearchQuery(`${client.firstName} ${client.lastName}`)
-                      }}
-                      className="p-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0"
-                    >
-                      {client.firstName} {client.lastName}
+              {clientSearchQuery && (
+                <div className="border border-slate-200 rounded-lg mt-2">
+                  {filteredClients.length > 0 ? (
+                    <div className="max-h-48 overflow-y-auto">
+                      {filteredClients.map((client) => (
+                        <div
+                          key={client.id}
+                          onClick={() => {
+                            setSelectedClient(client.id)
+                            setValue('clientId', client.id)
+                            setClientSearchQuery(`${client.firstName} ${client.lastName}`)
+                          }}
+                          className="p-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0"
+                        >
+                          {client.firstName} {client.lastName}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <div className="p-3 text-center space-y-3">
+                      <p className="text-sm text-slate-500">No clients found matching "{clientSearchQuery}"</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          // Save current form state in localStorage
+                          const formState = {
+                            caseNumber: (document.getElementById('caseNumber') as HTMLInputElement)?.value,
+                            year: (document.getElementById('year') as HTMLInputElement)?.value,
+                            appearingFor: selectedAppearingFor,
+                            courtId: selectedCourt,
+                            courtNumber: (document.getElementById('courtNumber') as HTMLInputElement)?.value,
+                            caseTypeId: selectedCaseType,
+                            opponentMainParty: (document.getElementById('opponentMainParty') as HTMLInputElement)?.value,
+                            filingDate: (document.getElementById('filingDate') as HTMLInputElement)?.value,
+                            nextHearingDate: (document.getElementById('nextHearingDate') as HTMLInputElement)?.value,
+                            synopsis: (document.getElementById('synopsis') as HTMLTextAreaElement)?.value,
+                            otherParties,
+                            opponentOtherParties,
+                            selectedAssignees,
+                            returnTo: '/cases/new'
+                          }
+                          localStorage.setItem('newCaseFormState', JSON.stringify(formState))
+                          router.push(`/clients/new?prefillName=${encodeURIComponent(clientSearchQuery)}`)
+                        }}
+                        className="gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Create New Client
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

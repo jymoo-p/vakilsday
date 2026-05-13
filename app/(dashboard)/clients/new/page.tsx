@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -37,6 +38,7 @@ type ClientFormData = z.infer<typeof clientSchema>
 
 export default function NewClientPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -50,6 +52,20 @@ export default function NewClientPage() {
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
   })
+
+  // Prefill name from query params if coming from case form
+  useEffect(() => {
+    const prefillName = searchParams.get('prefillName')
+    if (prefillName) {
+      const nameParts = prefillName.trim().split(' ')
+      if (nameParts.length === 1) {
+        setValue('firstName', nameParts[0])
+      } else {
+        setValue('firstName', nameParts[0])
+        setValue('lastName', nameParts.slice(1).join(' '))
+      }
+    }
+  }, [searchParams, setValue])
 
   const onSubmit = async (data: ClientFormData) => {
     setError(null)
@@ -77,7 +93,21 @@ export default function NewClientPage() {
         throw new Error(errorData.error || 'Failed to create client')
       }
 
-      router.push('/clients')
+      const result = await response.json()
+
+      // Check if we should return to case form
+      const savedState = localStorage.getItem('newCaseFormState')
+      if (savedState) {
+        toast.success('Client created! Returning to case form...')
+        // Update the saved state with the new client ID
+        const state = JSON.parse(savedState)
+        state.clientId = result.client.id
+        state.clientName = `${result.client.firstName} ${result.client.lastName}`
+        localStorage.setItem('newCaseFormState', JSON.stringify(state))
+        router.push('/cases/new')
+      } else {
+        router.push('/clients')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
       setIsSubmitting(false)
