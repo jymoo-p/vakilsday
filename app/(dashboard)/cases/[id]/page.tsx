@@ -488,7 +488,9 @@ export default function CaseDetailPage() {
                       <Label htmlFor="documentType">Document Type *</Label>
                       <Select
                         value={uploadData.documentType}
-                        onValueChange={(value) => setUploadData({ ...uploadData, documentType: value })}
+                        onValueChange={(value) => {
+                          if (value) setUploadData({ ...uploadData, documentType: value })
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
