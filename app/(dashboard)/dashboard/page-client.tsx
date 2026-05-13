@@ -31,17 +31,17 @@ type HearingWithCase = {
 }
 
 const statusColors = {
-  ACTIVE: 'bg-teal-100 text-teal-700 border-teal-300',
-  PENDING: 'bg-amber-100 text-amber-700 border-amber-300',
-  CLOSED: 'bg-slate-100 text-slate-700 border-slate-300',
-  ARCHIVED: 'bg-slate-100 text-slate-600 border-slate-300',
+  ACTIVE: 'bg-slate-100 text-slate-700 border-slate-300',
+  PENDING: 'bg-slate-100 text-slate-700 border-slate-300',
+  CLOSED: 'bg-slate-50 text-slate-600 border-slate-200',
+  ARCHIVED: 'bg-slate-50 text-slate-600 border-slate-200',
 }
 
 const statusBorderColors = {
-  ACTIVE: 'border-l-teal-500',
-  PENDING: 'border-l-amber-500',
+  ACTIVE: 'border-l-slate-900',
+  PENDING: 'border-l-slate-600',
   CLOSED: 'border-l-slate-400',
-  ARCHIVED: 'border-l-slate-400',
+  ARCHIVED: 'border-l-slate-300',
 }
 
 export default function DashboardPageClient() {
@@ -112,19 +112,19 @@ export default function DashboardPageClient() {
   }
 
   const displayedHearings = activeTab === 'today' ? todaysHearings : weekHearings
+  const uniqueActiveCases = new Set([...todaysHearings, ...weekHearings].map(h => h.case.id)).size
 
   return (
     <div className="space-y-6 max-w-6xl">
-      {/* Header with Stats */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-slate-600 mt-1">
+          <p className="text-slate-600">
             {format(new Date(), 'EEEE, MMMM d, yyyy')}
           </p>
         </div>
         <Link href="/cases/new">
-          <Button className="gap-2 bg-teal-600 hover:bg-teal-700">
+          <Button className="gap-2 bg-slate-900 hover:bg-slate-800">
             <Plus className="h-4 w-4" />
             New Case
           </Button>
@@ -133,52 +133,62 @@ export default function DashboardPageClient() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-0 bg-gradient-to-br from-teal-500 to-teal-600 text-white">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-teal-100 text-sm font-medium">Today</p>
-                <p className="text-3xl font-bold mt-1">{todaysHearings.length}</p>
-                <p className="text-teal-100 text-sm mt-1">hearings</p>
+        <button
+          onClick={() => setActiveTab('today')}
+          className="text-left transition-all hover:scale-[1.02]"
+        >
+          <Card className="border-0 bg-slate-900 text-white shadow-lg hover:shadow-xl transition-shadow">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-300 text-sm font-medium">Today</p>
+                  <p className="text-3xl font-bold mt-1">{todaysHearings.length}</p>
+                  <p className="text-slate-300 text-sm mt-1">hearings</p>
+                </div>
+                <div className="p-3 bg-white/10 rounded-xl">
+                  <Calendar className="h-8 w-8" />
+                </div>
               </div>
-              <div className="p-3 bg-white/20 rounded-xl">
-                <Calendar className="h-8 w-8" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </button>
 
-        <Card className="border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-sm font-medium">This Week</p>
-                <p className="text-3xl font-bold mt-1">{weekHearings.length}</p>
-                <p className="text-blue-100 text-sm mt-1">upcoming</p>
+        <button
+          onClick={() => setActiveTab('week')}
+          className="text-left transition-all hover:scale-[1.02]"
+        >
+          <Card className="border-0 bg-slate-800 text-white shadow-lg hover:shadow-xl transition-shadow">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-300 text-sm font-medium">This Week</p>
+                  <p className="text-3xl font-bold mt-1">{weekHearings.length}</p>
+                  <p className="text-slate-300 text-sm mt-1">upcoming</p>
+                </div>
+                <div className="p-3 bg-white/10 rounded-xl">
+                  <TrendingUp className="h-8 w-8" />
+                </div>
               </div>
-              <div className="p-3 bg-white/20 rounded-xl">
-                <TrendingUp className="h-8 w-8" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </button>
 
-        <Card className="border-0 bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-100 text-sm font-medium">Active Cases</p>
-                <p className="text-3xl font-bold mt-1">
-                  {new Set([...todaysHearings, ...weekHearings].map(h => h.case.id)).size}
-                </p>
-                <p className="text-purple-100 text-sm mt-1">in progress</p>
+        <Link href="/cases" className="transition-all hover:scale-[1.02]">
+          <Card className="border-0 bg-slate-700 text-white shadow-lg hover:shadow-xl transition-shadow h-full">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-300 text-sm font-medium">Active Cases</p>
+                  <p className="text-3xl font-bold mt-1">{uniqueActiveCases}</p>
+                  <p className="text-slate-300 text-sm mt-1">in progress</p>
+                </div>
+                <div className="p-3 bg-white/10 rounded-xl">
+                  <FileText className="h-8 w-8" />
+                </div>
               </div>
-              <div className="p-3 bg-white/20 rounded-xl">
-                <FileText className="h-8 w-8" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Tabs */}
@@ -187,26 +197,26 @@ export default function DashboardPageClient() {
           onClick={() => setActiveTab('today')}
           className={`px-6 py-3 font-medium text-sm transition-colors relative ${
             activeTab === 'today'
-              ? 'text-teal-600'
+              ? 'text-slate-900'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           Today
           {activeTab === 'today' && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-600" />
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900" />
           )}
         </button>
         <button
           onClick={() => setActiveTab('week')}
           className={`px-6 py-3 font-medium text-sm transition-colors relative ${
             activeTab === 'week'
-              ? 'text-teal-600'
+              ? 'text-slate-900'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           This Week
           {activeTab === 'week' && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-600" />
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900" />
           )}
         </button>
       </div>
@@ -238,7 +248,7 @@ export default function DashboardPageClient() {
                     {/* Left: Case Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-slate-900 group-hover:text-teal-600 transition-colors">
+                        <h3 className="text-lg font-semibold text-slate-900 group-hover:text-slate-700 transition-colors">
                           {hearing.case.caseNumber}
                         </h3>
                         <Badge
@@ -284,8 +294,8 @@ export default function DashboardPageClient() {
                           {format(parseISO(hearing.hearingDate), 'EEEE')}
                         </p>
                       </div>
-                      <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-teal-50 transition-colors">
-                        <Clock className="h-5 w-5 text-slate-600 group-hover:text-teal-600" />
+                      <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-slate-200 transition-colors">
+                        <Clock className="h-5 w-5 text-slate-600" />
                       </div>
                     </div>
                   </div>

@@ -33,7 +33,7 @@ export function Sidebar() {
     <div className="hidden md:flex md:w-72 md:flex-col md:fixed md:inset-y-0">
       <div className="flex flex-col flex-grow border-r border-slate-200 bg-white pt-8 overflow-y-auto">
         <div className="flex items-center flex-shrink-0 px-8 mb-12">
-          <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 shadow-lg shadow-teal-500/30">
+          <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-slate-900 shadow-lg">
             <Scale className="h-7 w-7 text-white" />
           </div>
           <span className="ml-4 text-2xl font-bold text-slate-900 tracking-tight">VakilsDay</span>
@@ -48,14 +48,14 @@ export function Sidebar() {
                 className={cn(
                   'group flex items-center px-5 py-4 text-base font-medium rounded-xl transition-all',
                   isActive
-                    ? 'bg-teal-50 text-teal-700 shadow-sm border border-teal-100'
+                    ? 'bg-slate-100 text-slate-900 shadow-sm border border-slate-200'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 )}
               >
                 <item.icon
                   className={cn(
                     'mr-4 flex-shrink-0 h-6 w-6',
-                    isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-600'
+                    isActive ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'
                   )}
                 />
                 {item.name}

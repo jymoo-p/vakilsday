@@ -32,17 +32,17 @@ interface Case {
 }
 
 const statusColors = {
-  ACTIVE: 'bg-teal-100 text-teal-700 border-teal-300',
-  PENDING: 'bg-amber-100 text-amber-700 border-amber-300',
-  CLOSED: 'bg-slate-100 text-slate-700 border-slate-300',
-  ARCHIVED: 'bg-slate-100 text-slate-600 border-slate-300',
+  ACTIVE: 'bg-slate-100 text-slate-700 border-slate-300',
+  PENDING: 'bg-slate-100 text-slate-700 border-slate-300',
+  CLOSED: 'bg-slate-50 text-slate-600 border-slate-200',
+  ARCHIVED: 'bg-slate-50 text-slate-600 border-slate-200',
 }
 
 const statusBorderColors = {
-  ACTIVE: 'border-l-teal-500',
-  PENDING: 'border-l-amber-500',
+  ACTIVE: 'border-l-slate-900',
+  PENDING: 'border-l-slate-600',
   CLOSED: 'border-l-slate-400',
-  ARCHIVED: 'border-l-slate-400',
+  ARCHIVED: 'border-l-slate-300',
 }
 
 export default function CasesPage() {
@@ -115,7 +115,7 @@ export default function CasesPage() {
         </div>
         {canCreateCase && (
           <Link href="/cases/new">
-            <Button className="gap-2 bg-teal-600 hover:bg-teal-700">
+            <Button className="gap-2 bg-slate-900 hover:bg-slate-800">
               <Plus className="h-4 w-4" />
               New Case
             </Button>
@@ -130,7 +130,7 @@ export default function CasesPage() {
           placeholder="Search cases by number, petitioner, or respondent..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-12 h-12 text-base border-slate-300 focus:border-teal-500 focus:ring-teal-500"
+          className="pl-12 h-12 text-base border-slate-300 focus:border-slate-900 focus:ring-slate-900"
         />
       </div>
 
@@ -142,7 +142,7 @@ export default function CasesPage() {
             onClick={() => setStatusFilter(status)}
             className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${
               statusFilter === status
-                ? 'bg-teal-600 text-white'
+                ? 'bg-slate-900 text-white'
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
@@ -183,7 +183,7 @@ export default function CasesPage() {
             </p>
             {canCreateCase && !searchQuery && statusFilter === 'All' && (
               <Link href="/cases/new">
-                <Button className="mt-4 bg-teal-600 hover:bg-teal-700">
+                <Button className="mt-4 bg-slate-900 hover:bg-slate-800">
                   <Plus className="h-4 w-4 mr-2" />
                   New Case
                 </Button>
@@ -203,7 +203,7 @@ export default function CasesPage() {
                     {/* Case Header */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-slate-900 group-hover:text-teal-600 transition-colors">
+                        <h3 className="text-lg font-semibold text-slate-900 group-hover:text-slate-700 transition-colors">
                           {caseItem.caseNumber}
                         </h3>
                         <Badge
