@@ -48,6 +48,8 @@ export default function SettingsPage() {
   const [memberError, setMemberError] = useState<string | null>(null)
   const [driveConnected, setDriveConnected] = useState<boolean | null>(null)
   const [connectingDrive, setConnectingDrive] = useState(false)
+  const [calendarSyncEnabled, setCalendarSyncEnabled] = useState<boolean>(false)
+  const [togglingCalendar, setTogglingCalendar] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -81,6 +83,11 @@ export default function SettingsPage() {
         if (driveResponse.ok) {
           const driveData = await driveResponse.json()
           setDriveConnected(driveData.connected)
+        }
+
+        // Get calendar sync status
+        if (data.user?.calendarSyncEnabled !== undefined) {
+          setCalendarSyncEnabled(data.user.calendarSyncEnabled)
         }
       } catch (error) {
         console.error('Error fetching settings data:', error)
@@ -241,6 +248,36 @@ export default function SettingsPage() {
       alert('Failed to connect Google Drive')
     } finally {
       setConnectingDrive(false)
+    }
+  }
+
+  async function handleToggleCalendarSync() {
+    if (!user?.email) return
+
+    setTogglingCalendar(true)
+    try {
+      const newValue = !calendarSyncEnabled
+
+      const response = await fetch('/api/settings/calendar-sync', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEmail: user.email,
+          enabled: newValue,
+        }),
+      })
+
+      if (response.ok) {
+        setCalendarSyncEnabled(newValue)
+        alert(`Calendar sync ${newValue ? 'enabled' : 'disabled'}`)
+      } else {
+        alert('Failed to update calendar sync settings')
+      }
+    } catch (error) {
+      console.error('Error toggling calendar sync:', error)
+      alert('Failed to update calendar sync')
+    } finally {
+      setTogglingCalendar(false)
     }
   }
 
@@ -591,24 +628,44 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Google Calendar Integration
+            Google Calendar Sync
           </CardTitle>
           <CardDescription>
-            Sync your hearing dates with Google Calendar
+            Automatically sync hearing dates to your Google Calendar
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Status</p>
+            <div className="flex-1">
+              <p className="font-medium">Auto-sync hearings</p>
               <p className="text-sm text-muted-foreground">
-                Connected via Google OAuth
+                {calendarSyncEnabled
+                  ? 'New hearings are automatically added to Google Calendar'
+                  : 'Enable to sync hearings to Google Calendar'}
               </p>
             </div>
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-              Active
-            </Badge>
+            <button
+              onClick={handleToggleCalendarSync}
+              disabled={togglingCalendar}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                calendarSyncEnabled ? 'bg-green-600' : 'bg-gray-200'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  calendarSyncEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
+
+          {calendarSyncEnabled && (
+            <div className="text-sm text-muted-foreground space-y-1 pt-2 border-t">
+              <p>• Hearings are synced in real-time</p>
+              <p>• Reminders: 1 day before (email), 1 hour before (popup)</p>
+              <p>• Updates automatically when hearing dates change</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

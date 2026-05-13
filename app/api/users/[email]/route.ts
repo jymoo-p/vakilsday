@@ -27,6 +27,7 @@ export async function GET(
         joiningDate: true,
         otherInfo: true,
         organizationId: true,
+        calendarSyncEnabled: true,
         createdAt: true,
         organization: {
           select: {

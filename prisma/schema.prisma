@@ -87,6 +87,9 @@ model User {
   joiningDate    DateTime?
   otherInfo      String?   @db.Text
 
+  // Calendar sync
+  calendarSyncEnabled Boolean  @default(false)
+
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 

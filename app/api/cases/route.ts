@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { canViewAllCases } from '@/lib/utils/rbac'
 import { CaseStatus } from '@prisma/client'
+import { syncHearingToGoogleCalendar } from '@/lib/services/calendar-sync-helper'
 
 export async function GET(request: NextRequest) {
   try {
@@ -223,6 +224,11 @@ export async function POST(request: NextRequest) {
           nextHearingDate: null,
         },
       })
+
+      // Sync to Google Calendar if enabled (fire and forget)
+      syncHearingToGoogleCalendar(user.id, newCase.id, new Date(nextHearingDate)).catch(err =>
+        console.error('Calendar sync failed:', err)
+      )
     }
 
     return NextResponse.json({ case: newCase }, { status: 201 })
