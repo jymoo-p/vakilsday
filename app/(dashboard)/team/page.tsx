@@ -62,8 +62,7 @@ export default function TeamPage() {
     name: '',
     email: '',
     phone: '',
-    role: 'ASSOCIATE',
-    customRoleId: '',
+    roleSelection: 'ASSOCIATE', // Can be ADMIN/ASSOCIATE/CLERK or a customRoleId
   })
 
   useEffect(() => {
@@ -116,16 +115,19 @@ export default function TeamPage() {
     setSubmitting(true)
 
     try {
+      // Determine if selection is a base role or custom role
+      const isCustomRole = !['ADMIN', 'ASSOCIATE', 'CLERK'].includes(formData.roleSelection)
+
       const payload: any = {
         adminEmail: user.email,
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        role: formData.role,
+        role: isCustomRole ? 'ASSOCIATE' : formData.roleSelection, // Default to ASSOCIATE for custom roles
       }
 
-      if (formData.customRoleId) {
-        payload.customRoleId = formData.customRoleId
+      if (isCustomRole) {
+        payload.customRoleId = formData.roleSelection
       }
 
       const response = await fetch('/api/team', {
@@ -138,7 +140,7 @@ export default function TeamPage() {
         const result = await response.json()
         toast.success(`Sustained! Team member "${result.member.name}" was added`)
         setShowAddDialog(false)
-        setFormData({ name: '', email: '', phone: '', role: 'ASSOCIATE', customRoleId: '' })
+        setFormData({ name: '', email: '', phone: '', roleSelection: 'ASSOCIATE' })
         fetchData() // Refresh the list
       } else {
         const data = await response.json()
@@ -325,9 +327,9 @@ export default function TeamPage() {
             <div className="space-y-2">
               <Label htmlFor="role">Role *</Label>
               <Select
-                value={formData.role}
+                value={formData.roleSelection}
                 onValueChange={(value) => {
-                  if (value) setFormData({ ...formData, role: value })
+                  if (value) setFormData({ ...formData, roleSelection: value })
                 }}
               >
                 <SelectTrigger>
@@ -337,33 +339,26 @@ export default function TeamPage() {
                   <SelectItem value="ADMIN">Admin</SelectItem>
                   <SelectItem value="ASSOCIATE">Associate</SelectItem>
                   <SelectItem value="CLERK">Clerk</SelectItem>
+                  {customRoles.length > 0 && (
+                    <>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-slate-500 border-t mt-1">
+                        Custom Roles
+                      </div>
+                      {customRoles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                {formData.roleSelection && !['ADMIN', 'ASSOCIATE', 'CLERK'].includes(formData.roleSelection)
+                  ? 'Custom role with specific permissions'
+                  : 'Base role with system-defined permissions'}
+              </p>
             </div>
-
-            {customRoles.length > 0 && (
-              <div className="space-y-2">
-                <Label htmlFor="customRole">Custom Role (Optional)</Label>
-                <Select
-                  value={formData.customRoleId}
-                  onValueChange={(value) => {
-                    setFormData({ ...formData, customRoleId: value || '' })
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select custom role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">None</SelectItem>
-                    {customRoles.map((role) => (
-                      <SelectItem key={role.id} value={role.id}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
 
             <div className="flex gap-3 pt-4">
               <Button
@@ -371,7 +366,7 @@ export default function TeamPage() {
                 variant="outline"
                 onClick={() => {
                   setShowAddDialog(false)
-                  setFormData({ name: '', email: '', phone: '', role: 'ASSOCIATE', customRoleId: '' })
+                  setFormData({ name: '', email: '', phone: '', roleSelection: 'ASSOCIATE' })
                 }}
                 className="flex-1"
               >
