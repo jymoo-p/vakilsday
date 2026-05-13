@@ -52,6 +52,13 @@ export default function DashboardPageClient() {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'today' | 'week'>('today')
 
+  function scrollToHearings() {
+    const hearingsSection = document.getElementById('hearings-section')
+    if (hearingsSection) {
+      hearingsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   useEffect(() => {
     async function fetchDashboardData() {
       if (!user?.email) return
@@ -134,7 +141,10 @@ export default function DashboardPageClient() {
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
-          onClick={() => setActiveTab('today')}
+          onClick={() => {
+            setActiveTab('today')
+            scrollToHearings()
+          }}
           className="text-left transition-all hover:scale-[1.02]"
         >
           <Card className="border-0 bg-slate-900 text-white shadow-lg hover:shadow-xl transition-shadow">
@@ -154,7 +164,10 @@ export default function DashboardPageClient() {
         </button>
 
         <button
-          onClick={() => setActiveTab('week')}
+          onClick={() => {
+            setActiveTab('week')
+            scrollToHearings()
+          }}
           className="text-left transition-all hover:scale-[1.02]"
         >
           <Card className="border-0 bg-slate-800 text-white shadow-lg hover:shadow-xl transition-shadow">
@@ -192,7 +205,7 @@ export default function DashboardPageClient() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-200">
+      <div id="hearings-section" className="flex gap-2 border-b border-slate-200">
         <button
           onClick={() => setActiveTab('today')}
           className={`px-6 py-3 font-medium text-sm transition-colors relative ${
