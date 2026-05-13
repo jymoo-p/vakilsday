@@ -197,7 +197,9 @@ export default function OnboardingTeamPage() {
                   <Label htmlFor="role">Role *</Label>
                   <Select
                     value={formData.role}
-                    onValueChange={(value) => setFormData({ ...formData, role: value })}
+                    onValueChange={(value) => {
+                      if (value) setFormData({ ...formData, role: value })
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
