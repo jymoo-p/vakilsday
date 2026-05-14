@@ -55,7 +55,6 @@ model Organization {
   customRoles      CustomRole[]
   courts           Court[]
   caseTypes        CaseType[]
-  appointments     Appointment[]
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -97,7 +96,6 @@ model User {
   assignedCases  CaseAssignment[]
   hearingNotes   HearingNote[]
   researchBookmarks ResearchBookmark[]
-  appointments   Appointment[]
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -140,7 +138,6 @@ model Client {
   organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   cases             Case[]
-  appointments      Appointment[]
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -231,32 +228,6 @@ model Case {
   @@index([nextHearingDate])
   @@index([status])
   @@map("cases")
-}
-
-model Appointment {
-  id              String          @id @default(cuid())
-  title           String
-  startTime       DateTime
-  endTime         DateTime?
-  location        String?
-  notes           String?         @db.Text
-
-  clientId        String?
-  client          Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
-
-  userId          String
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  organizationId  String
-  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-
-  @@index([userId, startTime])
-  @@index([organizationId])
-  @@index([clientId])
-  @@map("appointments")
 }
 
 model CaseAssignment {
