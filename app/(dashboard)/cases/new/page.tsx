@@ -9,7 +9,8 @@ import * as z from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, Plus, X } from 'lucide-react'
@@ -97,6 +98,7 @@ export default function NewCasePageNew() {
     handleSubmit,
     formState: { errors },
     setValue,
+    watch,
   } = useForm<CaseFormData>({
     resolver: zodResolver(caseSchema),
   })
@@ -170,7 +172,10 @@ export default function NewCasePageNew() {
       const teamRes = await fetch(`/api/team?email=${encodeURIComponent(user.email)}`)
       if (teamRes.ok) {
         const teamData = await teamRes.json()
-        setTeamMembers(teamData.users || [])
+        const members = teamData.users || []
+        setTeamMembers(members)
+        // Select all team members by default
+        setSelectedAssignees(members.map((m: TeamMember) => m.id))
       }
 
       // Fetch clients
@@ -221,6 +226,12 @@ export default function NewCasePageNew() {
   }
 
   function toggleAssignee(userId: string) {
+    // Prevent unchecking admin users
+    const member = teamMembers.find(m => m.id === userId)
+    if (member?.role === 'ADMIN' && selectedAssignees.includes(userId)) {
+      return // Don't allow unchecking admins
+    }
+
     setSelectedAssignees(prev =>
       prev.includes(userId)
         ? prev.filter(id => id !== userId)
@@ -687,11 +698,10 @@ export default function NewCasePageNew() {
             <CardDescription>Brief overview of the case</CardDescription>
           </CardHeader>
           <CardContent>
-            <Textarea
-              id="synopsis"
+            <RichTextEditor
+              content={watch('synopsis') || ''}
+              onChange={(html) => setValue('synopsis', html)}
               placeholder="Provide a brief summary of the case, key facts, legal issues, etc."
-              rows={6}
-              {...register('synopsis')}
             />
           </CardContent>
         </Card>
@@ -707,23 +717,39 @@ export default function NewCasePageNew() {
               <p className="text-slate-500">No team members available</p>
             ) : (
               <div className="space-y-2">
-                {teamMembers.map((member) => (
-                  <label
-                    key={member.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border hover:bg-slate-50 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedAssignees.includes(member.id)}
-                      onChange={() => toggleAssignee(member.id)}
-                      className="h-4 w-4"
-                    />
-                    <div className="flex-1">
-                      <p className="font-medium">{member.name}</p>
-                      <p className="text-sm text-slate-500">{member.email} • {member.role}</p>
-                    </div>
-                  </label>
-                ))}
+                {teamMembers.map((member) => {
+                  const isAdmin = member.role === 'ADMIN'
+                  const isChecked = selectedAssignees.includes(member.id)
+                  return (
+                    <label
+                      key={member.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg border ${
+                        isAdmin
+                          ? 'bg-slate-50 cursor-not-allowed'
+                          : 'hover:bg-slate-50 cursor-pointer'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggleAssignee(member.id)}
+                        disabled={isAdmin}
+                        className="h-4 w-4 disabled:cursor-not-allowed"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{member.name}</p>
+                          {isAdmin && (
+                            <Badge variant="secondary" className="text-xs">
+                              Auto-assigned
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-slate-500">{member.email} • {member.role}</p>
+                      </div>
+                    </label>
+                  )
+                })}
               </div>
             )}
           </CardContent>

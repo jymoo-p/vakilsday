@@ -9,7 +9,7 @@ import * as z from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import {
   Select,
   SelectContent,
@@ -307,7 +307,11 @@ export default function EditCasePage() {
 
             <div className="space-y-2">
               <Label htmlFor="synopsis">Synopsis</Label>
-              <Textarea id="synopsis" rows={4} {...register('synopsis')} />
+              <RichTextEditor
+                content={watch('synopsis') || ''}
+                onChange={(html) => setValue('synopsis', html)}
+                placeholder="Provide a brief summary of the case..."
+              />
             </div>
           </CardContent>
         </Card>

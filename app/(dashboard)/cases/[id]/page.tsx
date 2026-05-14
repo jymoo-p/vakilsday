@@ -458,9 +458,10 @@ export default function CaseDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-base leading-relaxed whitespace-pre-wrap">
-                  {caseData.synopsis}
-                </p>
+                <div
+                  className="prose prose-sm max-w-none text-base leading-relaxed [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1"
+                  dangerouslySetInnerHTML={{ __html: caseData.synopsis }}
+                />
               </CardContent>
             </Card>
           )}
