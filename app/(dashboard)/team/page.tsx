@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -185,7 +185,7 @@ export default function TeamPage() {
         {userRole === 'ADMIN' && (
           <Button
             onClick={() => setShowAddDialog(true)}
-            className="gap-2 bg-slate-900 hover:bg-slate-800"
+            className="gap-2"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Add Member</span>
@@ -196,8 +196,8 @@ export default function TeamPage() {
       {members.length === 0 ? (
         <Card className="border-slate-200">
           <CardContent className="pt-8 pb-8 md:pt-12 md:pb-12 text-center">
-            <div className="p-3 md:p-4 bg-slate-100 rounded-full w-fit mx-auto mb-3 md:mb-4">
-              <Users className="h-8 w-8 md:h-12 md:w-12 text-slate-400" />
+            <div className="p-3 md:p-4 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full w-fit mx-auto mb-3 md:mb-4">
+              <Users className="h-8 w-8 md:h-12 md:w-12 text-primary" />
             </div>
             <p className="text-base md:text-lg font-medium text-slate-900">No team members yet</p>
             <p className="text-sm md:text-base text-slate-600 mt-1">
@@ -206,74 +206,40 @@ export default function TeamPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {members.map((member) => (
             <Link key={member.id} href={`/team/${member.id}`}>
-              <Card className="border-l-4 border-l-slate-900 hover:shadow-md transition-all cursor-pointer group h-full">
-                <CardContent className="p-3 md:p-4">
-                  {/* Avatar & Name */}
-                  <div className="flex items-start gap-4 mb-4">
-                    <Avatar className="h-16 w-16 ring-2 ring-slate-100">
+              <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer group">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start gap-3">
+                    <Avatar className="h-12 w-12 flex-shrink-0">
                       <AvatarImage src={member.image || undefined} alt={member.name || 'User'} />
-                      <AvatarFallback className="bg-slate-900 text-white font-semibold text-lg">
+                      <AvatarFallback className="bg-purple-100 text-purple-600 font-semibold text-lg">
                         {getInitials(member.name)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-slate-900 group-hover:text-slate-700 truncate">
+                      <CardTitle className="text-base truncate group-hover:text-primary transition-colors">
                         {member.name || 'No name set'}
-                      </h3>
-                      <div className="flex flex-wrap items-center gap-2 mt-1">
-                        <Badge className="bg-slate-900 text-white text-xs px-2 py-0.5">
-                          {member.role}
-                        </Badge>
-                        {member.customRole && (
-                          <Badge variant="secondary" className="text-xs px-2 py-0.5">
-                            {member.customRole.name}
-                          </Badge>
-                        )}
-                      </div>
+                      </CardTitle>
+                      <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 text-xs font-medium px-2 py-0.5 border mt-1">
+                        {member.role}
+                      </Badge>
                     </div>
                   </div>
-
-                  {/* Contact Info */}
-                  <div className="space-y-2 mb-4 text-sm">
-                    <div className="flex items-center gap-2 text-slate-600">
+                  <CardDescription className="mt-3 space-y-1">
+                    {member.phone && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                        <span className="truncate">{member.phone}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-sm">
                       <Mail className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
                       <span className="truncate">{member.email}</span>
                     </div>
-                    {member.phone && (
-                      <div className="flex items-center gap-2 text-slate-600">
-                        <Phone className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                        <span>{member.phone}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Professional Info */}
-                  {(member.specialization || member.yearsOfService || member.joiningDate) && (
-                    <div className="pt-4 border-t border-slate-100 space-y-2 text-sm">
-                      {member.specialization && (
-                        <div className="flex items-center gap-2 text-slate-600">
-                          <Briefcase className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                          <span className="truncate">{member.specialization}</span>
-                        </div>
-                      )}
-                      {member.yearsOfService && (
-                        <div className="flex items-center gap-2 text-slate-600">
-                          <Calendar className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                          <span>{member.yearsOfService} years of service</span>
-                        </div>
-                      )}
-                      {member.joiningDate && !member.yearsOfService && (
-                        <div className="flex items-center gap-2 text-slate-600">
-                          <Calendar className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                          <span>Since {format(new Date(member.joiningDate), 'MMM yyyy')}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
+                  </CardDescription>
+                </CardHeader>
               </Card>
             </Link>
           ))}
@@ -375,7 +341,7 @@ export default function TeamPage() {
               <Button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 bg-slate-900 hover:bg-slate-800"
+                className="flex-1"
               >
                 {submitting ? 'Adding...' : 'Add Member'}
               </Button>

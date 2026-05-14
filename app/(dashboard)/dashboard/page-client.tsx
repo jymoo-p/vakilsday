@@ -48,6 +48,7 @@ export default function DashboardPageClient() {
   const { user, loading } = useAuth()
   const [todaysHearings, setTodaysHearings] = useState<HearingWithCase[]>([])
   const [weekHearings, setWeekHearings] = useState<HearingWithCase[]>([])
+  const [activeCasesCount, setActiveCasesCount] = useState(0)
   const [loadingData, setLoadingData] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'today' | 'week'>('today')
@@ -70,6 +71,7 @@ export default function DashboardPageClient() {
           const data = await response.json()
           setTodaysHearings(data.todaysHearings || [])
           setWeekHearings(data.weekHearings || [])
+          setActiveCasesCount(data.activeCasesCount || 0)
         } else {
           const errorData = await response.json()
           setError(errorData.error || 'Failed to load dashboard')
@@ -119,7 +121,6 @@ export default function DashboardPageClient() {
   }
 
   const displayedHearings = activeTab === 'today' ? todaysHearings : weekHearings
-  const uniqueActiveCases = new Set([...todaysHearings, ...weekHearings].map(h => h.case.id)).size
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -147,13 +148,13 @@ export default function DashboardPageClient() {
           }}
           className="text-left transition-all hover:scale-[1.02]"
         >
-          <Card className="border-0 bg-slate-900 text-white shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="border-0 bg-purple-700 text-white shadow-lg hover:shadow-xl transition-shadow">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-300 text-sm font-medium">Today</p>
+                  <p className="text-purple-200 text-sm font-medium">Today</p>
                   <p className="text-3xl font-bold mt-1">{todaysHearings.length}</p>
-                  <p className="text-slate-300 text-sm mt-1">hearings</p>
+                  <p className="text-purple-200 text-sm mt-1">hearings</p>
                 </div>
                 <div className="p-3 bg-white/10 rounded-xl">
                   <Calendar className="h-8 w-8" />
@@ -170,13 +171,13 @@ export default function DashboardPageClient() {
           }}
           className="text-left transition-all hover:scale-[1.02]"
         >
-          <Card className="border-0 bg-slate-800 text-white shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="border-0 bg-purple-400 text-white shadow-lg hover:shadow-xl transition-shadow">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-300 text-sm font-medium">This Week</p>
+                  <p className="text-purple-100 text-sm font-medium">This Week</p>
                   <p className="text-3xl font-bold mt-1">{weekHearings.length}</p>
-                  <p className="text-slate-300 text-sm mt-1">upcoming</p>
+                  <p className="text-purple-100 text-sm mt-1">upcoming</p>
                 </div>
                 <div className="p-3 bg-white/10 rounded-xl">
                   <TrendingUp className="h-8 w-8" />
@@ -187,13 +188,13 @@ export default function DashboardPageClient() {
         </button>
 
         <Link href="/cases" className="transition-all hover:scale-[1.02]">
-          <Card className="border-0 bg-slate-700 text-white shadow-lg hover:shadow-xl transition-shadow h-full">
+          <Card className="border-0 bg-blue-500 text-white shadow-lg hover:shadow-xl transition-shadow h-full">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-300 text-sm font-medium">Active Cases</p>
-                  <p className="text-3xl font-bold mt-1">{uniqueActiveCases}</p>
-                  <p className="text-slate-300 text-sm mt-1">in progress</p>
+                  <p className="text-blue-100 text-sm font-medium">Active Cases</p>
+                  <p className="text-3xl font-bold mt-1">{activeCasesCount}</p>
+                  <p className="text-blue-100 text-sm mt-1">in progress</p>
                 </div>
                 <div className="p-3 bg-white/10 rounded-xl">
                   <FileText className="h-8 w-8" />

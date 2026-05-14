@@ -256,14 +256,15 @@ export default function CaseDetailPage() {
                 {caseData.caseNumber}
               </h1>
               <Badge
-                variant={
+                className={`text-base px-3 py-1 border ${
                   caseData.status === 'ACTIVE'
-                    ? 'default'
+                    ? 'bg-green-100 text-green-700 border-green-200'
+                    : caseData.status === 'PENDING'
+                    ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
                     : caseData.status === 'CLOSED'
-                    ? 'secondary'
-                    : 'outline'
-                }
-                className="text-base px-3 py-1"
+                    ? 'bg-blue-100 text-blue-700 border-blue-200'
+                    : 'bg-gray-100 text-gray-600 border-gray-200'
+                }`}
               >
                 {caseData.status}
               </Badge>
@@ -303,7 +304,7 @@ export default function CaseDetailPage() {
             Overview
           </TabsTrigger>
           <TabsTrigger value="timeline" className="text-base py-3">
-            Timeline ({caseData.hearings.length})
+            Case History ({caseData.hearings.length})
           </TabsTrigger>
           <TabsTrigger value="documents" className="text-base py-3">
             Documents ({caseData.documents.length})

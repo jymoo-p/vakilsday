@@ -52,8 +52,8 @@ export async function GET(request: NextRequest) {
           },
         }
 
-    // Fetch today's and week's hearings in parallel
-    const [todaysHearings, weekHearings] = await Promise.all([
+    // Fetch today's and week's hearings, and active cases count in parallel
+    const [todaysHearings, weekHearings, activeCasesCount] = await Promise.all([
       // Today's hearings
       prisma.hearing.findMany({
         where: {
@@ -126,11 +126,30 @@ export async function GET(request: NextRequest) {
         },
         take: 20,
       }),
+
+      // Count active cases
+      prisma.case.count({
+        where: isAdmin
+          ? {
+              organizationId: user.organizationId,
+              status: CaseStatus.ACTIVE,
+            }
+          : {
+              organizationId: user.organizationId,
+              status: CaseStatus.ACTIVE,
+              assignments: {
+                some: {
+                  userId: user.id,
+                },
+              },
+            },
+      }),
     ])
 
     return NextResponse.json({
       todaysHearings,
       weekHearings,
+      activeCasesCount,
     })
   } catch (error) {
     console.error('Dashboard API error:', error)

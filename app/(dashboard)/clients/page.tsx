@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, User, Phone, Mail, Edit, Trash2 } from 'lucide-react'
+import { Plus, Search, User, Phone, Mail } from 'lucide-react'
 
 interface Client {
   id: string
@@ -146,179 +146,56 @@ export default function ClientsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-2 md:space-y-2">
-          {filteredClients.map((client) => (
-            <Card
-              key={client.id}
-              className="border-l-4 border-l-slate-900 hover:shadow-md transition-all duration-200 group cursor-pointer"
-              onClick={() => router.push(`/clients/${client.id}`)}
-            >
-              <CardContent className="p-2.5 md:py-3 md:px-4">
-                {/* Mobile Layout */}
-                <div className="md:hidden space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-base font-semibold text-slate-900">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredClients.map((client) => {
+            const initials = `${client.firstName[0]}${client.lastName[0]}`.toUpperCase()
+            return (
+              <Card
+                key={client.id}
+                className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer group"
+                onClick={() => router.push(`/clients/${client.id}`)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg font-semibold text-purple-600">{initials}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-base truncate group-hover:text-primary transition-colors">
                         {client.firstName} {client.lastName}
-                      </h3>
+                      </CardTitle>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs font-medium px-2 py-0.5">
-                          {client.gender}
-                        </Badge>
+                        <span className="text-xs text-slate-500">{client.gender}</span>
                         {client.age && (
-                          <span className="text-xs text-slate-500">{client.age} years</span>
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-xs text-slate-500">{client.age} years</span>
+                          </>
                         )}
                       </div>
                     </div>
-                    {client._count && (
-                      <div className="text-center bg-slate-50 rounded-lg px-3 py-1">
-                        <p className="text-lg font-bold text-slate-900">{client._count.cases}</p>
-                        <p className="text-xs text-slate-500">Cases</p>
-                      </div>
+                    {client._count && client._count.cases > 0 && (
+                      <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
+                        {client._count.cases}
+                      </Badge>
                     )}
                   </div>
-
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-slate-900">
-                      <Phone className="h-3.5 w-3.5 text-slate-400" />
-                      <span className="font-medium">{client.phone}</span>
-                      {client.otherPhone && (
-                        <span className="text-slate-400">• {client.otherPhone}</span>
-                      )}
+                  <CardDescription className="mt-3 space-y-1">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                      <span className="truncate">{client.phone}</span>
                     </div>
-
                     {client.email && (
-                      <div className="flex items-center gap-2 text-slate-900">
-                        <Mail className="h-3.5 w-3.5 text-slate-400" />
-                        <span className="font-medium truncate">{client.email}</span>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                        <span className="truncate">{client.email}</span>
                       </div>
                     )}
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex-1 h-9"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        router.push(`/clients/${client.id}/edit`)
-                      }}
-                    >
-                      <Edit className="h-4 w-4 mr-2 text-slate-600" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex-1 h-9 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        handleDelete(
-                          client.id,
-                          `${client.firstName} ${client.lastName}`,
-                          client._count?.cases || 0
-                        )
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Desktop Layout */}
-                <div className="hidden md:flex items-center justify-between gap-6">
-                  {/* Left: Name & Gender */}
-                  <div className="flex items-center gap-4 min-w-0 flex-shrink-0 w-64">
-                    <div className="min-w-0">
-                      <h3 className="text-base font-semibold text-slate-900 truncate">
-                        {client.firstName} {client.lastName}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs font-medium px-2 py-0.5">
-                          {client.gender}
-                        </Badge>
-                        {client.age && (
-                          <span className="text-xs text-slate-500">{client.age} years</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Middle: Contact Details */}
-                  <div className="flex-1 min-w-0">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="min-w-0">
-                        <p className="text-xs text-slate-500 mb-0.5">Phone</p>
-                        <div className="flex items-center gap-1.5 text-sm text-slate-900">
-                          <Phone className="h-3.5 w-3.5 text-slate-400" />
-                          <span className="font-medium">{client.phone}</span>
-                          {client.otherPhone && (
-                            <span className="text-slate-400">• {client.otherPhone}</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs text-slate-500 mb-0.5">Email</p>
-                        <div className="flex items-center gap-1.5 text-sm text-slate-900">
-                          {client.email ? (
-                            <>
-                              <Mail className="h-3.5 w-3.5 text-slate-400" />
-                              <span className="font-medium truncate">{client.email}</span>
-                            </>
-                          ) : (
-                            <span className="text-slate-400 text-sm">Not provided</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right: Cases & Actions */}
-                  <div className="flex items-center gap-4 flex-shrink-0">
-                    {client._count && (
-                      <div className="px-4 py-2 bg-slate-50 rounded-lg text-center">
-                        <p className="text-lg font-bold text-slate-900">
-                          {client._count.cases}
-                        </p>
-                        <p className="text-xs text-slate-500">Cases</p>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          router.push(`/clients/${client.id}/edit`)
-                        }}
-                      >
-                        <Edit className="h-4 w-4 text-slate-600" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 text-red-500 hover:text-red-700 hover:bg-red-50"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          handleDelete(
-                            client.id,
-                            `${client.firstName} ${client.lastName}`,
-                            client._count?.cases || 0
-                          )
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            )
+          })}
         </div>
       )}
     </div>
