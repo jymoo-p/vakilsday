@@ -16,6 +16,8 @@ type Appointment = {
   startTime: string
   endTime: string | null
   location: string | null
+  notes: string | null
+  clientId: string | null
   client: {
     id: string
     firstName: string
