@@ -94,27 +94,25 @@ export default function CalendarPage() {
 
   function previousMonth() {
     if (viewMode === 'day') {
-      setCurrentMonth(addDays(currentMonth, -1))
-      setSelectedDate(addDays(selectedDate || new Date(), -1))
+      const newDate = addDays(currentMonth, -1)
+      setCurrentMonth(newDate)
+      setSelectedDate(newDate)
     } else if (viewMode === 'week') {
       setCurrentMonth(addDays(currentMonth, -7))
-      setSelectedDate(null)
     } else {
       setCurrentMonth(subMonths(currentMonth, 1))
-      setSelectedDate(null)
     }
   }
 
   function nextMonth() {
     if (viewMode === 'day') {
-      setCurrentMonth(addDays(currentMonth, 1))
-      setSelectedDate(addDays(selectedDate || new Date(), 1))
+      const newDate = addDays(currentMonth, 1)
+      setCurrentMonth(newDate)
+      setSelectedDate(newDate)
     } else if (viewMode === 'week') {
       setCurrentMonth(addDays(currentMonth, 7))
-      setSelectedDate(null)
     } else {
       setCurrentMonth(addMonths(currentMonth, 1))
-      setSelectedDate(null)
     }
   }
 
@@ -135,15 +133,14 @@ export default function CalendarPage() {
     let endDate: Date
 
     if (viewMode === 'day') {
-      // Show only the selected day or today
-      const targetDay = selectedDate || new Date()
+      // Show only the selected day or currentMonth
+      const targetDay = selectedDate || currentMonth
       startDate = targetDay
       endDate = targetDay
     } else if (viewMode === 'week') {
-      // Show the week containing selected date or today
-      const targetDay = selectedDate || new Date()
-      startDate = startOfWeek(targetDay)
-      endDate = endOfWeek(targetDay)
+      // Show the week containing currentMonth
+      startDate = startOfWeek(currentMonth)
+      endDate = endOfWeek(currentMonth)
     } else {
       // Month view
       const monthStart = startOfMonth(currentMonth)
@@ -241,9 +238,9 @@ export default function CalendarPage() {
         <div>
           <h1 className="text-4xl md:text-5xl font-bold text-slate-900 uppercase tracking-tight">
             {viewMode === 'day'
-              ? format(selectedDate || new Date(), 'd MMM yyyy')
+              ? format(selectedDate || currentMonth, 'd MMM yyyy')
               : viewMode === 'week'
-              ? `${format(startOfWeek(selectedDate || currentMonth), 'd MMM')} - ${format(endOfWeek(selectedDate || currentMonth), 'd MMM yyyy')}`
+              ? `${format(startOfWeek(currentMonth), 'd MMM')} - ${format(endOfWeek(currentMonth), 'd MMM yyyy')}`
               : format(currentMonth, 'MMM yyyy')}
           </h1>
           <p className="text-sm md:text-base text-slate-600 mt-2">
