@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert } from '@/components/ui/alert'
-import { Plus } from 'lucide-react'
+import { Plus, Edit } from 'lucide-react'
 import { format } from 'date-fns'
 
 const hearingSchema = z.object({
@@ -26,17 +26,46 @@ const hearingSchema = z.object({
   itemNumber: z.string().optional(),
   outcome: z.string().optional(),
   nextHearingDate: z.string().optional(),
+}).refine((data) => {
+  if (!data.nextHearingDate) return true
+  const hearingDate = new Date(data.hearingDate)
+  const nextHearingDate = new Date(data.nextHearingDate)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  // Next hearing date cannot be in the past
+  if (nextHearingDate < today) {
+    return false
+  }
+
+  // Next hearing date must be after or equal to hearing date
+  hearingDate.setHours(0, 0, 0, 0)
+  nextHearingDate.setHours(0, 0, 0, 0)
+  return nextHearingDate >= hearingDate
+}, {
+  message: 'Next hearing date must be in the future and after or on the hearing date',
+  path: ['nextHearingDate'],
 })
 
 type HearingFormData = z.infer<typeof hearingSchema>
+
+interface Hearing {
+  id: string
+  hearingDate: string
+  itemNumber: string | null
+  outcome: string | null
+  nextHearingDate: string | null
+}
 
 interface HearingFormProps {
   caseId: string
   userEmail: string
   onSuccess?: () => void
+  hearing?: Hearing | null
+  mode?: 'create' | 'edit'
 }
 
-export function HearingForm({ caseId, userEmail, onSuccess }: HearingFormProps) {
+export function HearingForm({ caseId, userEmail, onSuccess, hearing, mode = 'create' }: HearingFormProps) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -50,26 +79,44 @@ export function HearingForm({ caseId, userEmail, onSuccess }: HearingFormProps) 
   } = useForm<HearingFormData>({
     resolver: zodResolver(hearingSchema),
     defaultValues: {
-      hearingDate: format(new Date(), "yyyy-MM-dd"),
+      hearingDate: hearing ? format(new Date(hearing.hearingDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+      itemNumber: hearing?.itemNumber || '',
+      outcome: hearing?.outcome || '',
+      nextHearingDate: hearing?.nextHearingDate ? format(new Date(hearing.nextHearingDate), "yyyy-MM-dd") : '',
     },
   })
 
-  // Reset form with current date when dialog opens
+  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
-      setValue('hearingDate', format(new Date(), "yyyy-MM-dd"))
+      if (mode === 'edit' && hearing) {
+        setValue('hearingDate', format(new Date(hearing.hearingDate), "yyyy-MM-dd"))
+        setValue('itemNumber', hearing.itemNumber || '')
+        setValue('outcome', hearing.outcome || '')
+        setValue('nextHearingDate', hearing.nextHearingDate ? format(new Date(hearing.nextHearingDate), "yyyy-MM-dd") : '')
+      } else {
+        setValue('hearingDate', format(new Date(), "yyyy-MM-dd"))
+        setValue('itemNumber', '')
+        setValue('outcome', '')
+        setValue('nextHearingDate', '')
+      }
     }
-  }, [open, setValue])
+  }, [open, setValue, mode, hearing])
 
   const onSubmit = async (data: HearingFormData) => {
     setError(null)
     setIsSubmitting(true)
 
     try {
-      // Create hearing date with current time
+      // Create hearing date with current time (or preserve existing time for edit)
       const hearingDateTime = new Date(data.hearingDate)
-      const now = new Date()
-      hearingDateTime.setHours(now.getHours(), now.getMinutes(), 0, 0)
+      if (mode === 'create') {
+        const now = new Date()
+        hearingDateTime.setHours(now.getHours(), now.getMinutes(), 0, 0)
+      } else if (hearing) {
+        const existingDate = new Date(hearing.hearingDate)
+        hearingDateTime.setHours(existingDate.getHours(), existingDate.getMinutes(), 0, 0)
+      }
 
       // Create next hearing date with 10 AM time if provided
       let nextHearingDateTime = null
@@ -78,8 +125,11 @@ export function HearingForm({ caseId, userEmail, onSuccess }: HearingFormProps) 
         nextHearingDateTime.setHours(10, 0, 0, 0)
       }
 
-      const response = await fetch('/api/hearings', {
-        method: 'POST',
+      const url = mode === 'edit' && hearing ? `/api/hearings/${hearing.id}` : '/api/hearings'
+      const method = mode === 'edit' ? 'PATCH' : 'POST'
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -95,7 +145,7 @@ export function HearingForm({ caseId, userEmail, onSuccess }: HearingFormProps) 
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to create hearing')
+        throw new Error(errorData.error || `Failed to ${mode} hearing`)
       }
 
       reset()
@@ -110,15 +160,21 @@ export function HearingForm({ caseId, userEmail, onSuccess }: HearingFormProps) 
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="lg" className="text-base" />}>
-        <Plus className="mr-2 h-5 w-5" />
-        Add Hearing
-      </DialogTrigger>
+      {mode === 'edit' ? (
+        <DialogTrigger render={<Button variant="ghost" size="sm" className="h-8 w-8 p-0" />}>
+          <Edit className="h-4 w-4" />
+        </DialogTrigger>
+      ) : (
+        <DialogTrigger render={<Button size="lg" className="text-base" />}>
+          <Plus className="mr-2 h-5 w-5" />
+          Add Hearing
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle className="text-xl">Add New Hearing</DialogTitle>
+          <DialogTitle className="text-xl">{mode === 'edit' ? 'Edit Hearing' : 'Add New Hearing'}</DialogTitle>
           <DialogDescription>
-            Record details of a hearing for this case
+            {mode === 'edit' ? 'Update hearing details' : 'Record details of a hearing for this case'}
           </DialogDescription>
         </DialogHeader>
 
@@ -188,6 +244,9 @@ export function HearingForm({ caseId, userEmail, onSuccess }: HearingFormProps) 
               {...register('nextHearingDate')}
               className="text-base h-12"
             />
+            {errors.nextHearingDate && (
+              <p className="text-sm text-destructive">{errors.nextHearingDate.message}</p>
+            )}
             <p className="text-xs text-slate-500">
               Time will be set to 10:00 AM (automatically added to calendar)
             </p>
@@ -208,7 +267,9 @@ export function HearingForm({ caseId, userEmail, onSuccess }: HearingFormProps) 
               disabled={isSubmitting}
               className="text-base h-11"
             >
-              {isSubmitting ? 'Adding...' : 'Add Hearing'}
+              {isSubmitting
+                ? (mode === 'edit' ? 'Updating...' : 'Adding...')
+                : (mode === 'edit' ? 'Update Hearing' : 'Add Hearing')}
             </Button>
           </DialogFooter>
         </form>

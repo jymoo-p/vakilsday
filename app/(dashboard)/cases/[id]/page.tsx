@@ -469,7 +469,12 @@ export default function CaseDetailPage() {
 
         {/* Timeline Tab */}
         <TabsContent value="timeline">
-          <HearingTimeline hearings={caseData.hearings} />
+          <HearingTimeline
+            hearings={caseData.hearings}
+            userEmail={user?.email || ''}
+            caseId={caseData.id}
+            onUpdate={fetchCase}
+          />
         </TabsContent>
 
         {/* Documents Tab */}

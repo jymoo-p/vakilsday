@@ -146,28 +146,31 @@ export default function CasesPage() {
 
       {/* Status Filter Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200 -mx-4 px-4 md:mx-0 md:px-0">
-        {statusTabs.map((status) => (
-          <button
-            key={status}
-            onClick={() => setStatusFilter(status)}
-            className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-xs md:text-sm whitespace-nowrap transition-all ${
-              statusFilter === status
-                ? 'bg-primary text-white'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            {status}
-            <span
-              className={`ml-1.5 md:ml-2 px-1.5 md:px-2 py-0.5 rounded-full text-xs ${
-                statusFilter === status
-                  ? 'bg-white/20 text-white'
-                  : 'bg-slate-200 text-slate-700'
-              }`}
+        {statusTabs.map((status) => {
+          const isSelected = statusFilter === status
+          return (
+            <button
+              key={status}
+              onClick={() => setStatusFilter(status)}
+              style={isSelected ? {
+                backgroundColor: '#7c3aed',
+                color: '#ffffff'
+              } : {}}
+              className="px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-xs md:text-sm whitespace-nowrap transition-all text-slate-600 hover:bg-slate-100"
             >
-              {statusCounts[status as keyof typeof statusCounts]}
-            </span>
-          </button>
-        ))}
+              {status}
+              <span
+                style={isSelected ? {
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  color: '#ffffff'
+                } : {}}
+                className="ml-1.5 md:ml-2 px-1.5 md:px-2 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-700"
+              >
+                {statusCounts[status as keyof typeof statusCounts]}
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       {/* Cases List */}
