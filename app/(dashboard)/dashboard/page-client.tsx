@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-import { Calendar, Clock, Building2, Plus, TrendingUp, FileText } from 'lucide-react'
+import { Calendar, Clock, Building2, Plus, TrendingUp, FileText, CalendarClock } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 
 type HearingWithCase = {
@@ -131,12 +131,22 @@ export default function DashboardPageClient() {
             {format(new Date(), 'EEEE, MMMM d, yyyy')}
           </p>
         </div>
-        <Link href="/cases/new">
-          <Button className="gap-2 bg-slate-900 hover:bg-slate-800">
-            <Plus className="h-4 w-4" />
-            New Case
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/appointments/new">
+            <Button variant="outline" className="gap-2">
+              <CalendarClock className="h-4 w-4" />
+              <span className="hidden md:inline">New Appointment</span>
+              <span className="md:hidden">Appointment</span>
+            </Button>
+          </Link>
+          <Link href="/cases/new">
+            <Button className="gap-2 bg-slate-900 hover:bg-slate-800">
+              <Plus className="h-4 w-4" />
+              <span className="hidden md:inline">New Case</span>
+              <span className="md:hidden">Case</span>
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Quick Stats */}

@@ -92,7 +92,30 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ hearings })
+    // Fetch appointments for the date range
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        organizationId: user.organizationId,
+        startTime: {
+          gte: new Date(start),
+          lte: new Date(end),
+        },
+      },
+      include: {
+        client: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: {
+        startTime: 'asc',
+      },
+    })
+
+    return NextResponse.json({ hearings, appointments })
   } catch (error) {
     console.error('Calendar API error:', error)
     return NextResponse.json(

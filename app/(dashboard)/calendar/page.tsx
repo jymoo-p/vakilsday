@@ -42,12 +42,26 @@ type HearingEvent = {
   }
 }
 
+type AppointmentEvent = {
+  id: string
+  title: string
+  startTime: string
+  endTime: string | null
+  location: string | null
+  client: {
+    id: string
+    firstName: string
+    lastName: string
+  } | null
+}
+
 type ViewMode = 'month' | 'week' | 'day'
 
 export default function CalendarPage() {
   const { user } = useAuth()
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [hearings, setHearings] = useState<HearingEvent[]>([])
+  const [appointments, setAppointments] = useState<AppointmentEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('month')
@@ -84,6 +98,7 @@ export default function CalendarPage() {
       if (response.ok) {
         const data = await response.json()
         setHearings(data.hearings || [])
+        setAppointments(data.appointments || [])
       }
     } catch (err) {
       console.error('Error fetching hearings:', err)
@@ -128,6 +143,16 @@ export default function CalendarPage() {
     )
   }
 
+  function getAppointmentsForDate(date: Date) {
+    return appointments.filter((appointment) =>
+      isSameDay(parseISO(appointment.startTime), date)
+    )
+  }
+
+  function hasEventsOnDate(date: Date) {
+    return getHearingsForDate(date).length > 0 || getAppointmentsForDate(date).length > 0
+  }
+
   function renderCalendarDays() {
     let startDate: Date
     let endDate: Date
@@ -158,7 +183,7 @@ export default function CalendarPage() {
         if (day > endDate) break
 
         const currentDay = day
-        const dayHearings = getHearingsForDate(currentDay)
+        const hasEvents = hasEventsOnDate(currentDay)
         const isCurrentMonth = isSameMonth(currentDay, currentMonth)
         const isTodayDate = isToday(currentDay)
         const isSelected = selectedDate && isSameDay(currentDay, selectedDate)
@@ -185,7 +210,7 @@ export default function CalendarPage() {
               </span>
 
               {/* Event indicator - underline style */}
-              {dayHearings.length > 0 && (
+              {hasEvents && (
                 <div className="w-full flex justify-center mt-auto pb-1">
                   <div className="w-8 h-0.5 bg-purple-600 rounded-full"></div>
                 </div>
@@ -215,6 +240,9 @@ export default function CalendarPage() {
   }
 
   const selectedDateHearings = selectedDate ? getHearingsForDate(selectedDate) : []
+  const selectedDateAppointments = selectedDate ? getAppointmentsForDate(selectedDate) : []
+  const todayHearings = getHearingsForDate(new Date())
+  const todayAppointments = getAppointmentsForDate(new Date())
 
   const getClientName = (hearing: HearingEvent) => {
     if (hearing.case.client) {
@@ -329,21 +357,22 @@ export default function CalendarPage() {
             <h2 className="text-xl md:text-2xl font-bold text-slate-900 uppercase tracking-tight">
               {selectedDate ? format(selectedDate, 'EEEE, d MMM') : 'TODAY'}
             </h2>
-            {(selectedDate ? selectedDateHearings : getHearingsForDate(new Date())).length > 0 && (
+            {((selectedDate ? selectedDateHearings.length + selectedDateAppointments.length : todayHearings.length + todayAppointments.length) > 0) && (
               <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-sm px-3 py-1">
-                {(selectedDate ? selectedDateHearings : getHearingsForDate(new Date())).length} scheduled
+                {selectedDate ? selectedDateHearings.length + selectedDateAppointments.length : todayHearings.length + todayAppointments.length} scheduled
               </Badge>
             )}
           </div>
 
-          {(selectedDate ? selectedDateHearings : getHearingsForDate(new Date())).length === 0 ? (
+          {(selectedDate ? (selectedDateHearings.length + selectedDateAppointments.length) : (todayHearings.length + todayAppointments.length)) === 0 ? (
             <div className="text-center py-8">
               <CalendarIcon className="h-12 w-12 mx-auto mb-3 text-slate-300" />
-              <p className="text-slate-500">No hearings scheduled</p>
+              <p className="text-slate-500">No events scheduled</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {(selectedDate ? selectedDateHearings : getHearingsForDate(new Date())).map((hearing) => (
+              {/* Hearings */}
+              {(selectedDate ? selectedDateHearings : todayHearings).map((hearing) => (
                 <Link key={hearing.id} href={`/cases/${hearing.case.id}`}>
                   <Card className="border border-slate-200 hover:shadow-md hover:border-purple-200 transition-all cursor-pointer group">
                     <CardContent className="p-4">
@@ -384,6 +413,57 @@ export default function CalendarPage() {
                         {/* Status Indicator */}
                         <div className="flex-shrink-0">
                           <div className="w-2 h-2 rounded-full bg-purple-600"></div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+
+              {/* Appointments */}
+              {(selectedDate ? selectedDateAppointments : todayAppointments).map((appointment) => (
+                <Link key={appointment.id} href={`/appointments/${appointment.id}`}>
+                  <Card className="border border-green-200 hover:shadow-md hover:border-green-300 transition-all cursor-pointer group bg-green-50/30">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-4">
+                        {/* Time Block */}
+                        <div className="flex flex-col items-center justify-center bg-green-100 rounded-lg px-3 py-2 min-w-[80px]">
+                          <Clock className="h-4 w-4 text-green-600 mb-1" />
+                          <span className="text-sm font-semibold text-green-900">
+                            {format(parseISO(appointment.startTime), 'h:mm a')}
+                          </span>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-base md:text-lg font-semibold text-slate-900 group-hover:text-green-700 transition-colors mb-1">
+                            {appointment.title}
+                          </h4>
+                          {appointment.client && (
+                            <p className="text-sm text-slate-600 mb-2 truncate">
+                              {appointment.client.firstName} {appointment.client.lastName}
+                            </p>
+                          )}
+
+                          <div className="flex flex-wrap gap-3 text-xs text-slate-500">
+                            {appointment.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {appointment.location}
+                              </span>
+                            )}
+                            {appointment.endTime && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                Until {format(parseISO(appointment.endTime), 'h:mm a')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Status Indicator */}
+                        <div className="flex-shrink-0">
+                          <div className="w-2 h-2 rounded-full bg-green-600"></div>
                         </div>
                       </div>
                     </CardContent>

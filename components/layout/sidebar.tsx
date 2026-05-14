@@ -12,12 +12,14 @@ import {
   Shield,
   UserCircle,
   Calendar,
+  CalendarClock,
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Cases', href: '/cases', icon: FolderOpen },
   { name: 'Clients', href: '/clients', icon: UserCircle },
+  { name: 'Appointments', href: '/appointments', icon: CalendarClock },
   { name: 'Calendar', href: '/calendar', icon: Calendar },
   { name: 'Research', href: '/research', icon: Search },
   { name: 'My Team', href: '/team', icon: Users },

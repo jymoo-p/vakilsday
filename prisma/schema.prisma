@@ -40,11 +40,6 @@ enum DocumentType {
   OTHER
 }
 
-enum AppointmentType {
-  HEARING
-  CLIENT_MEETING
-  OTHER
-}
 
 model Organization {
   id               String   @id @default(cuid())
@@ -145,6 +140,7 @@ model Client {
   organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   cases             Case[]
+  appointments      Appointment[]
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -240,13 +236,14 @@ model Case {
 model Appointment {
   id              String          @id @default(cuid())
   title           String
-  type            AppointmentType
   startTime       DateTime
   endTime         DateTime?
   location        String?
   notes           String?         @db.Text
 
-  caseId          String?
+  clientId        String?
+  client          Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
   userId          String
   user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -258,6 +255,7 @@ model Appointment {
 
   @@index([userId, startTime])
   @@index([organizationId])
+  @@index([clientId])
   @@map("appointments")
 }
 
