@@ -88,11 +88,16 @@ export default function CalendarPage() {
 
     setLoading(true)
     try {
+      // Fetch data for a wider range to cover week/day views
       const monthStart = startOfMonth(currentMonth)
       const monthEnd = endOfMonth(currentMonth)
 
+      // Extend range to cover the full calendar grid (includes prev/next month days)
+      const calendarStart = startOfWeek(monthStart)
+      const calendarEnd = endOfWeek(monthEnd)
+
       const response = await fetch(
-        `/api/calendar/hearings?email=${encodeURIComponent(user.email)}&start=${monthStart.toISOString()}&end=${monthEnd.toISOString()}`
+        `/api/calendar/hearings?email=${encodeURIComponent(user.email)}&start=${calendarStart.toISOString()}&end=${calendarEnd.toISOString()}`
       )
 
       if (response.ok) {
@@ -273,7 +278,7 @@ export default function CalendarPage() {
           </h1>
           <p className="text-sm md:text-base text-slate-600 mt-2">
             {viewMode === 'month'
-              ? `${hearings.length} ${hearings.length === 1 ? 'hearing' : 'hearings'} this month`
+              ? `${hearings.length} ${hearings.length === 1 ? 'hearing' : 'hearings'}${appointments.length > 0 ? `, ${appointments.length} ${appointments.length === 1 ? 'appointment' : 'appointments'}` : ''}`
               : viewMode === 'week'
               ? `Week ${format(currentMonth, 'w')}`
               : format(selectedDate || new Date(), 'EEEE')}
