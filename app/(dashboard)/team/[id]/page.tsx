@@ -204,12 +204,10 @@ export default function TeamMemberDetailPage({
           {/* Exit Organization - shown to current user viewing their own profile */}
           {isViewingOwnProfile && (
             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2 border-slate-300 text-slate-700 hover:bg-slate-50">
-                  <LogOut className="h-4 w-4" />
-                  <span className="hidden md:inline">Exit Organization</span>
-                  <span className="md:hidden">Exit</span>
-                </Button>
+              <AlertDialogTrigger className="inline-flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-50 transition-colors">
+                <LogOut className="h-4 w-4" />
+                <span className="hidden md:inline">Exit Organization</span>
+                <span className="md:hidden">Exit</span>
               </AlertDialogTrigger>
               <AlertDialogContent className="bg-white">
                 <AlertDialogHeader>
@@ -240,12 +238,10 @@ export default function TeamMemberDetailPage({
           {/* Remove Member - shown to admins viewing other profiles */}
           {!isViewingOwnProfile && currentUserRole === 'ADMIN' && (
             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2 border-slate-300 text-slate-700 hover:bg-slate-50">
-                  <UserMinus className="h-4 w-4" />
-                  <span className="hidden md:inline">Remove Member</span>
-                  <span className="md:hidden">Remove</span>
-                </Button>
+              <AlertDialogTrigger className="inline-flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-50 transition-colors">
+                <UserMinus className="h-4 w-4" />
+                <span className="hidden md:inline">Remove Member</span>
+                <span className="md:hidden">Remove</span>
               </AlertDialogTrigger>
               <AlertDialogContent className="bg-white">
                 <AlertDialogHeader>
