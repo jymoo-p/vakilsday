@@ -153,16 +153,38 @@ export async function PATCH(
     }
 
     // Handle team assignments separately and exclude relation objects
-    const { assignedUserIds, userEmail: _userEmail, client, court, caseType, assignments, ...caseUpdateData } = body
+    const { assignedUserIds, userEmail: _userEmail, client, court, caseType, assignments, hearings, documents, ...caseUpdateData } = body
+
+    // Clean up the update data - remove empty relation IDs
+    const cleanedData: any = { ...caseUpdateData }
+
+    // Handle dates
+    if (body.filingDate) cleanedData.filingDate = new Date(body.filingDate)
+    if (body.nextHearingDate) cleanedData.nextHearingDate = new Date(body.nextHearingDate)
+
+    // Only include relation IDs if they're valid
+    if (body.clientId && body.clientId !== '') {
+      cleanedData.clientId = body.clientId
+    } else if (body.clientId === '') {
+      cleanedData.clientId = null
+    }
+
+    if (body.courtId && body.courtId !== '') {
+      cleanedData.courtId = body.courtId
+    } else if (body.courtId === '') {
+      cleanedData.courtId = null
+    }
+
+    if (body.caseTypeId && body.caseTypeId !== '') {
+      cleanedData.caseTypeId = body.caseTypeId
+    } else if (body.caseTypeId === '') {
+      cleanedData.caseTypeId = null
+    }
 
     // Update case data
     await prisma.case.update({
       where: { id },
-      data: {
-        ...caseUpdateData,
-        filingDate: body.filingDate ? new Date(body.filingDate) : undefined,
-        nextHearingDate: body.nextHearingDate ? new Date(body.nextHearingDate) : undefined,
-      },
+      data: cleanedData,
     })
 
     // Update team assignments if provided
