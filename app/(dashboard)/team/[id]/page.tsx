@@ -7,9 +7,21 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { ArrowLeft, Mail, Phone, Briefcase, Calendar, FileText } from 'lucide-react'
+import { ArrowLeft, Mail, Phone, Briefcase, Calendar, FileText, LogOut, UserMinus } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 
 interface TeamMember {
   id: string
@@ -39,7 +51,11 @@ export default function TeamMemberDetailPage({
   const { user } = useAuth()
   const router = useRouter()
   const [member, setMember] = useState<TeamMember | null>(null)
+  const [currentUserRole, setCurrentUserRole] = useState<string>('')
+  const [caseCount, setCaseCount] = useState<number>(0)
   const [loading, setLoading] = useState(true)
+  const [isRemoving, setIsRemoving] = useState(false)
+  const [isExiting, setIsExiting] = useState(false)
 
   useEffect(() => {
     fetchMember()
@@ -49,10 +65,25 @@ export default function TeamMemberDetailPage({
     if (!user?.email) return
 
     try {
+      // Fetch current user role
+      const userResponse = await fetch(`/api/users/${encodeURIComponent(user.email)}`)
+      if (userResponse.ok) {
+        const userData = await userResponse.json()
+        setCurrentUserRole(userData.user?.role || '')
+      }
+
+      // Fetch member details
       const response = await fetch(`/api/team/${resolvedParams.id}`)
       if (response.ok) {
         const data = await response.json()
         setMember(data.member)
+
+        // Fetch case count
+        const caseResponse = await fetch(`/api/team/${resolvedParams.id}/cases`)
+        if (caseResponse.ok) {
+          const caseData = await caseResponse.json()
+          setCaseCount(caseData.caseCount || 0)
+        }
       } else {
         router.push('/team')
       }
@@ -61,6 +92,67 @@ export default function TeamMemberDetailPage({
       router.push('/team')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleExitOrganization() {
+    if (!user?.email) return
+
+    setIsExiting(true)
+    try {
+      const response = await fetch('/api/organizations/leave', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userEmail: user.email,
+        }),
+      })
+
+      if (response.ok) {
+        toast.success('You have left the organization')
+        router.push('/signin')
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Failed to leave organization')
+      }
+    } catch (error) {
+      console.error('Error leaving organization:', error)
+      toast.error('Failed to leave organization')
+    } finally {
+      setIsExiting(false)
+    }
+  }
+
+  async function handleRemoveMember() {
+    if (!member || !user?.email) return
+
+    setIsRemoving(true)
+    try {
+      const response = await fetch('/api/organizations/remove-member', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: member.id,
+          adminEmail: user.email,
+        }),
+      })
+
+      if (response.ok) {
+        toast.success(`${member.name || member.email} has been removed from the organization`)
+        router.push('/team')
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Failed to remove member')
+      }
+    } catch (error) {
+      console.error('Error removing member:', error)
+      toast.error('Failed to remove member')
+    } finally {
+      setIsRemoving(false)
     }
   }
 
@@ -90,17 +182,104 @@ export default function TeamMemberDetailPage({
     )
   }
 
+  const isViewingOwnProfile = user?.email === member.email
+
   return (
     <div className="space-y-6 max-w-4xl px-4 md:px-0">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/team">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Team Member Profile</h1>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link href="/team">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Team Member Profile</h1>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          {/* Exit Organization - shown to current user viewing their own profile */}
+          {isViewingOwnProfile && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2 border-slate-300 text-slate-700 hover:bg-slate-50">
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden md:inline">Exit Organization</span>
+                  <span className="md:hidden">Exit</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-white">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-xl font-bold text-slate-900">Exit Organization?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-slate-600 text-base pt-2">
+                    Are you sure you want to leave this organization? You will lose access to all cases, documents, and team resources.
+                    {currentUserRole === 'ADMIN' && (
+                      <span className="block mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-sm font-medium">
+                        ⚠️ Note: You cannot leave if you are the only admin. Please assign another admin first.
+                      </span>
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="gap-2 sm:gap-2">
+                  <AlertDialogCancel className="bg-white border-slate-300 text-slate-700 hover:bg-slate-50">Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleExitOrganization}
+                    disabled={isExiting}
+                    className="bg-slate-900 hover:bg-slate-800 text-white"
+                  >
+                    {isExiting ? 'Leaving...' : 'Yes, Exit'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+
+          {/* Remove Member - shown to admins viewing other profiles */}
+          {!isViewingOwnProfile && currentUserRole === 'ADMIN' && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2 border-slate-300 text-slate-700 hover:bg-slate-50">
+                  <UserMinus className="h-4 w-4" />
+                  <span className="hidden md:inline">Remove Member</span>
+                  <span className="md:hidden">Remove</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-white">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-xl font-bold text-slate-900">Remove Team Member?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-slate-600 text-base pt-2 space-y-3">
+                    <p>
+                      Are you sure you want to remove <strong className="text-slate-900">{member.name || member.email}</strong> from the organization?
+                      They will lose access to all cases, documents, and team resources.
+                    </p>
+                    {caseCount > 0 && (
+                      <p className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-900 text-sm font-medium">
+                        📋 <strong>{member.name || member.email}</strong> is assigned to <strong>{caseCount}</strong> {caseCount === 1 ? 'case' : 'cases'}. Removing user will also unassign them from all cases.
+                      </p>
+                    )}
+                    {member.role === 'ADMIN' && (
+                      <p className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-sm font-medium">
+                        ⚠️ Note: You cannot remove the only admin. Assign another admin first.
+                      </p>
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="gap-2 sm:gap-2">
+                  <AlertDialogCancel className="bg-white border-slate-300 text-slate-700 hover:bg-slate-50">Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleRemoveMember}
+                    disabled={isRemoving}
+                    className="bg-slate-900 hover:bg-slate-800 text-white"
+                  >
+                    {isRemoving ? 'Removing...' : 'Yes, Remove'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
 
