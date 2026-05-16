@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ChevronLeft, Phone, Mail, MapPin, Plus, FileText, Calendar, Building2 } from 'lucide-react'
+import { ChevronLeft, Phone, Mail, MapPin, Plus, FileText, Calendar, Building2, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
 
@@ -39,6 +39,10 @@ interface Case {
     name: string
   } | null
   opponentMainParty: string
+  _count: {
+    hearings: number
+    documents: number
+  }
 }
 
 export default function ClientDetailPage() {
@@ -105,10 +109,10 @@ export default function ClientDetailPage() {
   }
 
   const statusColors = {
-    ACTIVE: 'bg-green-100 text-green-800 border-green-300',
-    PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    CLOSED: 'bg-slate-100 text-slate-600 border-slate-300',
-    ARCHIVED: 'bg-slate-50 text-slate-500 border-slate-200',
+    ACTIVE: 'bg-green-100 text-green-700 border-green-200',
+    PENDING: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    CLOSED: 'bg-blue-100 text-blue-700 border-blue-200',
+    ARCHIVED: 'bg-gray-100 text-gray-600 border-gray-200',
   }
 
   return (
@@ -225,49 +229,70 @@ export default function ClientDetailPage() {
             <div className="space-y-3">
               {cases.map((caseItem) => (
                 <Link key={caseItem.id} href={`/cases/${caseItem.id}`}>
-                  <Card className="border-l-4 border-l-slate-900 hover:shadow-md transition-all cursor-pointer">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-slate-900">
+                  <Card className="hover:shadow-lg hover:scale-[1.01] transition-all duration-200 cursor-pointer group border-slate-200">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-base truncate group-hover:text-primary transition-colors font-normal tracking-wide">
                               {caseItem.caseNumber}
                               {caseItem.year && ` / ${caseItem.year}`}
                             </h3>
-                            <Badge className={statusColors[caseItem.status as keyof typeof statusColors]}>
+                            <Badge className={`${statusColors[caseItem.status as keyof typeof statusColors]} text-xs font-medium px-2 py-0.5 border`}>
                               {caseItem.status}
                             </Badge>
                           </div>
-
-                          <div className="space-y-1 text-sm text-slate-600">
-                            <p>
-                              <span className="font-medium">vs</span> {caseItem.opponentMainParty}
-                            </p>
-
-                            {caseItem.court && (
-                              <div className="flex items-center gap-1">
-                                <Building2 className="h-3.5 w-3.5" />
-                                <span>{caseItem.court.name}</span>
-                                {caseItem.courtNumber && <span>• Court {caseItem.courtNumber}</span>}
+                          <div className="space-y-1.5 mt-1">
+                            <div className="flex items-center gap-2 text-base">
+                              <span className="text-slate-400 font-normal">vs</span>
+                              <span className="font-medium text-slate-700">{caseItem.opponentMainParty}</span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                                <Building2 className="h-4 w-4 text-slate-400" />
+                                <span className={caseItem.court?.name ? '' : 'text-yellow-600'}>
+                                  {caseItem.court?.name || 'Court is not specified'}
+                                </span>
+                                {caseItem.courtNumber && (
+                                  <>
+                                    <span className="text-slate-300">•</span>
+                                    <span>Court {caseItem.courtNumber}</span>
+                                  </>
+                                )}
                               </div>
-                            )}
-
-                            {caseItem.nextHearingDate && (
-                              <div className="flex items-center gap-1 text-slate-900 font-medium">
-                                <Calendar className="h-3.5 w-3.5" />
-                                <span>Next: {format(parseISO(caseItem.nextHearingDate), 'MMM d, yyyy')}</span>
-                              </div>
-                            )}
+                              {caseItem.caseType && (
+                                <Badge variant="outline" className="text-xs">
+                                  {caseItem.caseType.name}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
-
-                        {caseItem.caseType && (
-                          <Badge variant="outline" className="text-xs">
-                            {caseItem.caseType.name}
-                          </Badge>
-                        )}
+                        <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors flex-shrink-0 mt-1" />
                       </div>
-                    </CardContent>
+                      <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-100">
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <Calendar className="h-3.5 w-3.5 text-purple-600" />
+                          <span className="text-xs text-slate-500">Next:</span>
+                          <span className="font-medium text-slate-900">
+                            {caseItem.nextHearingDate
+                              ? format(parseISO(caseItem.nextHearingDate), 'MMM d, yyyy')
+                              : 'Not scheduled'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-center">
+                            <p className="text-base font-bold text-primary">{caseItem._count.hearings}</p>
+                            <p className="text-xs text-slate-500">Hearings</p>
+                          </div>
+                          <div className="w-px h-8 bg-slate-200"></div>
+                          <div className="text-center">
+                            <p className="text-base font-bold text-primary">{caseItem._count.documents}</p>
+                            <p className="text-xs text-slate-500">Docs</p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardHeader>
                   </Card>
                 </Link>
               ))}

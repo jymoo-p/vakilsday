@@ -31,7 +31,6 @@ import {
   Edit,
   Upload,
   Download,
-  Trash2,
   Eye,
   History,
   Plus,
@@ -733,7 +732,7 @@ export default function CaseDetailPage() {
                       <Label htmlFor="court">Court</Label>
                       <Select
                         value={courtDetailsForm.courtId || undefined}
-                        onValueChange={(value) => setCourtDetailsForm({ ...courtDetailsForm, courtId: value })}
+                        onValueChange={(value) => setCourtDetailsForm({ ...courtDetailsForm, courtId: value || '' })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select court" />
@@ -762,7 +761,7 @@ export default function CaseDetailPage() {
                       <Label htmlFor="caseType">Case Type</Label>
                       <Select
                         value={courtDetailsForm.caseTypeId || undefined}
-                        onValueChange={(value) => setCourtDetailsForm({ ...courtDetailsForm, caseTypeId: value })}
+                        onValueChange={(value) => setCourtDetailsForm({ ...courtDetailsForm, caseTypeId: value || '' })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select case type" />

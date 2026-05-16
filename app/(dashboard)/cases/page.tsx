@@ -2,13 +2,25 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Search, Calendar, FileText, ChevronRight, Building2 } from 'lucide-react'
 import { format } from 'date-fns'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { toast } from 'sonner'
 
 interface Case {
   id: string
@@ -25,6 +37,10 @@ interface Case {
     lastName: string
   } | null
   court: {
+    id: string
+    name: string
+  } | null
+  caseType: {
     id: string
     name: string
   } | null
@@ -49,11 +65,27 @@ const statusColors = {
 
 export default function CasesPage() {
   const { user } = useAuth()
+  const router = useRouter()
   const [cases, setCases] = useState<Case[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('All')
   const [userRole, setUserRole] = useState<string>('ASSOCIATE')
+  const [showQuickCreateDialog, setShowQuickCreateDialog] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [clients, setClients] = useState<any[]>([])
+  const [quickCaseForm, setQuickCaseForm] = useState({
+    caseNumber: '',
+    clientId: '',
+    opponentMainParty: '',
+    appearingFor: 'PETITIONER' as 'PETITIONER' | 'RESPONDENT',
+  })
+  const [clientSearchQuery, setClientSearchQuery] = useState('')
+  const [showClientDropdown, setShowClientDropdown] = useState(false)
+  const [showQuickClientDialog, setShowQuickClientDialog] = useState(false)
+  const [quickClientName, setQuickClientName] = useState('')
+  const [quickClientPhone, setQuickClientPhone] = useState('')
+  const [isCreatingClient, setIsCreatingClient] = useState(false)
 
   useEffect(() => {
     async function fetchUserData() {
@@ -80,6 +112,140 @@ export default function CasesPage() {
       console.error('Error fetching cases:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchClients = async () => {
+    if (!user?.email) return
+
+    try {
+      const res = await fetch(`/api/clients?email=${encodeURIComponent(user.email)}`)
+      if (res.ok) {
+        const data = await res.json()
+        setClients(data.clients || [])
+      }
+    } catch (error) {
+      console.error('Error fetching clients:', error)
+    }
+  }
+
+  const handleOpenQuickCreate = () => {
+    fetchClients()
+    setQuickCaseForm({
+      caseNumber: '',
+      clientId: '',
+      opponentMainParty: '',
+      appearingFor: 'PETITIONER',
+    })
+    setClientSearchQuery('')
+    setShowClientDropdown(false)
+    setShowQuickClientDialog(false)
+    setQuickClientName('')
+    setQuickClientPhone('')
+    setShowQuickCreateDialog(true)
+  }
+
+  const handleQuickClientCreate = async () => {
+    if (!quickClientName.trim() || !quickClientPhone.trim()) {
+      toast.error('Please enter both name and phone number')
+      return
+    }
+
+    setIsCreatingClient(true)
+    try {
+      const nameParts = quickClientName.trim().split(/\s+/)
+      const firstName = nameParts[0]
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined
+
+      const response = await fetch('/api/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEmail: user?.email,
+          firstName,
+          lastName,
+          phone: quickClientPhone.trim(),
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to create client')
+      }
+
+      const data = await response.json()
+      const newClient = data.client
+
+      // Update clients list
+      setClients([...clients, newClient])
+
+      // Select the new client
+      const fullName = newClient.lastName ? `${newClient.firstName} ${newClient.lastName}` : newClient.firstName
+      setClientSearchQuery(fullName)
+      setQuickCaseForm({ ...quickCaseForm, clientId: newClient.id })
+
+      toast.success('Client created successfully')
+      setShowQuickClientDialog(false)
+      setQuickClientName('')
+      setQuickClientPhone('')
+    } catch (error) {
+      console.error('Error creating client:', error)
+      toast.error('Failed to create client')
+    } finally {
+      setIsCreatingClient(false)
+    }
+  }
+
+  const handleQuickCreateCase = async () => {
+    if (!user?.email) return
+
+    // Validation
+    if (!quickCaseForm.caseNumber.trim()) {
+      toast.error('Case number is required')
+      return
+    }
+    if (!quickCaseForm.clientId) {
+      toast.error('Please select a client')
+      return
+    }
+    if (!quickCaseForm.opponentMainParty.trim()) {
+      toast.error('Opponent main party is required')
+      return
+    }
+
+    setCreating(true)
+
+    try {
+      // Create case with minimal data
+      const caseResponse = await fetch('/api/cases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEmail: user.email,
+          caseNumber: quickCaseForm.caseNumber,
+          appearingFor: quickCaseForm.appearingFor,
+          clientId: quickCaseForm.clientId,
+          opponentMainParty: quickCaseForm.opponentMainParty,
+          filingDate: new Date().toISOString(),
+          status: 'ACTIVE',
+        }),
+      })
+
+      if (!caseResponse.ok) {
+        const errorData = await caseResponse.json()
+        throw new Error(errorData.error || 'Failed to create case')
+      }
+
+      const caseData = await caseResponse.json()
+      toast.success('Case created successfully')
+      setShowQuickCreateDialog(false)
+
+      // Navigate to case detail page
+      router.push(`/cases/${caseData.case.id}`)
+    } catch (error) {
+      console.error('Error creating case:', error)
+      toast.error(error instanceof Error ? error.message : 'Something went wrong. Try again.')
+    } finally {
+      setCreating(false)
     }
   }
 
@@ -124,13 +290,221 @@ export default function CasesPage() {
           </p>
         </div>
         {canCreateCase && (
-          <Link href="/cases/new">
-            <Button className="gap-2 h-9 md:h-10 text-sm md:text-base">
+          <Dialog open={showQuickCreateDialog} onOpenChange={setShowQuickCreateDialog}>
+            <DialogTrigger render={<Button className="gap-2 h-9 md:h-10 text-sm md:text-base" />} onClick={handleOpenQuickCreate}>
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">New Case</span>
-            </Button>
-          </Link>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle className="text-xl">Create New Case</DialogTitle>
+                <DialogDescription>
+                  Enter basic case information. You can add more details after creating the case.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="caseNumber">Case Number *</Label>
+                  <Input
+                    id="caseNumber"
+                    value={quickCaseForm.caseNumber}
+                    onChange={(e) => setQuickCaseForm({ ...quickCaseForm, caseNumber: e.target.value })}
+                    placeholder="e.g., CRL.A. 123/2024"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Appearing For *</Label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        value="PETITIONER"
+                        checked={quickCaseForm.appearingFor === 'PETITIONER'}
+                        onChange={(e) => setQuickCaseForm({ ...quickCaseForm, appearingFor: e.target.value as any })}
+                        className="w-4 h-4 text-primary"
+                      />
+                      <span className="text-sm">Petitioner</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        value="RESPONDENT"
+                        checked={quickCaseForm.appearingFor === 'RESPONDENT'}
+                        onChange={(e) => setQuickCaseForm({ ...quickCaseForm, appearingFor: e.target.value as any })}
+                        className="w-4 h-4 text-primary"
+                      />
+                      <span className="text-sm">Respondent</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="space-y-2 relative">
+                  <Label htmlFor="clientSearch">Client *</Label>
+                  <Input
+                    id="clientSearch"
+                    placeholder="Start typing to search clients..."
+                    value={clientSearchQuery}
+                    onChange={(e) => {
+                      setClientSearchQuery(e.target.value)
+                      setShowClientDropdown(true)
+                      if (!e.target.value) {
+                        setQuickCaseForm({ ...quickCaseForm, clientId: '' })
+                      }
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => setShowClientDropdown(false), 300)
+                    }}
+                    onFocus={() => {
+                      if (clientSearchQuery) {
+                        setShowClientDropdown(true)
+                      }
+                    }}
+                  />
+                  {clientSearchQuery && showClientDropdown && (
+                    <div className="absolute z-10 w-full border border-slate-200 rounded-lg mt-1 bg-white shadow-lg">
+                      {clients.filter(client => {
+                        const fullName = client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName
+                        return fullName.toLowerCase().includes(clientSearchQuery.toLowerCase())
+                      }).length > 0 ? (
+                        <div className="max-h-48 overflow-y-auto">
+                          {clients.filter(client => {
+                            const fullName = client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName
+                            return fullName.toLowerCase().includes(clientSearchQuery.toLowerCase())
+                          }).map((client) => (
+                            <div
+                              key={client.id}
+                              onMouseDown={(e) => {
+                                e.preventDefault()
+                                const fullName = client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName
+                                setClientSearchQuery(fullName)
+                                setQuickCaseForm({ ...quickCaseForm, clientId: client.id })
+                                setShowClientDropdown(false)
+                              }}
+                              className="p-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0"
+                            >
+                              {client.firstName} {client.lastName || ''}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-4 text-center space-y-3 bg-gradient-to-br from-indigo-50 to-purple-50">
+                          <p className="text-sm text-slate-700 font-medium">
+                            No clients found matching "{clientSearchQuery}"
+                          </p>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setQuickClientName(clientSearchQuery)
+                              setShowQuickClientDialog(true)
+                              setShowClientDropdown(false)
+                            }}
+                            className="gap-2"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Create New Client
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="opponentMainParty">Opponent Main Party *</Label>
+                  <Input
+                    id="opponentMainParty"
+                    value={quickCaseForm.opponentMainParty}
+                    onChange={(e) => setQuickCaseForm({ ...quickCaseForm, opponentMainParty: e.target.value })}
+                    placeholder="e.g., State of Kerala"
+                  />
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-800">
+                    💡 <strong>Quick Entry:</strong> After creating the case, you'll be taken to the case details page where you can add court information, hearings, documents, and more.
+                  </p>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowQuickCreateDialog(false)}
+                  disabled={creating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleQuickCreateCase}
+                  disabled={creating}
+                >
+                  {creating ? 'Creating...' : 'Create Case'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
+
+        {/* Quick Client Creation Dialog */}
+        <Dialog open={showQuickClientDialog} onOpenChange={setShowQuickClientDialog}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>Create New Client</DialogTitle>
+              <DialogDescription>
+                Enter client details to create a new record.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="quickClientName">Client Name *</Label>
+                <Input
+                  id="quickClientName"
+                  value={quickClientName}
+                  onChange={(e) => setQuickClientName(e.target.value)}
+                  placeholder="Enter full name"
+                />
+                <p className="text-xs text-slate-500">
+                  First word will be first name, rest will be last name
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="quickClientPhone">Phone Number *</Label>
+                <Input
+                  id="quickClientPhone"
+                  value={quickClientPhone}
+                  onChange={(e) => setQuickClientPhone(e.target.value)}
+                  placeholder="Enter phone number"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowQuickClientDialog(false)}
+                disabled={isCreatingClient}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleQuickClientCreate}
+                disabled={isCreatingClient}
+              >
+                {isCreatingClient ? 'Creating...' : 'Create Client'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Search Bar */}
@@ -195,12 +569,10 @@ export default function CasesPage() {
                 : 'Create your first case to get started'}
             </p>
             {canCreateCase && !searchQuery && statusFilter === 'All' && (
-              <Link href="/cases/new">
-                <Button className="mt-4">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Case
-                </Button>
-              </Link>
+              <Button className="mt-4" onClick={handleOpenQuickCreate}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Case
+              </Button>
             )}
           </CardContent>
         </Card>
@@ -226,16 +598,23 @@ export default function CasesPage() {
                           <span className="text-slate-400 font-normal">vs</span>
                           <span className="font-medium text-slate-700">{caseItem.opponentMainParty}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                          <Building2 className="h-4 w-4 text-slate-400" />
-                          <span className={caseItem.court?.name ? '' : 'text-yellow-600'}>
-                            {caseItem.court?.name || 'Court is not specified'}
-                          </span>
-                          {caseItem.courtNumber && (
-                            <>
-                              <span className="text-slate-300">•</span>
-                              <span>Court {caseItem.courtNumber}</span>
-                            </>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                            <Building2 className="h-4 w-4 text-slate-400" />
+                            <span className={caseItem.court?.name ? '' : 'text-yellow-600'}>
+                              {caseItem.court?.name || 'Court is not specified'}
+                            </span>
+                            {caseItem.courtNumber && (
+                              <>
+                                <span className="text-slate-300">•</span>
+                                <span>Court {caseItem.courtNumber}</span>
+                              </>
+                            )}
+                          </div>
+                          {caseItem.caseType && (
+                            <Badge variant="outline" className="text-xs">
+                              {caseItem.caseType.name}
+                            </Badge>
                           )}
                         </div>
                       </div>

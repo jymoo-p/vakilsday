@@ -19,11 +19,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ChevronLeft, Loader2, Plus, X } from 'lucide-react'
+import { ChevronLeft, Loader2, Plus, X, Trash2, Archive } from 'lucide-react'
 import Link from 'next/link'
 import { Alert } from '@/components/ui/alert'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
 
 const caseSchema = z.object({
@@ -74,6 +84,11 @@ export default function EditCasePage() {
   const [selectedClient, setSelectedClient] = useState<string>('')
   const [currentClientName, setCurrentClientName] = useState<string>('')
   const [showClientChangeDialog, setShowClientChangeDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [userRole, setUserRole] = useState<string>('')
+  const [caseStatus, setCaseStatus] = useState<string>('')
+  const [hearingCount, setHearingCount] = useState<number>(0)
 
   const {
     register,
@@ -105,6 +120,8 @@ export default function EditCasePage() {
 
       // Populate form
       const c = caseData.case
+      setCaseStatus(c.status)
+      setHearingCount(c.hearings?.length || 0)
       setValue('caseNumber', c.caseNumber)
       setValue('year', c.year?.toString() || '')
       setValue('appearingFor', c.appearingFor)
@@ -172,10 +189,65 @@ export default function EditCasePage() {
         setCaseTypes(typesData.caseTypes || [])
       }
 
+      // Fetch user role
+      const userRes = await fetch(`/api/users/${encodeURIComponent(user!.email!)}`)
+      if (userRes.ok) {
+        const userData = await userRes.json()
+        setUserRole(userData.user?.role || '')
+      }
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load case')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteOrArchive = () => {
+    setShowDeleteDialog(true)
+  }
+
+  const handleConfirmAction = async () => {
+    if (!user?.email) return
+
+    setDeleting(true)
+
+    try {
+      if (hearingCount >= 2) {
+        // Archive the case
+        const response = await fetch(`/api/cases/${params.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userEmail: user.email,
+            status: 'ARCHIVED',
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to archive case')
+        }
+
+        toast.success('Case archived successfully')
+        router.push('/cases')
+      } else {
+        // Delete the case
+        const response = await fetch(`/api/cases/${params.id}?email=${encodeURIComponent(user.email)}`, {
+          method: 'DELETE',
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to delete case')
+        }
+
+        toast.success('Case deleted successfully')
+        router.push('/cases')
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Something went wrong. Try again.')
+    } finally {
+      setDeleting(false)
+      setShowDeleteDialog(false)
     }
   }
 
@@ -597,6 +669,111 @@ export default function EditCasePage() {
           </Button>
         </div>
       </form>
+
+      {/* Delete/Archive Section */}
+      {userRole === 'ADMIN' && caseStatus !== 'ARCHIVED' && (
+        <Card className="mt-6">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h3 className="text-base font-medium text-slate-900">
+                  {hearingCount >= 2 ? 'Archive this case' : 'Delete this case'}
+                </h3>
+                <p className="text-sm text-slate-600 mt-1">
+                  {hearingCount >= 2
+                    ? `This case has ${hearingCount} hearing records. Archive to preserve the case history while removing it from active cases.`
+                    : hearingCount === 1
+                    ? 'This case has 1 hearing record. Once deleted, it cannot be recovered.'
+                    : 'Once deleted, this case cannot be recovered.'}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleDeleteOrArchive}
+                className="ml-4 border-red-300 text-red-700 hover:bg-red-50 flex-shrink-0"
+              >
+                {hearingCount >= 2 ? (
+                  <>
+                    <Archive className="mr-2 h-4 w-4" />
+                    Archive Case
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Case
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Delete/Archive Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="sm:max-w-[480px] rounded-2xl bg-white">
+          <AlertDialogHeader>
+            <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
+              hearingCount >= 2
+                ? 'bg-gradient-to-br from-blue-100 to-blue-200'
+                : 'bg-gradient-to-br from-red-100 to-red-200'
+            }`}>
+              {hearingCount >= 2 ? (
+                <Archive className="h-8 w-8 text-blue-600" />
+              ) : (
+                <Trash2 className="h-8 w-8 text-red-600" />
+              )}
+            </div>
+            <AlertDialogTitle className="text-center text-xl font-semibold">
+              {hearingCount >= 2 ? 'Archive This Case?' : 'Delete This Case?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center space-y-3 pt-2">
+              {hearingCount >= 2 ? (
+                <>
+                  <div className="text-slate-600">
+                    This case has <strong className="text-slate-900">{hearingCount} hearing records</strong>. Cases with significant history should be archived to maintain records.
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="text-sm text-blue-800">
+                      The case will be moved to <strong>ARCHIVED</strong> status and can be viewed later from the archived cases list.
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-slate-600">
+                    Are you sure you want to delete this case? <strong className="text-red-600">This action cannot be undone.</strong>
+                  </div>
+                  {hearingCount === 1 && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                      <div className="text-sm text-amber-800">
+                        This case has <strong>1 hearing record</strong> which will also be deleted.
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-3 mt-6">
+            <AlertDialogCancel disabled={deleting} className="flex-1">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmAction}
+              disabled={deleting}
+              className={`flex-1 ${
+                hearingCount >= 2
+                  ? 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-red-600 hover:bg-red-700'
+              }`}
+            >
+              {deleting ? 'Processing...' : (hearingCount >= 2 ? 'Archive Case' : 'Delete Case')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
