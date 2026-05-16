@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { useState } from 'react'
 import {
   LayoutDashboard,
-  FolderOpen,
+  Briefcase,
   UserCircle,
   Calendar,
   MoreHorizontal,
@@ -25,7 +25,7 @@ import {
 
 const primaryNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Cases', href: '/cases', icon: FolderOpen },
+  { name: 'Cases', href: '/cases', icon: Briefcase },
   { name: 'Calendar', href: '/calendar', icon: Calendar },
   { name: 'Clients', href: '/clients', icon: UserCircle },
 ]
@@ -61,7 +61,7 @@ export function MobileNav() {
                 <item.icon
                   className={cn(
                     'h-6 w-6 mb-1',
-                    isActive ? 'text-slate-900' : 'text-slate-500'
+                    isActive ? 'text-purple-600' : 'text-purple-400'
                   )}
                 />
                 <span className={cn(

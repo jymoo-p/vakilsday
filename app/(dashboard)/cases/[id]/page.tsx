@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { format } from 'date-fns'
 import {
@@ -34,6 +34,8 @@ import {
   Eye,
   History,
   Plus,
+  X,
+  Sparkles,
 } from 'lucide-react'
 import Link from 'next/link'
 import { HearingTimeline } from '@/components/cases/hearing-timeline'
@@ -115,6 +117,7 @@ interface Case {
 export default function CaseDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useAuth()
   const [caseData, setCaseData] = useState<Case | null>(null)
   const [loading, setLoading] = useState(true)
@@ -122,6 +125,7 @@ export default function CaseDetailPage() {
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
+  const [showGuidance, setShowGuidance] = useState(false)
   const [editingCourtDetails, setEditingCourtDetails] = useState(false)
   const [editingSynopsis, setEditingSynopsis] = useState(false)
   const [editingOpposingCounsel, setEditingOpposingCounsel] = useState(false)
@@ -178,8 +182,12 @@ export default function CaseDetailPage() {
   useEffect(() => {
     if (user?.email) {
       fetchCase()
+      // Check if this is a newly created case
+      if (searchParams.get('newCase') === 'true') {
+        setShowGuidance(true)
+      }
     }
-  }, [params.id, user])
+  }, [params.id, user, searchParams])
 
   const fetchCourtsAndTypes = async () => {
     if (!user?.email) return
@@ -479,6 +487,73 @@ export default function CaseDetailPage() {
 
   return (
     <div className="space-y-4 md:space-y-6 max-w-6xl px-4 md:px-0">
+      {/* Guidance Banner for New Cases */}
+      {showGuidance && (
+        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+                <Sparkles className="h-6 w-6 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-purple-900 mb-2">Welcome to Your New Case! 🎉</h3>
+                    <p className="text-sm text-purple-800 mb-4">
+                      Your case has been created successfully. Here's what you can do next:
+                    </p>
+                    <div className="space-y-2.5">
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Building2 className="h-3.5 w-3.5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-purple-900">Add Court Details</p>
+                          <p className="text-xs text-purple-700">Scroll down to add court name, number, case type, and judge information</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Calendar className="h-3.5 w-3.5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-purple-900">Schedule Hearings</p>
+                          <p className="text-xs text-purple-700">Click "Add Hearing" to record hearing dates and outcomes</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <FileText className="h-3.5 w-3.5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-purple-900">Upload Documents</p>
+                          <p className="text-xs text-purple-700">Go to the Documents tab to upload petitions, evidence, orders, and more</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Edit className="h-3.5 w-3.5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-purple-900">Add Synopsis & Team</p>
+                          <p className="text-xs text-purple-700">Click "Edit Case" to add case summary and assign team members</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowGuidance(false)}
+                    className="flex-shrink-0 p-1 hover:bg-purple-100 rounded-lg transition-colors"
+                  >
+                    <X className="h-5 w-5 text-purple-600" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex flex-col gap-4">
         <Link href="/cases">

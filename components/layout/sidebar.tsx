@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
-  FolderOpen,
+  Briefcase,
   Search,
   Scale,
   Users,
@@ -16,7 +16,7 @@ import {
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Cases', href: '/cases', icon: FolderOpen },
+  { name: 'Cases', href: '/cases', icon: Briefcase },
   { name: 'Clients', href: '/clients', icon: UserCircle },
   { name: 'Calendar', href: '/calendar', icon: Calendar },
   { name: 'Research', href: '/research', icon: Search },
@@ -53,7 +53,7 @@ export function Sidebar() {
                 <item.icon
                   className={cn(
                     'mr-4 flex-shrink-0 h-6 w-6',
-                    isActive ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'
+                    isActive ? 'text-purple-600' : 'text-purple-400 group-hover:text-purple-600'
                   )}
                 />
                 {item.name}
