@@ -153,7 +153,7 @@ export async function PATCH(
     }
 
     // Handle team assignments separately and exclude relation objects
-    const { assignedUserIds, userEmail: _userEmail, client, court, caseType, assignments, hearings, documents, ...caseUpdateData } = body
+    const { assignedUserIds, userEmail: _userEmail, client, court, caseType, assignments, hearings, documents, nextHearingTime, ...caseUpdateData } = body
 
     // Clean up the update data - remove empty relation IDs
     const cleanedData: any = { ...caseUpdateData }
@@ -162,29 +162,48 @@ export async function PATCH(
     if (body.filingDate) cleanedData.filingDate = new Date(body.filingDate)
     if (body.nextHearingDate) cleanedData.nextHearingDate = new Date(body.nextHearingDate)
 
-    // Only include relation IDs if they're valid
-    if (body.clientId && body.clientId !== '') {
-      cleanedData.clientId = body.clientId
-    } else if (body.clientId === '') {
-      cleanedData.clientId = null
+    // Remove nextHearingTime from cleanedData as it's not a Prisma field
+    delete cleanedData.nextHearingTime
+
+    // Remove relation IDs from cleanedData as they need special handling
+    delete cleanedData.clientId
+    delete cleanedData.courtId
+    delete cleanedData.caseTypeId
+
+    // Build relation updates
+    const relationUpdates: any = {}
+
+    if (body.clientId !== undefined) {
+      if (body.clientId && body.clientId !== '' && body.clientId !== '_none') {
+        relationUpdates.client = { connect: { id: body.clientId } }
+      } else {
+        relationUpdates.client = { disconnect: true }
+      }
     }
 
-    if (body.courtId && body.courtId !== '') {
-      cleanedData.courtId = body.courtId
-    } else if (body.courtId === '') {
-      cleanedData.courtId = null
+    if (body.courtId !== undefined) {
+      if (body.courtId && body.courtId !== '') {
+        relationUpdates.court = { connect: { id: body.courtId } }
+      } else {
+        relationUpdates.court = { disconnect: true }
+      }
     }
 
-    if (body.caseTypeId && body.caseTypeId !== '') {
-      cleanedData.caseTypeId = body.caseTypeId
-    } else if (body.caseTypeId === '') {
-      cleanedData.caseTypeId = null
+    if (body.caseTypeId !== undefined) {
+      if (body.caseTypeId && body.caseTypeId !== '') {
+        relationUpdates.caseType = { connect: { id: body.caseTypeId } }
+      } else {
+        relationUpdates.caseType = { disconnect: true }
+      }
     }
 
     // Update case data
     await prisma.case.update({
       where: { id },
-      data: cleanedData,
+      data: {
+        ...cleanedData,
+        ...relationUpdates,
+      },
     })
 
     // Update team assignments if provided

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Trash2, Shield, CheckSquare, Square, ArrowLeft } from 'lucide-react'
+import { Plus, Trash2, Shield, CheckSquare, Square, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 
 interface CustomRole {
@@ -133,7 +133,7 @@ export default function RolesPage() {
       <div className="flex items-center gap-4 mb-6">
         <Link href="/admin">
           <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
+            <ChevronLeft className="h-6 w-6" />
           </Button>
         </Link>
         <div className="flex-1 flex items-center justify-between">

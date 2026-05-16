@@ -19,9 +19,8 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import {
-  ArrowLeft,
+  ChevronLeft,
   Calendar,
   FileText,
   Users,
@@ -34,6 +33,8 @@ import {
   Download,
   Trash2,
   Eye,
+  History,
+  Plus,
 } from 'lucide-react'
 import Link from 'next/link'
 import { HearingTimeline } from '@/components/cases/hearing-timeline'
@@ -41,6 +42,7 @@ import { HearingForm } from '@/components/cases/hearing-form'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import {
   Select,
   SelectContent,
@@ -71,6 +73,7 @@ interface Case {
   synopsis: string | null
   otherParties: string[]
   opponentMainParty: string
+  opponentOtherParties: string[]
   client: {
     id: string
     firstName: string
@@ -119,11 +122,42 @@ export default function CaseDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [activeTab, setActiveTab] = useState('overview')
+  const [editingCourtDetails, setEditingCourtDetails] = useState(false)
+  const [editingSynopsis, setEditingSynopsis] = useState(false)
+  const [editingOpposingCounsel, setEditingOpposingCounsel] = useState(false)
+  const [editingClient, setEditingClient] = useState(false)
+  const [editingOpponent, setEditingOpponent] = useState(false)
+  const [savingCourtDetails, setSavingCourtDetails] = useState(false)
+  const [savingSynopsis, setSavingSynopsis] = useState(false)
+  const [savingOpposingCounsel, setSavingOpposingCounsel] = useState(false)
+  const [savingClient, setSavingClient] = useState(false)
+  const [savingOpponent, setSavingOpponent] = useState(false)
   const [uploadData, setUploadData] = useState({
     title: '',
     documentType: 'OTHER',
     file: null as File | null,
   })
+  const [courtDetailsForm, setCourtDetailsForm] = useState({
+    courtId: '',
+    courtNumber: '',
+    caseTypeId: '',
+    judgeName: '',
+  })
+  const [synopsisForm, setSynopsisForm] = useState('')
+  const [opposingCounselForm, setOpposingCounselForm] = useState({
+    opposingCounselName: '',
+    opposingCounselPhone: '',
+  })
+  const [clientForm, setClientForm] = useState({
+    otherParties: '',
+  })
+  const [opponentForm, setOpponentForm] = useState({
+    opponentMainParty: '',
+    opponentOtherParties: '',
+  })
+  const [courts, setCourts] = useState<any[]>([])
+  const [caseTypes, setCaseTypes] = useState<any[]>([])
 
   const fetchCase = async () => {
     if (!user?.email) return
@@ -147,6 +181,214 @@ export default function CaseDetailPage() {
       fetchCase()
     }
   }, [params.id, user])
+
+  const fetchCourtsAndTypes = async () => {
+    if (!user?.email) return
+
+    try {
+      const [courtsRes, typesRes] = await Promise.all([
+        fetch(`/api/courts?email=${encodeURIComponent(user.email)}`),
+        fetch(`/api/case-types?email=${encodeURIComponent(user.email)}`)
+      ])
+
+      if (courtsRes.ok) {
+        const courtsData = await courtsRes.json()
+        setCourts(courtsData.courts || [])
+      }
+
+      if (typesRes.ok) {
+        const typesData = await typesRes.json()
+        setCaseTypes(typesData.caseTypes || [])
+      }
+    } catch (err) {
+      console.error('Error fetching courts and case types:', err)
+    }
+  }
+
+  const handleEditCourtDetails = () => {
+    if (!caseData) return
+    setCourtDetailsForm({
+      courtId: caseData.court?.id || '',
+      courtNumber: caseData.courtNumber || '',
+      caseTypeId: caseData.caseType?.id || '',
+      judgeName: caseData.judgeName || '',
+    })
+    fetchCourtsAndTypes()
+    setEditingCourtDetails(true)
+  }
+
+  const handleSaveCourtDetails = async () => {
+    if (!user?.email || !caseData) return
+
+    setSavingCourtDetails(true)
+    try {
+      const response = await fetch(`/api/cases/${caseData.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEmail: user.email,
+          ...courtDetailsForm,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save court details')
+      }
+
+      toast.success('Court details saved')
+      setEditingCourtDetails(false)
+      fetchCase()
+    } catch (err) {
+      toast.error('Something went wrong. Try again.')
+    } finally {
+      setSavingCourtDetails(false)
+    }
+  }
+
+  const handleEditSynopsis = () => {
+    if (!caseData) return
+    setSynopsisForm(caseData.synopsis || '')
+    setEditingSynopsis(true)
+  }
+
+  const handleSaveSynopsis = async () => {
+    if (!user?.email || !caseData) return
+
+    setSavingSynopsis(true)
+    try {
+      const response = await fetch(`/api/cases/${caseData.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEmail: user.email,
+          synopsis: synopsisForm,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save synopsis')
+      }
+
+      toast.success('Synopsis saved')
+      setEditingSynopsis(false)
+      fetchCase()
+    } catch (err) {
+      toast.error('Something went wrong. Try again.')
+    } finally {
+      setSavingSynopsis(false)
+    }
+  }
+
+  const handleEditOpposingCounsel = () => {
+    if (!caseData) return
+    setOpposingCounselForm({
+      opposingCounselName: caseData.opposingCounselName || '',
+      opposingCounselPhone: caseData.opposingCounselPhone || '',
+    })
+    setEditingOpposingCounsel(true)
+  }
+
+  const handleSaveOpposingCounsel = async () => {
+    if (!user?.email || !caseData) return
+
+    setSavingOpposingCounsel(true)
+    try {
+      const response = await fetch(`/api/cases/${caseData.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEmail: user.email,
+          ...opposingCounselForm,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save opposing counsel details')
+      }
+
+      toast.success('Opposing counsel details saved')
+      setEditingOpposingCounsel(false)
+      fetchCase()
+    } catch (err) {
+      toast.error('Something went wrong. Try again.')
+    } finally {
+      setSavingOpposingCounsel(false)
+    }
+  }
+
+  const handleEditClient = () => {
+    if (!caseData) return
+    setClientForm({
+      otherParties: caseData.otherParties?.join(', ') || '',
+    })
+    setEditingClient(true)
+  }
+
+  const handleSaveClient = async () => {
+    if (!user?.email || !caseData) return
+
+    setSavingClient(true)
+    try {
+      const response = await fetch(`/api/cases/${caseData.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEmail: user.email,
+          otherParties: clientForm.otherParties,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save client details')
+      }
+
+      toast.success('Client details saved')
+      setEditingClient(false)
+      fetchCase()
+    } catch (err) {
+      toast.error('Something went wrong. Try again.')
+    } finally {
+      setSavingClient(false)
+    }
+  }
+
+  const handleEditOpponent = () => {
+    if (!caseData) return
+    setOpponentForm({
+      opponentMainParty: caseData.opponentMainParty,
+      opponentOtherParties: caseData.opponentOtherParties?.join(', ') || '',
+    })
+    setEditingOpponent(true)
+  }
+
+  const handleSaveOpponent = async () => {
+    if (!user?.email || !caseData) return
+
+    setSavingOpponent(true)
+    try {
+      const response = await fetch(`/api/cases/${caseData.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEmail: user.email,
+          opponentMainParty: opponentForm.opponentMainParty,
+          opponentOtherParties: opponentForm.opponentOtherParties,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save opponent details')
+      }
+
+      toast.success('Opponent details saved')
+      setEditingOpponent(false)
+      fetchCase()
+    } catch (err) {
+      toast.error('Something went wrong. Try again.')
+    } finally {
+      setSavingOpponent(false)
+    }
+  }
 
   const handleUploadDocument = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -221,7 +463,7 @@ export default function CaseDetailPage() {
             {error || 'Case not found'}
           </div>
           <Button onClick={() => router.push('/cases')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ChevronLeft className="mr-2 h-5 w-5" />
             Back to Cases
           </Button>
         </div>
@@ -242,13 +484,13 @@ export default function CaseDetailPage() {
       <div className="flex flex-col gap-4">
         <Link href="/cases">
           <Button variant="ghost" size="icon" className="h-9 w-9">
-            <ArrowLeft className="h-5 w-5" />
+            <ChevronLeft className="h-6 w-6" />
           </Button>
         </Link>
 
         <div className="flex flex-col gap-4">
           <div className="space-y-3">
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
+            <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 tracking-wide">
               {caseData.caseNumber}
             </h1>
             <p className="text-base md:text-lg text-slate-600">
@@ -289,7 +531,7 @@ export default function CaseDetailPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4 md:space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
         <div className="border-b border-slate-200">
           <TabsList className="inline-flex h-auto bg-transparent p-0 gap-1">
             <TabsTrigger
@@ -318,41 +560,291 @@ export default function CaseDetailPage() {
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4 md:space-y-6">
           <div className="grid gap-4 md:gap-6 md:grid-cols-2">
+            {/* Client Side */}
+            <Card className="border-slate-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                  <Users className="h-5 w-5" />
+                  Client
+                </CardTitle>
+                {!editingClient && (
+                  <Button variant="ghost" size="sm" onClick={handleEditClient} className="h-8">
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-3 md:space-y-4">
+                {editingClient ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="otherParties">Other Parties (comma-separated)</Label>
+                      <Input
+                        id="otherParties"
+                        value={clientForm.otherParties}
+                        onChange={(e) => setClientForm({ ...clientForm, otherParties: e.target.value })}
+                        placeholder="e.g., Party 2, Party 3"
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingClient(false)}
+                        disabled={savingClient}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleSaveClient}
+                        disabled={savingClient}
+                      >
+                        {savingClient ? 'Saving...' : 'Save'}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <p className="text-xs md:text-sm text-slate-500 mb-1">Appearing For</p>
+                      <Badge variant="outline" className="text-sm">
+                        {caseData.appearingFor}
+                      </Badge>
+                    </div>
+
+                    <div>
+                      <p className="text-xs md:text-sm text-slate-500 mb-1">Main Party</p>
+                      <p className="text-base md:text-lg font-medium text-slate-900">
+                        {getClientName()}
+                      </p>
+                    </div>
+
+                    {caseData.otherParties && caseData.otherParties.length > 0 && (
+                      <div>
+                        <p className="text-xs md:text-sm text-slate-500 mb-1">Other Parties</p>
+                        <p className="text-xs md:text-sm text-slate-500 leading-relaxed">
+                          {caseData.otherParties.join(', ')}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Opponent Side */}
+            <Card className="border-slate-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                  <Users className="h-5 w-5" />
+                  Opponent
+                </CardTitle>
+                {!editingOpponent && (
+                  <Button variant="ghost" size="sm" onClick={handleEditOpponent} className="h-8">
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-3 md:space-y-4">
+                {editingOpponent ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="opponentMainParty">Main Party *</Label>
+                      <Input
+                        id="opponentMainParty"
+                        value={opponentForm.opponentMainParty}
+                        onChange={(e) => setOpponentForm({ ...opponentForm, opponentMainParty: e.target.value })}
+                        placeholder="Enter opponent main party"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="opponentOtherParties">Additional Parties (comma-separated)</Label>
+                      <Input
+                        id="opponentOtherParties"
+                        value={opponentForm.opponentOtherParties}
+                        onChange={(e) => setOpponentForm({ ...opponentForm, opponentOtherParties: e.target.value })}
+                        placeholder="e.g., Opponent 2, Opponent 3"
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingOpponent(false)}
+                        disabled={savingOpponent}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleSaveOpponent}
+                        disabled={savingOpponent}
+                      >
+                        {savingOpponent ? 'Saving...' : 'Save'}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <p className="text-xs md:text-sm text-slate-500 mb-1">Main Party</p>
+                      <p className="text-base md:text-lg font-medium text-slate-900">
+                        {caseData.opponentMainParty}
+                      </p>
+                    </div>
+
+                    {caseData.opponentOtherParties && caseData.opponentOtherParties.length > 0 && (
+                      <div>
+                        <p className="text-xs md:text-sm text-slate-500 mb-1">Additional Parties</p>
+                        <p className="text-xs md:text-sm text-slate-500 leading-relaxed">
+                          {caseData.opponentOtherParties.join(', ')}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Court Details */}
             <Card className="border-slate-200">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                   <Building2 className="h-5 w-5" />
                   Court Details
                 </CardTitle>
+                {!editingCourtDetails && (caseData.court || caseData.courtNumber || caseData.caseType || caseData.judgeName) && (
+                  <Button variant="ghost" size="sm" onClick={handleEditCourtDetails} className="h-8">
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                )}
               </CardHeader>
               <CardContent className="space-y-3 md:space-y-4">
-                {caseData.court && (
-                  <div>
-                    <p className="text-xs md:text-sm text-slate-500 mb-1">Court Name</p>
-                    <p className="text-base md:text-lg font-medium text-slate-900">{caseData.court.name}</p>
+                {editingCourtDetails ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="court">Court</Label>
+                      <Select
+                        value={courtDetailsForm.courtId || undefined}
+                        onValueChange={(value) => setCourtDetailsForm({ ...courtDetailsForm, courtId: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select court" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {courts.map((court) => (
+                            <SelectItem key={court.id} value={court.id}>
+                              {court.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="courtNumber">Court Number</Label>
+                      <Input
+                        id="courtNumber"
+                        value={courtDetailsForm.courtNumber || ''}
+                        onChange={(e) => setCourtDetailsForm({ ...courtDetailsForm, courtNumber: e.target.value })}
+                        placeholder="e.g., 1, 2, 3"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="caseType">Case Type</Label>
+                      <Select
+                        value={courtDetailsForm.caseTypeId || undefined}
+                        onValueChange={(value) => setCourtDetailsForm({ ...courtDetailsForm, caseTypeId: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select case type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {caseTypes.map((type) => (
+                            <SelectItem key={type.id} value={type.id}>
+                              {type.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="judgeName">Judge Name</Label>
+                      <Input
+                        id="judgeName"
+                        value={courtDetailsForm.judgeName}
+                        onChange={(e) => setCourtDetailsForm({ ...courtDetailsForm, judgeName: e.target.value })}
+                        placeholder="Enter judge name"
+                      />
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingCourtDetails(false)}
+                        disabled={savingCourtDetails}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleSaveCourtDetails}
+                        disabled={savingCourtDetails}
+                      >
+                        {savingCourtDetails ? 'Saving...' : 'Save'}
+                      </Button>
+                    </div>
                   </div>
-                )}
-                {caseData.courtNumber && (
-                  <div>
-                    <p className="text-xs md:text-sm text-slate-500 mb-1">Court Number</p>
-                    <p className="text-base md:text-lg font-medium text-slate-900">{caseData.courtNumber}</p>
+                ) : !caseData.court && !caseData.courtNumber && !caseData.caseType && !caseData.judgeName ? (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-slate-500 mb-3">No court details added yet</p>
+                    <Button variant="outline" size="sm" className="gap-2" onClick={handleEditCourtDetails}>
+                      <Plus className="h-4 w-4" />
+                      Add Court Details
+                    </Button>
                   </div>
-                )}
-                {caseData.caseType && (
-                  <div>
-                    <p className="text-xs md:text-sm text-slate-500 mb-1">Case Type</p>
-                    <p className="text-base md:text-lg font-medium text-slate-900">{caseData.caseType.name}</p>
-                  </div>
-                )}
-                {caseData.judgeName && (
-                  <div>
-                    <p className="text-xs md:text-sm text-slate-500 mb-1">Judge</p>
-                    <p className="text-base md:text-lg font-medium text-slate-900 flex items-center gap-2">
-                      <Gavel className="h-4 w-4" />
-                      {caseData.judgeName}
-                    </p>
-                  </div>
+                ) : (
+                  <>
+                    {caseData.court && (
+                      <div>
+                        <p className="text-xs md:text-sm text-slate-500 mb-1">Court Name</p>
+                        <p className="text-base md:text-lg font-medium text-slate-900">{caseData.court.name}</p>
+                      </div>
+                    )}
+                    {caseData.courtNumber && (
+                      <div>
+                        <p className="text-xs md:text-sm text-slate-500 mb-1">Court Number</p>
+                        <p className="text-base md:text-lg font-medium text-slate-900">{caseData.courtNumber}</p>
+                      </div>
+                    )}
+                    {caseData.caseType && (
+                      <div>
+                        <p className="text-xs md:text-sm text-slate-500 mb-1">Case Type</p>
+                        <p className="text-base md:text-lg font-medium text-slate-900">{caseData.caseType.name}</p>
+                      </div>
+                    )}
+                    {caseData.judgeName && (
+                      <div>
+                        <p className="text-xs md:text-sm text-slate-500 mb-1">Judge</p>
+                        <p className="text-base md:text-lg font-medium text-slate-900 flex items-center gap-2">
+                          <Gavel className="h-4 w-4" />
+                          {caseData.judgeName}
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -383,39 +875,111 @@ export default function CaseDetailPage() {
                     </p>
                   </div>
                 )}
+                <div className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2"
+                    onClick={() => {
+                      console.log('Button clicked, switching to timeline')
+                      setActiveTab('timeline')
+                    }}
+                  >
+                    <History className="h-4 w-4" />
+                    View History
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
             {/* Opposing Counsel */}
-            {(caseData.opposingCounselName || caseData.opposingCounselPhone) && (
-              <Card className="border-slate-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                    <Users className="h-5 w-5" />
-                    Opposing Counsel
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 md:space-y-4">
-                  {caseData.opposingCounselName && (
-                    <div>
-                      <p className="text-xs md:text-sm text-slate-500 mb-1">Name</p>
-                      <p className="text-base md:text-lg font-medium text-slate-900">
-                        {caseData.opposingCounselName}
-                      </p>
+            <Card className="border-slate-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                  <Users className="h-5 w-5" />
+                  Opposing Counsel
+                </CardTitle>
+                {!editingOpposingCounsel && (caseData.opposingCounselName || caseData.opposingCounselPhone) && (
+                  <Button variant="ghost" size="sm" onClick={handleEditOpposingCounsel} className="h-8">
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-3 md:space-y-4">
+                {editingOpposingCounsel ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="opposingCounselName">Counsel Name</Label>
+                      <Input
+                        id="opposingCounselName"
+                        value={opposingCounselForm.opposingCounselName || ''}
+                        onChange={(e) => setOpposingCounselForm({ ...opposingCounselForm, opposingCounselName: e.target.value })}
+                        placeholder="Enter opposing counsel name"
+                      />
                     </div>
-                  )}
-                  {caseData.opposingCounselPhone && (
-                    <div>
-                      <p className="text-xs md:text-sm text-slate-500 mb-1">Phone</p>
-                      <p className="text-base md:text-lg font-medium text-slate-900 flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        {caseData.opposingCounselPhone}
-                      </p>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="opposingCounselPhone">Phone Number</Label>
+                      <Input
+                        id="opposingCounselPhone"
+                        value={opposingCounselForm.opposingCounselPhone || ''}
+                        onChange={(e) => setOpposingCounselForm({ ...opposingCounselForm, opposingCounselPhone: e.target.value })}
+                        placeholder="Enter phone number"
+                      />
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingOpposingCounsel(false)}
+                        disabled={savingOpposingCounsel}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleSaveOpposingCounsel}
+                        disabled={savingOpposingCounsel}
+                      >
+                        {savingOpposingCounsel ? 'Saving...' : 'Save'}
+                      </Button>
+                    </div>
+                  </div>
+                ) : !caseData.opposingCounselName && !caseData.opposingCounselPhone ? (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-slate-500 mb-3">No opposing counsel details added yet</p>
+                    <Button variant="outline" size="sm" className="gap-2" onClick={handleEditOpposingCounsel}>
+                      <Plus className="h-4 w-4" />
+                      Add Opposing Counsel
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    {caseData.opposingCounselName && (
+                      <div>
+                        <p className="text-xs md:text-sm text-slate-500 mb-1">Name</p>
+                        <p className="text-base md:text-lg font-medium text-slate-900">
+                          {caseData.opposingCounselName}
+                        </p>
+                      </div>
+                    )}
+                    {caseData.opposingCounselPhone && (
+                      <div>
+                        <p className="text-xs md:text-sm text-slate-500 mb-1">Phone</p>
+                        <p className="text-base md:text-lg font-medium text-slate-900 flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          {caseData.opposingCounselPhone}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Team */}
             {caseData.assignments.length > 0 && (
@@ -453,22 +1017,66 @@ export default function CaseDetailPage() {
           </div>
 
           {/* Synopsis */}
-          {caseData.synopsis && (
-            <Card className="border-slate-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                  <FileText className="h-5 w-5" />
-                  Case Synopsis
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+          <Card className="border-slate-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <FileText className="h-5 w-5" />
+                Case Synopsis
+              </CardTitle>
+              {!editingSynopsis && caseData.synopsis && (
+                <Button variant="ghost" size="sm" onClick={handleEditSynopsis} className="h-8">
+                  <Edit className="h-4 w-4" />
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              {editingSynopsis ? (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="synopsis">Synopsis</Label>
+                    <RichTextEditor
+                      content={synopsisForm}
+                      onChange={(html) => setSynopsisForm(html)}
+                      placeholder="Provide a brief summary of the case..."
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingSynopsis(false)}
+                      disabled={savingSynopsis}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleSaveSynopsis}
+                      disabled={savingSynopsis}
+                    >
+                      {savingSynopsis ? 'Saving...' : 'Save'}
+                    </Button>
+                  </div>
+                </div>
+              ) : !caseData.synopsis ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-slate-500 mb-3">No synopsis added yet</p>
+                  <Button variant="outline" size="sm" className="gap-2" onClick={handleEditSynopsis}>
+                    <Plus className="h-4 w-4" />
+                    Add Synopsis
+                  </Button>
+                </div>
+              ) : (
                 <div
                   className="prose prose-sm max-w-none text-sm md:text-base leading-relaxed text-slate-700 [&_ul]:list-disc [&_ul]:pl-4 md:[&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-4 md:[&_ol]:pl-6 [&_li]:my-1"
                   dangerouslySetInnerHTML={{ __html: caseData.synopsis }}
                 />
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Timeline Tab */}

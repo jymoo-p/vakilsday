@@ -168,9 +168,10 @@ export async function DELETE(
 
     // Check if client has associated cases
     if (client._count.cases > 0) {
+      const clientName = client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName
       return NextResponse.json(
         {
-          error: `${client.firstName} ${client.lastName} is associated with ${client._count.cases} case(s). Please delete or reassign the case(s) first.`,
+          error: `${clientName} is associated with ${client._count.cases} case(s). Please delete or reassign the case(s) first.`,
         },
         { status: 400 }
       )

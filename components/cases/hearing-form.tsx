@@ -20,30 +20,24 @@ import { Textarea } from '@/components/ui/textarea'
 import { Alert } from '@/components/ui/alert'
 import { Plus, Edit } from 'lucide-react'
 import { format } from 'date-fns'
+import { toast } from 'sonner'
 
 const hearingSchema = z.object({
   hearingDate: z.string().min(1, 'Hearing date is required'),
   itemNumber: z.string().optional(),
   outcome: z.string().optional(),
-  nextHearingDate: z.string().optional(),
+  nextHearingDate: z.string().min(1, 'Next hearing date is required'),
+  nextHearingTime: z.string().min(1, 'Next hearing time is required'),
 }).refine((data) => {
-  if (!data.nextHearingDate) return true
   const hearingDate = new Date(data.hearingDate)
   const nextHearingDate = new Date(data.nextHearingDate)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
 
-  // Next hearing date cannot be in the past
-  if (nextHearingDate < today) {
-    return false
-  }
-
-  // Next hearing date must be after or equal to hearing date
+  // Next hearing date must be on or after the hearing date
   hearingDate.setHours(0, 0, 0, 0)
   nextHearingDate.setHours(0, 0, 0, 0)
   return nextHearingDate >= hearingDate
 }, {
-  message: 'Next hearing date must be in the future and after or on the hearing date',
+  message: 'Next hearing date cannot be earlier than the hearing date',
   path: ['nextHearingDate'],
 })
 
@@ -82,7 +76,8 @@ export function HearingForm({ caseId, userEmail, onSuccess, hearing, mode = 'cre
       hearingDate: hearing ? format(new Date(hearing.hearingDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
       itemNumber: hearing?.itemNumber || '',
       outcome: hearing?.outcome || '',
-      nextHearingDate: hearing?.nextHearingDate ? format(new Date(hearing.nextHearingDate), "yyyy-MM-dd") : '',
+      nextHearingDate: hearing?.nextHearingDate ? format(new Date(hearing.nextHearingDate), "yyyy-MM-dd") : format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+      nextHearingTime: hearing?.nextHearingDate ? format(new Date(hearing.nextHearingDate), "HH:mm") : "11:00",
     },
   })
 
@@ -93,18 +88,36 @@ export function HearingForm({ caseId, userEmail, onSuccess, hearing, mode = 'cre
         setValue('hearingDate', format(new Date(hearing.hearingDate), "yyyy-MM-dd"))
         setValue('itemNumber', hearing.itemNumber || '')
         setValue('outcome', hearing.outcome || '')
-        setValue('nextHearingDate', hearing.nextHearingDate ? format(new Date(hearing.nextHearingDate), "yyyy-MM-dd") : '')
+        setValue('nextHearingDate', hearing.nextHearingDate ? format(new Date(hearing.nextHearingDate), "yyyy-MM-dd") : format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"))
+        setValue('nextHearingTime', hearing.nextHearingDate ? format(new Date(hearing.nextHearingDate), "HH:mm") : "11:00")
       } else {
-        setValue('hearingDate', format(new Date(), "yyyy-MM-dd"))
+        const today = new Date()
+        const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
+        setValue('hearingDate', format(today, "yyyy-MM-dd"))
         setValue('itemNumber', '')
         setValue('outcome', '')
-        setValue('nextHearingDate', '')
+        setValue('nextHearingDate', format(nextWeek, "yyyy-MM-dd"))
+        setValue('nextHearingTime', "11:00")
       }
     }
   }, [open, setValue, mode, hearing])
 
   const onSubmit = async (data: HearingFormData) => {
     setError(null)
+
+    // Check if time is unusual (between 5 PM and 11 AM)
+    const [hours, minutes] = data.nextHearingTime.split(':').map(Number)
+    const isUnusualTime = hours >= 17 || hours < 11
+
+    if (isUnusualTime) {
+      const confirmed = window.confirm(
+        `The selected time is ${data.nextHearingTime} (${hours >= 12 ? hours === 12 ? '12' : hours - 12 : hours}:${minutes.toString().padStart(2, '0')} ${hours >= 12 ? 'PM' : 'AM'}).\n\nThis is outside typical court hours (11 AM - 5 PM).\n\nDo you want to continue?`
+      )
+      if (!confirmed) {
+        return
+      }
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -118,11 +131,11 @@ export function HearingForm({ caseId, userEmail, onSuccess, hearing, mode = 'cre
         hearingDateTime.setHours(existingDate.getHours(), existingDate.getMinutes(), 0, 0)
       }
 
-      // Create next hearing date with 10 AM time if provided
+      // Create next hearing date with selected time
       let nextHearingDateTime = null
       if (data.nextHearingDate) {
         nextHearingDateTime = new Date(data.nextHearingDate)
-        nextHearingDateTime.setHours(10, 0, 0, 0)
+        nextHearingDateTime.setHours(hours, minutes, 0, 0)
       }
 
       const url = mode === 'edit' && hearing ? `/api/hearings/${hearing.id}` : '/api/hearings'
@@ -148,10 +161,12 @@ export function HearingForm({ caseId, userEmail, onSuccess, hearing, mode = 'cre
         throw new Error(errorData.error || `Failed to ${mode} hearing`)
       }
 
+      toast.success('Saved!')
       reset()
       setOpen(false)
       onSuccess?.()
     } catch (err) {
+      toast.error('Something went wrong. Try again.')
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setIsSubmitting(false)
@@ -165,8 +180,8 @@ export function HearingForm({ caseId, userEmail, onSuccess, hearing, mode = 'cre
           <Edit className="h-4 w-4" />
         </DialogTrigger>
       ) : (
-        <DialogTrigger render={<Button size="lg" className="text-base" />}>
-          <Plus className="mr-2 h-5 w-5" />
+        <DialogTrigger render={<Button size="sm" />}>
+          <Plus className="mr-2 h-4 w-4" />
           Add Hearing
         </DialogTrigger>
       )}
@@ -234,23 +249,41 @@ export function HearingForm({ caseId, userEmail, onSuccess, hearing, mode = 'cre
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="nextHearingDate" className="text-base">
-              Next Hearing Date
-            </Label>
-            <Input
-              id="nextHearingDate"
-              type="date"
-              {...register('nextHearingDate')}
-              className="text-base h-12"
-            />
-            {errors.nextHearingDate && (
-              <p className="text-sm text-destructive">{errors.nextHearingDate.message}</p>
-            )}
-            <p className="text-xs text-slate-500">
-              Time will be set to 10:00 AM (automatically added to calendar)
-            </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nextHearingDate" className="text-base">
+                Next Hearing Date <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="nextHearingDate"
+                type="date"
+                {...register('nextHearingDate')}
+                className="text-base h-12"
+              />
+              {errors.nextHearingDate && (
+                <p className="text-sm text-red-500">{errors.nextHearingDate.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="nextHearingTime" className="text-base">
+                Time <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="nextHearingTime"
+                type="time"
+                {...register('nextHearingTime')}
+                className="text-base h-12"
+              />
+              {errors.nextHearingTime && (
+                <p className="text-sm text-red-500">{errors.nextHearingTime.message}</p>
+              )}
+            </div>
           </div>
+
+          <p className="text-xs text-slate-500 -mt-2">
+            Court hours are typically 11 AM - 5 PM. You'll be asked to confirm unusual times.
+          </p>
 
           <DialogFooter>
             <Button

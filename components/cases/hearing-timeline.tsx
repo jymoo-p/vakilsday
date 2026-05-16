@@ -43,24 +43,19 @@ export function HearingTimeline({ hearings, userEmail, caseId, onUpdate }: Heari
   return (
     <div className="relative">
       {/* Timeline vertical line */}
-      <div className="absolute left-[19px] md:left-[23px] top-0 bottom-0 w-[2px] md:w-[3px] bg-gradient-to-b from-purple-400 via-purple-300 to-purple-200" />
+      <div className="absolute left-[23px] md:left-[27px] top-0 bottom-0 w-[2px] md:w-[3px] bg-gradient-to-b from-purple-600 via-purple-500 to-purple-400" />
 
       <div className="space-y-4 md:space-y-6">
         {sortedHearings.map((hearing) => {
           const hearingDate = new Date(hearing.hearingDate)
-          const isUpcoming = hearingDate > new Date()
 
           return (
-            <div key={hearing.id} className="relative pl-12 md:pl-16">
-              {/* Date circle */}
+            <div key={hearing.id} className="relative pl-16 md:pl-20">
+              {/* Date button with calendar look */}
               <div className="absolute left-0 top-0 flex flex-col items-center">
-                <div
-                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex flex-col items-center justify-center text-white font-bold shadow-md ${
-                    isUpcoming ? 'bg-gradient-to-br from-purple-500 to-purple-600' : 'bg-gradient-to-br from-green-500 to-green-600'
-                  }`}
-                >
-                  <span className="text-[9px] md:text-xs font-medium uppercase">{format(hearingDate, 'MMM')}</span>
-                  <span className="text-base md:text-lg">{format(hearingDate, 'd')}</span>
+                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex flex-col items-center justify-center text-white font-bold shadow-md border-2 border-white bg-gradient-to-br from-slate-400 to-slate-500">
+                  <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wide opacity-90">{format(hearingDate, 'MMM')}</span>
+                  <span className="text-lg md:text-xl font-bold leading-tight">{format(hearingDate, 'd')}</span>
                 </div>
               </div>
 

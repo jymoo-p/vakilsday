@@ -19,10 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { ChevronLeft, Loader2, Plus, X } from 'lucide-react'
 import Link from 'next/link'
 import { Alert } from '@/components/ui/alert'
+import { toast } from 'sonner'
 
 const caseSchema = z.object({
   caseNumber: z.string().min(1, 'Case number is required'),
@@ -41,6 +43,7 @@ const caseSchema = z.object({
   status: z.enum(['ACTIVE', 'PENDING', 'CLOSED', 'ARCHIVED']),
   filingDate: z.string().min(1, 'Filing date is required'),
   nextHearingDate: z.string().optional(),
+  nextHearingTime: z.string().optional(),
   synopsis: z.string().optional(),
   assignedUserIds: z.array(z.string()).optional(),
 })
@@ -66,6 +69,11 @@ export default function EditCasePage() {
   const [courts, setCourts] = useState<any[]>([])
   const [caseTypes, setCaseTypes] = useState<any[]>([])
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([])
+  const [clientSearchQuery, setClientSearchQuery] = useState('')
+  const [showClientDropdown, setShowClientDropdown] = useState(false)
+  const [selectedClient, setSelectedClient] = useState<string>('')
+  const [currentClientName, setCurrentClientName] = useState<string>('')
+  const [showClientChangeDialog, setShowClientChangeDialog] = useState(false)
 
   const {
     register,
@@ -101,6 +109,14 @@ export default function EditCasePage() {
       setValue('year', c.year?.toString() || '')
       setValue('appearingFor', c.appearingFor)
       setValue('clientId', c.clientId || '')
+      // Set current client name
+      if (c.client) {
+        const clientFullName = c.client.lastName
+          ? `${c.client.firstName} ${c.client.lastName}`
+          : c.client.firstName
+        setCurrentClientName(clientFullName)
+        setClientSearchQuery(clientFullName)
+      }
       setValue('otherParties', c.otherParties?.join(', ') || '')
       setValue('opponentMainParty', c.opponentMainParty)
       setValue('opponentOtherParties', c.opponentOtherParties?.join(', ') || '')
@@ -113,6 +129,15 @@ export default function EditCasePage() {
       setValue('status', c.status)
       setValue('filingDate', c.filingDate ? c.filingDate.split('T')[0] : '')
       setValue('nextHearingDate', c.nextHearingDate ? c.nextHearingDate.split('T')[0] : '')
+      // Extract time from nextHearingDate if exists, otherwise default to 11:00
+      if (c.nextHearingDate) {
+        const date = new Date(c.nextHearingDate)
+        const hours = date.getHours().toString().padStart(2, '0')
+        const minutes = date.getMinutes().toString().padStart(2, '0')
+        setValue('nextHearingTime', `${hours}:${minutes}`)
+      } else {
+        setValue('nextHearingTime', '11:00')
+      }
       setValue('synopsis', c.synopsis || '')
 
       // Set assigned users
@@ -159,6 +184,17 @@ export default function EditCasePage() {
     setError(null)
 
     try {
+      // Combine date and time for nextHearingDate if both exist
+      let nextHearingDateTime = null
+      if (data.nextHearingDate && data.nextHearingTime) {
+        const [hours, minutes] = data.nextHearingTime.split(':').map(Number)
+        const dateTime = new Date(data.nextHearingDate)
+        dateTime.setHours(hours, minutes, 0, 0)
+        nextHearingDateTime = dateTime.toISOString()
+      } else if (data.nextHearingDate) {
+        nextHearingDateTime = new Date(data.nextHearingDate).toISOString()
+      }
+
       const payload = {
         ...data,
         userEmail: user!.email,
@@ -166,6 +202,7 @@ export default function EditCasePage() {
         opponentOtherParties: data.opponentOtherParties ? data.opponentOtherParties.split(',').map(s => s.trim()).filter(Boolean) : [],
         year: data.year ? parseInt(data.year) : null,
         assignedUserIds: selectedAssignees,
+        nextHearingDate: nextHearingDateTime,
       }
 
       const response = await fetch(`/api/cases/${params.id}`, {
@@ -179,8 +216,10 @@ export default function EditCasePage() {
         throw new Error(errorData.error || 'Failed to update case')
       }
 
+      toast.success('Case updated successfully')
       router.push(`/cases/${params.id}`)
     } catch (err) {
+      toast.error('Something went wrong. Try again.')
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setSubmitting(false)
@@ -208,7 +247,7 @@ export default function EditCasePage() {
       <div className="flex items-center gap-4">
         <Link href={`/cases/${params.id}`}>
           <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
+            <ChevronLeft className="h-6 w-6" />
           </Button>
         </Link>
         <div className="flex-1">
@@ -245,21 +284,31 @@ export default function EditCasePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="appearingFor">Appearing For *</Label>
-                <Select
-                  value={watchAppearingFor}
-                  onValueChange={(value) => setValue('appearingFor', value as any)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PETITIONER">Petitioner</SelectItem>
-                    <SelectItem value="RESPONDENT">Respondent</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Appearing For <span className="text-red-500">*</span></Label>
+                <div className="flex gap-6 pt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      value="PETITIONER"
+                      checked={watchAppearingFor === 'PETITIONER'}
+                      onChange={(e) => setValue('appearingFor', e.target.value as any)}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <span className="text-sm">Petitioner</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      value="RESPONDENT"
+                      checked={watchAppearingFor === 'RESPONDENT'}
+                      onChange={(e) => setValue('appearingFor', e.target.value as any)}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <span className="text-sm">Respondent</span>
+                  </label>
+                </div>
                 {errors.appearingFor && (
-                  <p className="text-sm text-destructive">{errors.appearingFor.message}</p>
+                  <p className="text-sm text-red-500">{errors.appearingFor.message}</p>
                 )}
               </div>
 
@@ -283,6 +332,76 @@ export default function EditCasePage() {
             </div>
 
             <div className="space-y-2">
+              <Label>Client</Label>
+              {showClientChangeDialog ? (
+                <div className="space-y-2">
+                  <Select
+                    value={watch('clientId') || undefined}
+                    onValueChange={(value) => {
+                      setValue('clientId', value || undefined)
+                      const selectedClient = clients.find(c => c.id === value)
+                      if (selectedClient) {
+                        const fullName = selectedClient.lastName
+                          ? `${selectedClient.firstName} ${selectedClient.lastName}`
+                          : selectedClient.firstName
+                        setCurrentClientName(fullName)
+                        setClientSearchQuery(fullName)
+                      }
+                      setShowClientChangeDialog(false)
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.firstName} {client.lastName || ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowClientChangeDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 px-3 py-2 border border-slate-300 rounded-md bg-slate-50">
+                    <span className="text-sm text-slate-700">
+                      {currentClientName || 'No client assigned'}
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowClientChangeDialog(true)}
+                  >
+                    Change Client
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="otherParties">Other Parties (comma-separated)</Label>
+              <Input
+                id="otherParties"
+                placeholder="e.g., Party 2, Party 3"
+                {...register('otherParties')}
+              />
+              <p className="text-xs text-slate-500">
+                Additional parties on your client's side (if any)
+              </p>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="opponentMainParty">Opponent Main Party *</Label>
               <Input id="opponentMainParty" {...register('opponentMainParty')} />
               {errors.opponentMainParty && (
@@ -290,7 +409,19 @@ export default function EditCasePage() {
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="opponentOtherParties">Additional Opponent Parties (comma-separated)</Label>
+              <Input
+                id="opponentOtherParties"
+                placeholder="e.g., Opponent 2, Opponent 3"
+                {...register('opponentOtherParties')}
+              />
+              <p className="text-xs text-slate-500">
+                Additional parties on the opponent's side (if any)
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="filingDate">Filing Date *</Label>
                 <Input id="filingDate" type="date" {...register('filingDate')} />
@@ -303,9 +434,19 @@ export default function EditCasePage() {
                 <Label htmlFor="nextHearingDate">Next Hearing Date</Label>
                 <Input id="nextHearingDate" type="date" {...register('nextHearingDate')} />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nextHearingTime">Time</Label>
+                <Input
+                  id="nextHearingTime"
+                  type="time"
+                  defaultValue="11:00"
+                  {...register('nextHearingTime')}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2" id="synopsis">
               <Label htmlFor="synopsis">Synopsis</Label>
               <RichTextEditor
                 content={watch('synopsis') || ''}
@@ -317,7 +458,7 @@ export default function EditCasePage() {
         </Card>
 
         {/* Court Details */}
-        <Card>
+        <Card id="court-details">
           <CardHeader>
             <CardTitle>Court Details</CardTitle>
           </CardHeader>

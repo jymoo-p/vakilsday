@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ArrowLeft } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -24,8 +24,8 @@ import {
 
 const clientSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  gender: z.enum(['MALE', 'FEMALE', 'OTHER'], { message: 'Gender is required' }),
+  lastName: z.string().optional(),
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional(),
   age: z.string().optional(),
   phone: z.string().min(10, 'Phone number is required'),
   otherPhone: z.string().optional(),
@@ -113,6 +113,7 @@ export default function NewClientPage() {
         router.push('/clients')
       }
     } catch (err) {
+      toast.error('Something went wrong. Try again.')
       setError(err instanceof Error ? err.message : 'An error occurred')
       setIsSubmitting(false)
     }
@@ -126,7 +127,7 @@ export default function NewClientPage() {
           onClick={() => router.push('/clients')}
           className="mb-4"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
+          <ChevronLeft className="mr-2 h-5 w-5" />
           Back to Clients
         </Button>
 
@@ -169,7 +170,7 @@ export default function NewClientPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="lastName">
-                  Last Name <span className="text-red-500">*</span>
+                  Last Name
                 </Label>
                 <Input
                   id="lastName"
@@ -185,7 +186,7 @@ export default function NewClientPage() {
             <div className="grid gap-5 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="gender">
-                  Gender <span className="text-red-500">*</span>
+                  Gender
                 </Label>
                 <Select
                   value={selectedGender}

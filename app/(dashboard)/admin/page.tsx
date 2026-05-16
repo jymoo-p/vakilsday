@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Building2, Scale, Shield, ArrowLeft } from 'lucide-react'
+import { Building2, Scale, Shield, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useState, useEffect } from 'react'
@@ -59,7 +59,7 @@ export default function AdminPage() {
       <div className="flex items-center gap-4 mb-6">
         <Link href="/dashboard">
           <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
+            <ChevronLeft className="h-6 w-6" />
           </Button>
         </Link>
         <div>

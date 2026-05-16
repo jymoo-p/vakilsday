@@ -71,14 +71,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!firstName || !lastName || !gender || !phone) {
+    if (!firstName || !phone) {
       return NextResponse.json(
-        { error: 'Missing required fields: firstName, lastName, gender, phone' },
+        { error: 'Missing required fields: firstName, phone' },
         { status: 400 }
       )
     }
 
-    if (!['MALE', 'FEMALE', 'OTHER'].includes(gender)) {
+    if (gender && !['MALE', 'FEMALE', 'OTHER'].includes(gender)) {
       return NextResponse.json({ error: 'Invalid gender' }, { status: 400 })
     }
 

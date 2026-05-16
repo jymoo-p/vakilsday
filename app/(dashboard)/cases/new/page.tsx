@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ArrowLeft, Plus, X } from 'lucide-react'
+import { ChevronLeft, Plus, X, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Select,
@@ -22,6 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 const caseSchema = z.object({
   caseNumber: z.string().min(1, 'Case number is required'),
@@ -36,6 +43,7 @@ const caseSchema = z.object({
   opponentMainParty: z.string().min(1, 'Main opponent party is required'),
   filingDate: z.string().min(1, 'Filing date is required'),
   nextHearingDate: z.string().optional(),
+  nextHearingTime: z.string().optional(),
   synopsis: z.string().optional(),
 })
 
@@ -44,7 +52,7 @@ type CaseFormData = z.infer<typeof caseSchema>
 interface Client {
   id: string
   firstName: string
-  lastName: string
+  lastName?: string | null
 }
 
 interface Court {
@@ -92,6 +100,12 @@ export default function NewCasePageNew() {
   const [clientSearchQuery, setClientSearchQuery] = useState('')
   const [clientValidationError, setClientValidationError] = useState<string | null>(null)
   const [showClientDropdown, setShowClientDropdown] = useState(false)
+
+  // Quick client creation dialog
+  const [showQuickClientDialog, setShowQuickClientDialog] = useState(false)
+  const [quickClientFirstName, setQuickClientFirstName] = useState('')
+  const [quickClientPhone, setQuickClientPhone] = useState('')
+  const [isCreatingClient, setIsCreatingClient] = useState(false)
 
   const {
     register,
@@ -239,6 +253,61 @@ export default function NewCasePageNew() {
     )
   }
 
+  const handleQuickClientCreate = async () => {
+    if (!quickClientFirstName.trim() || !quickClientPhone.trim()) {
+      toast.error('Please enter both name and phone number')
+      return
+    }
+
+    setIsCreatingClient(true)
+    try {
+      // Split name into firstName and lastName if it contains spaces
+      const nameParts = quickClientFirstName.trim().split(/\s+/)
+      const firstName = nameParts[0]
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined
+
+      const response = await fetch('/api/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEmail: user?.email,
+          firstName,
+          lastName,
+          phone: quickClientPhone.trim(),
+        }),
+      })
+
+      if (response.ok) {
+        const { client } = await response.json()
+
+        // Add to clients list
+        setClients(prev => [...prev, client])
+
+        // Select the new client
+        setSelectedClient(client.id)
+        setValue('clientId', client.id)
+        const fullName = client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName
+        setClientSearchQuery(fullName)
+        setClientValidationError(null)
+
+        // Close dialog and reset
+        setShowQuickClientDialog(false)
+        setQuickClientFirstName('')
+        setQuickClientPhone('')
+        setShowClientDropdown(false)
+
+        toast.success(`Client "${fullName}" created successfully`)
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Failed to create client')
+      }
+    } catch (err) {
+      toast.error('Failed to create client')
+    } finally {
+      setIsCreatingClient(false)
+    }
+  }
+
   const onSubmit = async (data: CaseFormData) => {
     setError(null)
     setIsSubmitting(true)
@@ -260,7 +329,14 @@ export default function NewCasePageNew() {
           opponentOtherParties,
           assignedUserIds: selectedAssignees,
           filingDate: new Date(data.filingDate).toISOString(),
-          nextHearingDate: data.nextHearingDate
+          nextHearingDate: data.nextHearingDate && data.nextHearingTime
+            ? (() => {
+                const [hours, minutes] = data.nextHearingTime.split(':').map(Number)
+                const dateTime = new Date(data.nextHearingDate)
+                dateTime.setHours(hours, minutes, 0, 0)
+                return dateTime.toISOString()
+              })()
+            : data.nextHearingDate
             ? new Date(data.nextHearingDate).toISOString()
             : null,
         }),
@@ -280,9 +356,10 @@ export default function NewCasePageNew() {
     }
   }
 
-  const filteredClients = clients.filter(client =>
-    `${client.firstName} ${client.lastName}`.toLowerCase().includes(clientSearchQuery.toLowerCase())
-  )
+  const filteredClients = clients.filter(client => {
+    const fullName = client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName
+    return fullName.toLowerCase().includes(clientSearchQuery.toLowerCase())
+  })
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -292,7 +369,7 @@ export default function NewCasePageNew() {
           onClick={() => router.push('/cases')}
           className="mb-4"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
+          <ChevronLeft className="mr-2 h-5 w-5" />
           Back to Cases
         </Button>
 
@@ -439,23 +516,25 @@ export default function NewCasePageNew() {
                           key={client.id}
                           onMouseDown={(e) => {
                             e.preventDefault()
+                            const fullName = client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName
                             setSelectedClient(client.id)
                             setValue('clientId', client.id)
-                            setClientSearchQuery(`${client.firstName} ${client.lastName}`)
+                            setClientSearchQuery(fullName)
                             setClientValidationError(null)
                             setShowClientDropdown(false)
                           }}
                           onTouchStart={(e) => {
                             e.preventDefault()
+                            const fullName = client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName
                             setSelectedClient(client.id)
                             setValue('clientId', client.id)
-                            setClientSearchQuery(`${client.firstName} ${client.lastName}`)
+                            setClientSearchQuery(fullName)
                             setClientValidationError(null)
                             setShowClientDropdown(false)
                           }}
                           className="p-3 hover:bg-slate-50 active:bg-slate-100 cursor-pointer border-b last:border-b-0"
                         >
-                          {client.firstName} {client.lastName}
+                          {client.firstName} {client.lastName || ''}
                         </div>
                       ))}
                     </div>
@@ -471,25 +550,9 @@ export default function NewCasePageNew() {
                         type="button"
                         size="sm"
                         onClick={() => {
-                          // Save current form state in localStorage
-                          const formState = {
-                            caseNumber: (document.getElementById('caseNumber') as HTMLInputElement)?.value,
-                            year: (document.getElementById('year') as HTMLInputElement)?.value,
-                            appearingFor: selectedAppearingFor,
-                            courtId: selectedCourt,
-                            courtNumber: (document.getElementById('courtNumber') as HTMLInputElement)?.value,
-                            caseTypeId: selectedCaseType,
-                            opponentMainParty: (document.getElementById('opponentMainParty') as HTMLInputElement)?.value,
-                            filingDate: (document.getElementById('filingDate') as HTMLInputElement)?.value,
-                            nextHearingDate: (document.getElementById('nextHearingDate') as HTMLInputElement)?.value,
-                            synopsis: (document.getElementById('synopsis') as HTMLTextAreaElement)?.value,
-                            otherParties,
-                            opponentOtherParties,
-                            selectedAssignees,
-                            returnTo: '/cases/new'
-                          }
-                          localStorage.setItem('newCaseFormState', JSON.stringify(formState))
-                          router.push(`/clients/new?prefillName=${encodeURIComponent(clientSearchQuery)}`)
+                          setQuickClientFirstName(clientSearchQuery)
+                          setShowQuickClientDialog(true)
+                          setShowClientDropdown(false)
                         }}
                         className="gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md"
                       >
@@ -683,8 +746,18 @@ export default function NewCasePageNew() {
                 <Label htmlFor="nextHearingDate">Next Hearing Date</Label>
                 <Input
                   id="nextHearingDate"
-                  type="datetime-local"
+                  type="date"
                   {...register('nextHearingDate')}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nextHearingTime">Time</Label>
+                <Input
+                  id="nextHearingTime"
+                  type="time"
+                  defaultValue="11:00"
+                  {...register('nextHearingTime')}
                 />
               </div>
             </div>
@@ -770,6 +843,81 @@ export default function NewCasePageNew() {
           </Button>
         </div>
       </form>
+
+      {/* Quick Client Creation Dialog */}
+      <Dialog open={showQuickClientDialog} onOpenChange={setShowQuickClientDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Quick Client Creation</DialogTitle>
+            <DialogDescription>
+              Add basic details to create a new client quickly. You can edit more details later.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="quickClientName">
+                Name <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="quickClientName"
+                placeholder="Client name"
+                value={quickClientFirstName}
+                onChange={(e) => setQuickClientFirstName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleQuickClientCreate()
+                  }
+                }}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="quickClientPhone">
+                Phone Number <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="quickClientPhone"
+                placeholder="Phone number"
+                value={quickClientPhone}
+                onChange={(e) => setQuickClientPhone(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleQuickClientCreate()
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowQuickClientDialog(false)
+                setQuickClientFirstName('')
+                setQuickClientPhone('')
+              }}
+              disabled={isCreatingClient}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleQuickClientCreate}
+              disabled={isCreatingClient || !quickClientFirstName.trim() || !quickClientPhone.trim()}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+            >
+              <Check className="h-4 w-4 mr-2" />
+              {isCreatingClient ? 'Creating...' : 'Save'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

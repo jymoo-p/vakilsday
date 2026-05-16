@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Calendar, FileText, ChevronRight } from 'lucide-react'
+import { Plus, Search, Calendar, FileText, ChevronRight, Building2 } from 'lucide-react'
 import { format } from 'date-fns'
 
 interface Case {
@@ -213,21 +213,24 @@ export default function CasesPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <CardTitle className="text-base truncate group-hover:text-primary transition-colors">
+                        <CardTitle className="text-base truncate group-hover:text-primary transition-colors font-normal tracking-wide">
                           {caseItem.caseNumber}
                         </CardTitle>
                         <Badge className={`${statusColors[caseItem.status as keyof typeof statusColors]} text-xs font-medium px-2 py-0.5 border`}>
                           {caseItem.status}
                         </Badge>
                       </div>
-                      <div className="space-y-1 mt-1">
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <span className="font-medium text-primary">{getClientName(caseItem)}</span>
-                          <span className="text-slate-400">vs</span>
-                          <span className="font-medium text-primary">{caseItem.opponentMainParty}</span>
+                      <div className="space-y-1.5 mt-1">
+                        <div className="flex items-center gap-2 text-base">
+                          <span className="font-medium text-slate-700">{getClientName(caseItem)}</span>
+                          <span className="text-slate-400 font-normal">vs</span>
+                          <span className="font-medium text-slate-700">{caseItem.opponentMainParty}</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                          <span>{caseItem.court?.name || 'Not assigned'}</span>
+                          <Building2 className="h-4 w-4 text-slate-400" />
+                          <span className={caseItem.court?.name ? '' : 'text-yellow-600'}>
+                            {caseItem.court?.name || 'Court is not specified'}
+                          </span>
                           {caseItem.courtNumber && (
                             <>
                               <span className="text-slate-300">•</span>
@@ -241,7 +244,7 @@ export default function CasesPage() {
                   </div>
                   <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-100">
                     <div className="flex items-center gap-1.5 text-sm">
-                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                      <Calendar className="h-3.5 w-3.5 text-purple-600" />
                       <span className="text-xs text-slate-500">Next:</span>
                       <span className="font-medium text-slate-900">
                         {caseItem.nextHearingDate

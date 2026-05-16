@@ -79,11 +79,12 @@ export default function ClientsPage() {
     }
   }
 
-  const filteredClients = clients.filter(client =>
-    `${client.firstName} ${client.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.phone.includes(searchQuery) ||
-    client.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredClients = clients.filter(client => {
+    const fullName = client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName
+    return fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.phone.includes(searchQuery) ||
+      client.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  })
 
   if (loading) {
     return (
@@ -148,7 +149,9 @@ export default function ClientsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredClients.map((client) => {
-            const initials = `${client.firstName[0]}${client.lastName[0]}`.toUpperCase()
+            const initials = client.lastName
+              ? `${client.firstName[0]}${client.lastName[0]}`.toUpperCase()
+              : client.firstName.substring(0, 2).toUpperCase()
             return (
               <Card
                 key={client.id}
@@ -162,10 +165,10 @@ export default function ClientsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <CardTitle className="text-base truncate group-hover:text-primary transition-colors">
-                        {client.firstName} {client.lastName}
+                        {client.firstName} {client.lastName || ''}
                       </CardTitle>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-slate-500">{client.gender}</span>
+                        {client.gender && <span className="text-xs text-slate-500">{client.gender}</span>}
                         {client.age && (
                           <>
                             <span className="text-slate-300">•</span>

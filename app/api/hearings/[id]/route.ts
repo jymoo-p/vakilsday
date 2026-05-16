@@ -24,6 +24,13 @@ export async function PATCH(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    if (!nextHearingDate) {
+      return NextResponse.json(
+        { error: 'Next hearing date is required' },
+        { status: 400 }
+      )
+    }
+
     // Get the hearing with case info
     const hearing = await prisma.hearing.findUnique({
       where: { id },
@@ -60,17 +67,15 @@ export async function PATCH(
         hearingDate: hearingDate ? new Date(hearingDate) : undefined,
         itemNumber: itemNumber || null,
         outcome: outcome || null,
-        nextHearingDate: nextHearingDate ? new Date(nextHearingDate) : null,
+        nextHearingDate: new Date(nextHearingDate),
       },
     })
 
-    // If nextHearingDate changed, update the case's nextHearingDate
-    if (nextHearingDate) {
-      await prisma.case.update({
-        where: { id: hearing.caseId },
-        data: { nextHearingDate: new Date(nextHearingDate) },
-      })
-    }
+    // Update the case's nextHearingDate
+    await prisma.case.update({
+      where: { id: hearing.caseId },
+      data: { nextHearingDate: new Date(nextHearingDate) },
+    })
 
     return NextResponse.json({ hearing: updatedHearing })
   } catch (error) {

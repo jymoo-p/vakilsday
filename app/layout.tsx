@@ -3,6 +3,7 @@ import { Roboto, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/hooks/useAuth";
 import { Toaster } from 'sonner';
+import { CheckCheck } from 'lucide-react';
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -35,9 +36,15 @@ export default function RootLayout({
       lang="en"
       className={`${roboto.variable} ${robotoMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-white text-slate-900">
+      <body className="min-h-full flex flex-col bg-white text-slate-900" suppressHydrationWarning>
         <AuthProvider>{children}</AuthProvider>
-        <Toaster position="top-center" richColors />
+        <Toaster
+          position="top-center"
+          richColors
+          icons={{
+            success: <CheckCheck className="h-5 w-5" />
+          }}
+        />
       </body>
     </html>
   );

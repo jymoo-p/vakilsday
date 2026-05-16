@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Phone, Mail, MapPin, Plus, FileText, Calendar, Building2 } from 'lucide-react'
+import { ChevronLeft, Phone, Mail, MapPin, Plus, FileText, Calendar, Building2 } from 'lucide-react'
 import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
 
@@ -120,17 +120,17 @@ export default function ClientDetailPage() {
           onClick={() => router.push('/clients')}
           className="mb-4"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
+          <ChevronLeft className="mr-2 h-5 w-5" />
           Back to Clients
         </Button>
 
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">
-              {client.firstName} {client.lastName}
+              {client.firstName} {client.lastName || ''}
             </h1>
             <div className="flex items-center gap-2 mt-2">
-              <Badge variant="secondary">{client.gender}</Badge>
+              {client.gender && <Badge variant="secondary">{client.gender}</Badge>}
               {client.age && <span className="text-slate-600">{client.age} years old</span>}
             </div>
           </div>
@@ -201,7 +201,7 @@ export default function ClientDetailPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Cases ({cases.length})</CardTitle>
-            <Link href={`/cases/new?clientId=${client.id}&clientName=${encodeURIComponent(`${client.firstName} ${client.lastName}`)}`}>
+            <Link href={`/cases/new?clientId=${client.id}&clientName=${encodeURIComponent(client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName)}`}>
               <Button size="sm" className="gap-2 bg-slate-900 hover:bg-slate-800">
                 <Plus className="h-4 w-4" />
                 Add Case
@@ -214,7 +214,7 @@ export default function ClientDetailPage() {
             <div className="text-center py-12">
               <FileText className="h-16 w-16 text-slate-300 mx-auto mb-4" />
               <p className="text-slate-600 text-lg mb-4">No cases found for this client</p>
-              <Link href={`/cases/new?clientId=${client.id}&clientName=${encodeURIComponent(`${client.firstName} ${client.lastName}`)}`}>
+              <Link href={`/cases/new?clientId=${client.id}&clientName=${encodeURIComponent(client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName)}`}>
                 <Button className="gap-2 bg-slate-900 hover:bg-slate-800">
                   <Plus className="h-4 w-4" />
                   Add First Case

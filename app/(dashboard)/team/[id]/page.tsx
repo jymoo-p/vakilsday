@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { ArrowLeft, Mail, Phone, Briefcase, Calendar, FileText, LogOut, UserMinus } from 'lucide-react'
+import { ChevronLeft, Mail, Phone, Briefcase, Calendar, FileText, LogOut, UserMinus } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -191,7 +191,7 @@ export default function TeamMemberDetailPage({
         <div className="flex items-center gap-4">
           <Link href="/team">
             <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
+              <ChevronLeft className="h-6 w-6" />
             </Button>
           </Link>
           <div>
