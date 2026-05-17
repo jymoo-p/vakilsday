@@ -79,6 +79,7 @@ interface Case {
     id: string
     firstName: string
     lastName: string
+    phone: string
   } | null
   court: {
     id: string
@@ -1159,6 +1160,8 @@ export default function CaseDetailPage() {
             hearings={caseData.hearings}
             userEmail={user?.email || ''}
             caseId={caseData.id}
+            caseNumber={caseData.caseNumber}
+            client={caseData.client}
             onUpdate={fetchCase}
           />
         </TabsContent>
