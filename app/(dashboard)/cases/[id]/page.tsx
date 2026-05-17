@@ -556,99 +556,148 @@ export default function CaseDetailPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         <Link href="/cases">
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <ChevronLeft className="h-6 w-6" />
+          <Button variant="ghost" size="sm" className="gap-2 text-slate-600 hover:text-slate-900 -ml-2">
+            <ChevronLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Back to Cases</span>
           </Button>
         </Link>
 
-        <div className="flex flex-col gap-4">
-          <div className="space-y-3">
-            <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 tracking-wide">
-              {caseData.caseNumber}
-            </h1>
-            <p className="text-base md:text-lg text-slate-600">
-              {getClientName()} <span className="text-slate-400">vs</span> {caseData.opponentMainParty}
-            </p>
-            {caseData.court && (
-              <p className="text-sm md:text-base text-slate-600 flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                {caseData.court.name}
-                {caseData.courtNumber && <span>• Court {caseData.courtNumber}</span>}
-              </p>
-            )}
-          </div>
+        {/* Modern Card Header */}
+        <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-white to-slate-50">
+          <CardContent className="p-6 md:p-8">
+            <div className="flex flex-col gap-6">
+              <div className="space-y-4">
+                {/* Case Number with Badge */}
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center flex-shrink-0 shadow-md">
+                        <Gavel className="h-5 w-5 text-white" />
+                      </div>
+                      <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
+                        {caseData.caseNumber}
+                      </h1>
+                    </div>
+                    <Badge
+                      className={`text-xs font-semibold px-3 py-1 border-0 shadow-sm ${
+                        caseData.status === 'ACTIVE'
+                          ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
+                          : caseData.status === 'PENDING'
+                          ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
+                          : caseData.status === 'CLOSED'
+                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
+                          : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white'
+                      }`}
+                    >
+                      {caseData.status}
+                    </Badge>
+                  </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Badge
-              className={`text-sm px-3 py-1 border ${
-                caseData.status === 'ACTIVE'
-                  ? 'bg-green-100 text-green-700 border-green-200'
-                  : caseData.status === 'PENDING'
-                  ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
-                  : caseData.status === 'CLOSED'
-                  ? 'bg-blue-100 text-blue-700 border-blue-200'
-                  : 'bg-gray-100 text-gray-600 border-gray-200'
-              }`}
-            >
-              {caseData.status}
-            </Badge>
-            <Link href={`/cases/${caseData.id}/edit`}>
-              <Button variant="outline" size="sm">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Case
-              </Button>
-            </Link>
-            <HearingForm caseId={caseData.id} userEmail={user?.email || ''} onSuccess={fetchCase} />
-          </div>
-        </div>
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    <Link href={`/cases/${caseData.id}/edit`}>
+                      <Button variant="outline" size="sm" className="gap-2 border-slate-300 hover:border-purple-300 hover:bg-purple-50">
+                        <Edit className="h-4 w-4" />
+                        <span className="hidden sm:inline">Edit Case</span>
+                        <span className="sm:hidden">Edit</span>
+                      </Button>
+                    </Link>
+                    <HearingForm caseId={caseData.id} userEmail={user?.email || ''} onSuccess={fetchCase} />
+                  </div>
+                </div>
+
+                {/* Parties */}
+                <div className="bg-white rounded-xl p-4 border border-slate-200">
+                  <p className="text-base md:text-lg text-slate-900 font-medium">
+                    <span className="text-purple-600">{getClientName()}</span>
+                    <span className="text-slate-400 mx-2">vs</span>
+                    <span className="text-slate-900">{caseData.opponentMainParty}</span>
+                  </p>
+                </div>
+
+                {/* Court & Type Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {caseData.court && (
+                    <div className="flex items-center gap-3 text-sm text-slate-600 bg-white rounded-lg p-3 border border-slate-200">
+                      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                        <Building2 className="h-4 w-4 text-slate-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900">{caseData.court.name}</p>
+                        {caseData.courtNumber && (
+                          <p className="text-xs text-slate-500">Court No. {caseData.courtNumber}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {caseData.caseType && (
+                    <div className="flex items-center gap-3 text-sm text-slate-600 bg-white rounded-lg p-3 border border-slate-200">
+                      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                        <FileText className="h-4 w-4 text-slate-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900">{caseData.caseType.name}</p>
+                        <p className="text-xs text-slate-500">Case Type</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
-        <div className="border-b border-slate-200">
-          <TabsList className="inline-flex h-auto bg-transparent p-0 gap-1">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <div className="border-b border-slate-200 bg-white rounded-t-xl px-2">
+          <TabsList className="inline-flex h-auto bg-transparent p-0 gap-1 w-full sm:w-auto">
             <TabsTrigger
               value="overview"
-              className="relative bg-transparent border-0 px-4 py-3 text-sm md:text-base font-medium text-slate-600 hover:text-slate-900 data-[state=active]:text-slate-900 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-slate-900 transition-colors"
+              className="relative bg-transparent border-0 px-4 sm:px-6 py-3 text-sm md:text-base font-semibold text-slate-500 hover:text-slate-900 data-[state=active]:text-purple-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-t-lg after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-gradient-to-r data-[state=active]:after:from-purple-600 data-[state=active]:after:to-purple-700 transition-all flex-1 sm:flex-initial"
             >
               Overview
             </TabsTrigger>
             <TabsTrigger
               value="timeline"
-              className="relative bg-transparent border-0 px-4 py-3 text-sm md:text-base font-medium text-slate-600 hover:text-slate-900 data-[state=active]:text-slate-900 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-slate-900 transition-colors whitespace-nowrap"
+              className="relative bg-transparent border-0 px-4 sm:px-6 py-3 text-sm md:text-base font-semibold text-slate-500 hover:text-slate-900 data-[state=active]:text-purple-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-t-lg after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-gradient-to-r data-[state=active]:after:from-purple-600 data-[state=active]:after:to-purple-700 transition-all whitespace-nowrap flex-1 sm:flex-initial"
             >
               <span className="hidden md:inline">Case History</span>
               <span className="md:hidden">History</span>
-              <span className="ml-1 text-slate-400">({caseData.hearings.length})</span>
+              <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-600 hover:bg-slate-100 text-xs px-1.5 py-0">{caseData.hearings.length}</Badge>
             </TabsTrigger>
             <TabsTrigger
               value="documents"
-              className="relative bg-transparent border-0 px-4 py-3 text-sm md:text-base font-medium text-slate-600 hover:text-slate-900 data-[state=active]:text-slate-900 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-slate-900 transition-colors whitespace-nowrap"
+              className="relative bg-transparent border-0 px-4 sm:px-6 py-3 text-sm md:text-base font-semibold text-slate-500 hover:text-slate-900 data-[state=active]:text-purple-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-t-lg after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-gradient-to-r data-[state=active]:after:from-purple-600 data-[state=active]:after:to-purple-700 transition-all whitespace-nowrap flex-1 sm:flex-initial"
             >
-              Documents <span className="ml-1 text-slate-400">({caseData.documents.length})</span>
+              Documents
+              <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-600 hover:bg-slate-100 text-xs px-1.5 py-0">{caseData.documents.length}</Badge>
             </TabsTrigger>
           </TabsList>
         </div>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-4 md:space-y-6">
-          <div className="grid gap-4 md:gap-6 md:grid-cols-2">
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
             {/* Client Side */}
-            <Card className="border-slate-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                  <Users className="h-5 w-5" />
+            <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-white to-purple-50/30">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-slate-100">
+                <CardTitle className="flex items-center gap-3 text-lg md:text-xl font-bold">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-sm">
+                    <Users className="h-5 w-5 text-white" />
+                  </div>
                   Client
                 </CardTitle>
                 {!editingClient && (
-                  <Button variant="ghost" size="sm" onClick={handleEditClient} className="h-8">
-                    <Edit className="h-4 w-4" />
+                  <Button variant="ghost" size="sm" onClick={handleEditClient} className="h-8 hover:bg-purple-50">
+                    <Edit className="h-4 w-4 text-purple-600" />
                   </Button>
                 )}
               </CardHeader>
-              <CardContent className="space-y-3 md:space-y-4">
+              <CardContent className="space-y-4 pt-3 md:pt-6">
                 {editingClient ? (
                   <div className="space-y-4">
                     <div className="space-y-2">
@@ -711,19 +760,21 @@ export default function CaseDetailPage() {
             </Card>
 
             {/* Opponent Side */}
-            <Card className="border-slate-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                  <Users className="h-5 w-5" />
+            <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-white to-slate-50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-slate-100">
+                <CardTitle className="flex items-center gap-3 text-lg md:text-xl font-bold">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center shadow-sm">
+                    <Users className="h-5 w-5 text-white" />
+                  </div>
                   Opponent
                 </CardTitle>
                 {!editingOpponent && (
-                  <Button variant="ghost" size="sm" onClick={handleEditOpponent} className="h-8">
-                    <Edit className="h-4 w-4" />
+                  <Button variant="ghost" size="sm" onClick={handleEditOpponent} className="h-8 hover:bg-slate-50">
+                    <Edit className="h-4 w-4 text-slate-600" />
                   </Button>
                 )}
               </CardHeader>
-              <CardContent className="space-y-3 md:space-y-4">
+              <CardContent className="space-y-4 pt-3 md:pt-6">
                 {editingOpponent ? (
                   <div className="space-y-4">
                     <div className="space-y-2">
@@ -789,19 +840,21 @@ export default function CaseDetailPage() {
             </Card>
 
             {/* Court Details */}
-            <Card className="border-slate-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                  <Building2 className="h-5 w-5" />
+            <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-white to-blue-50/30">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-slate-100">
+                <CardTitle className="flex items-center gap-3 text-lg md:text-xl font-bold">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-sm">
+                    <Building2 className="h-5 w-5 text-white" />
+                  </div>
                   Court Details
                 </CardTitle>
                 {!editingCourtDetails && (caseData.court || caseData.courtNumber || caseData.caseType || caseData.judgeName) && (
-                  <Button variant="ghost" size="sm" onClick={handleEditCourtDetails} className="h-8">
-                    <Edit className="h-4 w-4" />
+                  <Button variant="ghost" size="sm" onClick={handleEditCourtDetails} className="h-8 hover:bg-blue-50">
+                    <Edit className="h-4 w-4 text-blue-600" />
                   </Button>
                 )}
               </CardHeader>
-              <CardContent className="space-y-3 md:space-y-4">
+              <CardContent className="space-y-4 pt-3 md:pt-6">
                 {editingCourtDetails ? (
                   <div className="space-y-4">
                     <div className="space-y-2">
@@ -925,14 +978,16 @@ export default function CaseDetailPage() {
             </Card>
 
             {/* Important Dates */}
-            <Card className="border-slate-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                  <Calendar className="h-5 w-5" />
+            <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-white to-emerald-50/30">
+              <CardHeader className="pb-4 border-b border-slate-100">
+                <CardTitle className="flex items-center gap-3 text-lg md:text-xl font-bold">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center shadow-sm">
+                    <Calendar className="h-5 w-5 text-white" />
+                  </div>
                   Important Dates
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 md:space-y-4">
+              <CardContent className="space-y-4 pt-3 md:pt-6">
                 <div>
                   <p className="text-xs md:text-sm text-slate-500 mb-1">Filing Date</p>
                   <p className="text-base md:text-lg font-medium text-slate-900">
@@ -969,19 +1024,21 @@ export default function CaseDetailPage() {
             </Card>
 
             {/* Opposing Counsel */}
-            <Card className="border-slate-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                  <Users className="h-5 w-5" />
+            <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-white to-teal-50/30">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-slate-100">
+                <CardTitle className="flex items-center gap-3 text-lg md:text-xl font-bold">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-600 to-teal-700 flex items-center justify-center shadow-sm">
+                    <Users className="h-5 w-5 text-white" />
+                  </div>
                   Opposing Counsel
                 </CardTitle>
                 {!editingOpposingCounsel && (caseData.opposingCounselName || caseData.opposingCounselPhone) && (
-                  <Button variant="ghost" size="sm" onClick={handleEditOpposingCounsel} className="h-8">
-                    <Edit className="h-4 w-4" />
+                  <Button variant="ghost" size="sm" onClick={handleEditOpposingCounsel} className="h-8 hover:bg-teal-50">
+                    <Edit className="h-4 w-4 text-teal-600" />
                   </Button>
                 )}
               </CardHeader>
-              <CardContent className="space-y-3 md:space-y-4">
+              <CardContent className="space-y-4 pt-3 md:pt-6">
                 {editingOpposingCounsel ? (
                   <div className="space-y-4">
                     <div className="space-y-2">
@@ -1058,14 +1115,16 @@ export default function CaseDetailPage() {
 
             {/* Team */}
             {caseData.assignments.length > 0 && (
-              <Card className="border-slate-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                    <Users className="h-5 w-5" />
+              <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-white to-indigo-50/30">
+                <CardHeader className="pb-4 border-b border-slate-100">
+                  <CardTitle className="flex items-center gap-3 text-lg md:text-xl font-bold">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center shadow-sm">
+                      <Users className="h-5 w-5 text-white" />
+                    </div>
                     Assigned Team
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <div className="space-y-3">
                     {caseData.assignments.map((assignment) => (
                       <div
@@ -1092,19 +1151,21 @@ export default function CaseDetailPage() {
           </div>
 
           {/* Synopsis */}
-          <Card className="border-slate-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                <FileText className="h-5 w-5" />
+          <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-white to-amber-50/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-slate-100">
+              <CardTitle className="flex items-center gap-3 text-lg md:text-xl font-bold">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center shadow-sm">
+                  <FileText className="h-5 w-5 text-white" />
+                </div>
                 Case Synopsis
               </CardTitle>
               {!editingSynopsis && caseData.synopsis && (
-                <Button variant="ghost" size="sm" onClick={handleEditSynopsis} className="h-8">
-                  <Edit className="h-4 w-4" />
+                <Button variant="ghost" size="sm" onClick={handleEditSynopsis} className="h-8 hover:bg-amber-50">
+                  <Edit className="h-4 w-4 text-amber-600" />
                 </Button>
               )}
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               {editingSynopsis ? (
                 <div className="space-y-4">
                   <div className="space-y-2">

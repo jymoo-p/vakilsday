@@ -40,6 +40,11 @@ export function MobileNav() {
   const pathname = usePathname()
   const [moreOpen, setMoreOpen] = useState(false)
 
+  // Check if current page is in the "More" menu
+  const isMoreActive = moreNavigation.some(
+    (item) => pathname === item.href || pathname.startsWith(item.href + '/')
+  )
+
   return (
     <>
       {/* Bottom Navigation Bar - Fixed at bottom on mobile */}
@@ -54,7 +59,7 @@ export function MobileNav() {
                 className={cn(
                   'flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-all min-w-[64px]',
                   isActive
-                    ? 'text-slate-900'
+                    ? 'text-slate-900 bg-purple-50'
                     : 'text-slate-500'
                 )}
               >
@@ -77,10 +82,23 @@ export function MobileNav() {
           {/* More Button */}
           <button
             onClick={() => setMoreOpen(true)}
-            className="flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-all min-w-[64px] text-slate-500"
+            className={cn(
+              'flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-all min-w-[64px]',
+              isMoreActive
+                ? 'text-slate-900 bg-purple-50'
+                : 'text-slate-500'
+            )}
           >
-            <MoreHorizontal className="h-6 w-6 mb-1" />
-            <span className="text-xs font-medium">More</span>
+            <MoreHorizontal className={cn(
+              'h-6 w-6 mb-1',
+              isMoreActive ? 'text-purple-600' : 'text-purple-400'
+            )} />
+            <span className={cn(
+              'text-xs font-medium',
+              isMoreActive ? 'text-slate-900' : 'text-slate-500'
+            )}>
+              More
+            </span>
           </button>
         </nav>
       </div>

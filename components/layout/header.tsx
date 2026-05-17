@@ -70,9 +70,16 @@ export function Header() {
         {/* Law Firm Name */}
         <div className="flex-1 min-w-0">
           {organizationName && (
-            <h2 className="text-lg font-semibold text-slate-900 truncate max-w-xs line-clamp-2">
-              {organizationName}
-            </h2>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-md">
+                <span className="text-white font-bold text-xl">
+                  {organizationName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <h2 className="text-xl font-semibold text-slate-900 truncate max-w-xs">
+                {organizationName}
+              </h2>
+            </div>
           )}
         </div>
 
