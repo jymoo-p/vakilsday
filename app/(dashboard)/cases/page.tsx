@@ -295,7 +295,7 @@ export default function CasesPage() {
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">New Case</span>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[540px] rounded-2xl">
+            <DialogContent className="sm:max-w-[540px] rounded-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader className="space-y-3">
                 <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
                   <Briefcase className="h-7 w-7 text-white" />
@@ -306,7 +306,7 @@ export default function CasesPage() {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-5 py-6">
+              <div className="space-y-5 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="caseNumber" className="text-sm font-medium text-slate-700">
                     Case Number <span className="text-red-500">*</span>
