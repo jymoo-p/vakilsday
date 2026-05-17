@@ -367,102 +367,104 @@ export default function ClientDetailPage() {
 
       {/* Quick Case Creation Dialog */}
       <Dialog open={showQuickCreateDialog} onOpenChange={setShowQuickCreateDialog}>
-        <DialogContent className="sm:max-w-[540px] rounded-2xl">
-          <DialogHeader className="space-y-3">
-            <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-              <Briefcase className="h-7 w-7 text-white" />
-            </div>
-            <DialogTitle className="text-2xl font-semibold text-center">New Case</DialogTitle>
-            <DialogDescription className="text-center text-base">
-              Create case quickly for {client?.firstName} {client?.lastName}. Add more details later.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-5 py-6">
-            <div className="space-y-2">
-              <Label htmlFor="caseNumber" className="text-sm font-medium text-slate-700">
-                Case Number <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="caseNumber"
-                value={quickCaseForm.caseNumber}
-                onChange={(e) => setQuickCaseForm({ ...quickCaseForm, caseNumber: e.target.value })}
-                placeholder="e.g., WP(C) 12345/2024"
-                className="h-11 text-base"
-              />
-            </div>
-
-            <div className="space-y-3">
-              <Label className="text-sm font-medium text-slate-700">
-                Appearing For <span className="text-red-500">*</span>
-              </Label>
-              <div className="grid grid-cols-2 gap-3">
-                <label className={`flex items-center justify-center gap-2 cursor-pointer rounded-lg border-2 p-3 transition-all ${
-                  quickCaseForm.appearingFor === 'PETITIONER'
-                    ? 'border-purple-600 bg-purple-50 text-purple-900'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
-                }`}>
-                  <input
-                    type="radio"
-                    value="PETITIONER"
-                    checked={quickCaseForm.appearingFor === 'PETITIONER'}
-                    onChange={(e) => setQuickCaseForm({ ...quickCaseForm, appearingFor: e.target.value as 'PETITIONER' | 'RESPONDENT' })}
-                    className="sr-only"
-                  />
-                  <span className="font-medium text-sm">Petitioner</span>
-                </label>
-                <label className={`flex items-center justify-center gap-2 cursor-pointer rounded-lg border-2 p-3 transition-all ${
-                  quickCaseForm.appearingFor === 'RESPONDENT'
-                    ? 'border-purple-600 bg-purple-50 text-purple-900'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
-                }`}>
-                  <input
-                    type="radio"
-                    value="RESPONDENT"
-                    checked={quickCaseForm.appearingFor === 'RESPONDENT'}
-                    onChange={(e) => setQuickCaseForm({ ...quickCaseForm, appearingFor: e.target.value as 'PETITIONER' | 'RESPONDENT' })}
-                    className="sr-only"
-                  />
-                  <span className="font-medium text-sm">Respondent</span>
-                </label>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-[540px] rounded-xl sm:rounded-2xl max-h-[95vh] p-0 gap-0 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 pt-4 sm:pt-6" style={{ maxHeight: 'calc(95vh - 80px)' }}>
+            <DialogHeader className="space-y-2 sm:space-y-3">
+              <div className="mx-auto w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+                <Briefcase className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
               </div>
-            </div>
+              <DialogTitle className="text-xl sm:text-2xl font-semibold text-center">New Case</DialogTitle>
+              <DialogDescription className="text-center text-sm sm:text-base">
+                Create case quickly for {client?.firstName} {client?.lastName}. Add more details later.
+              </DialogDescription>
+            </DialogHeader>
 
-            <div className="space-y-2">
-              <Label htmlFor="opponentMainParty" className="text-sm font-medium text-slate-700">
-                Opponent Main Party <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="opponentMainParty"
-                value={quickCaseForm.opponentMainParty}
-                onChange={(e) => setQuickCaseForm({ ...quickCaseForm, opponentMainParty: e.target.value })}
-                placeholder="e.g., Union of India"
-                className="h-11 text-base"
-              />
-            </div>
+            <div className="space-y-3 sm:space-y-5 py-3 sm:py-4">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="caseNumber" className="text-xs sm:text-sm font-medium text-slate-700">
+                  Case Number <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="caseNumber"
+                  value={quickCaseForm.caseNumber}
+                  onChange={(e) => setQuickCaseForm({ ...quickCaseForm, caseNumber: e.target.value })}
+                  placeholder="e.g., WP(C) 12345/2024"
+                  className="h-9 sm:h-11 text-sm sm:text-base"
+                />
+              </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-4">
-              <div className="flex gap-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
-                  <span className="text-white text-lg">💡</span>
+              <div className="space-y-2 sm:space-y-3">
+                <Label className="text-xs sm:text-sm font-medium text-slate-700">
+                  Appearing For <span className="text-red-500">*</span>
+                </Label>
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <label className={`flex items-center justify-center gap-2 cursor-pointer rounded-lg border-2 p-2 sm:p-3 transition-all ${
+                    quickCaseForm.appearingFor === 'PETITIONER'
+                      ? 'border-purple-600 bg-purple-50 text-purple-900'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}>
+                    <input
+                      type="radio"
+                      value="PETITIONER"
+                      checked={quickCaseForm.appearingFor === 'PETITIONER'}
+                      onChange={(e) => setQuickCaseForm({ ...quickCaseForm, appearingFor: e.target.value as 'PETITIONER' | 'RESPONDENT' })}
+                      className="sr-only"
+                    />
+                    <span className="font-medium text-xs sm:text-sm">Petitioner</span>
+                  </label>
+                  <label className={`flex items-center justify-center gap-2 cursor-pointer rounded-lg border-2 p-2 sm:p-3 transition-all ${
+                    quickCaseForm.appearingFor === 'RESPONDENT'
+                      ? 'border-purple-600 bg-purple-50 text-purple-900'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}>
+                    <input
+                      type="radio"
+                      value="RESPONDENT"
+                      checked={quickCaseForm.appearingFor === 'RESPONDENT'}
+                      onChange={(e) => setQuickCaseForm({ ...quickCaseForm, appearingFor: e.target.value as 'PETITIONER' | 'RESPONDENT' })}
+                      className="sr-only"
+                    />
+                    <span className="font-medium text-xs sm:text-sm">Respondent</span>
+                  </label>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-blue-900 mb-1">Quick Entry Mode</p>
-                  <p className="text-xs text-blue-800 leading-relaxed">
-                    After creating, you'll be redirected to add court details, hearings, documents, and more information.
-                  </p>
+              </div>
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="opponentMainParty" className="text-xs sm:text-sm font-medium text-slate-700">
+                  Opponent Main Party <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="opponentMainParty"
+                  value={quickCaseForm.opponentMainParty}
+                  onChange={(e) => setQuickCaseForm({ ...quickCaseForm, opponentMainParty: e.target.value })}
+                  placeholder="e.g., Union of India"
+                  className="h-9 sm:h-11 text-sm sm:text-base"
+                />
+              </div>
+
+              <div className="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
+                <div className="flex gap-2 sm:gap-3">
+                  <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+                    <span className="text-white text-base sm:text-lg">💡</span>
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-blue-900 mb-0.5 sm:mb-1">Quick Entry Mode</p>
+                    <p className="text-[10px] sm:text-xs text-blue-800 leading-relaxed">
+                      After creating, you'll be redirected to add court details, hearings, documents, and more information.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <DialogFooter className="gap-3">
+          <DialogFooter className="gap-2 sm:gap-3 px-4 sm:px-6 pb-4 sm:pb-6 pt-3 sm:pt-4 border-t border-slate-100">
             <Button
               type="button"
               variant="outline"
               onClick={() => setShowQuickCreateDialog(false)}
               disabled={creating}
-              className="flex-1"
+              className="flex-1 h-9 sm:h-10 text-xs sm:text-sm"
             >
               Cancel
             </Button>
@@ -470,9 +472,19 @@ export default function ClientDetailPage() {
               type="button"
               onClick={handleQuickCreateCase}
               disabled={creating}
-              className="flex-1 bg-purple-600 hover:bg-purple-700"
+              className="flex-1 bg-purple-600 hover:bg-purple-700 h-9 sm:h-10 text-xs sm:text-sm"
             >
-              {creating ? 'Creating...' : 'Create Case'}
+              {creating ? (
+                <>
+                  <span className="sm:hidden">Creating...</span>
+                  <span className="hidden sm:inline">Creating...</span>
+                </>
+              ) : (
+                <>
+                  <span className="sm:hidden">Create</span>
+                  <span className="hidden sm:inline">Create Case</span>
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

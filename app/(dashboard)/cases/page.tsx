@@ -295,20 +295,21 @@ export default function CasesPage() {
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">New Case</span>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[540px] rounded-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader className="space-y-3">
-                <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-                  <Briefcase className="h-7 w-7 text-white" />
-                </div>
-                <DialogTitle className="text-2xl font-semibold text-center">New Case</DialogTitle>
-                <DialogDescription className="text-center text-base">
-                  Create case quickly. Add more details later.
-                </DialogDescription>
-              </DialogHeader>
+            <DialogContent className="w-[calc(100vw-2rem)] max-w-[540px] rounded-xl sm:rounded-2xl max-h-[95vh] p-0 gap-0 overflow-hidden flex flex-col">
+              <div className="flex-1 overflow-y-auto px-4 sm:px-6 pt-4 sm:pt-6" style={{ maxHeight: 'calc(95vh - 80px)' }}>
+                <DialogHeader className="space-y-2 sm:space-y-3">
+                  <div className="mx-auto w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+                    <Briefcase className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
+                  </div>
+                  <DialogTitle className="text-xl sm:text-2xl font-semibold text-center">New Case</DialogTitle>
+                  <DialogDescription className="text-center text-sm sm:text-base">
+                    Create case quickly. Add more details later.
+                  </DialogDescription>
+                </DialogHeader>
 
-              <div className="space-y-5 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="caseNumber" className="text-sm font-medium text-slate-700">
+                <div className="space-y-3 sm:space-y-5 py-3 sm:py-4">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="caseNumber" className="text-xs sm:text-sm font-medium text-slate-700">
                     Case Number <span className="text-red-500">*</span>
                   </Label>
                   <Input
@@ -316,16 +317,16 @@ export default function CasesPage() {
                     value={quickCaseForm.caseNumber}
                     onChange={(e) => setQuickCaseForm({ ...quickCaseForm, caseNumber: e.target.value })}
                     placeholder="e.g., WP(C) 12345/2024"
-                    className="h-11 text-base"
+                    className="h-9 sm:h-11 text-sm sm:text-base"
                   />
                 </div>
 
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium text-slate-700">
+                <div className="space-y-2 sm:space-y-3">
+                  <Label className="text-xs sm:text-sm font-medium text-slate-700">
                     Appearing For <span className="text-red-500">*</span>
                   </Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className={`flex items-center justify-center gap-2 cursor-pointer rounded-lg border-2 p-3 transition-all ${
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                    <label className={`flex items-center justify-center gap-2 cursor-pointer rounded-lg border-2 p-2 sm:p-3 transition-all ${
                       quickCaseForm.appearingFor === 'PETITIONER'
                         ? 'border-purple-600 bg-purple-50 text-purple-900'
                         : 'border-slate-200 bg-white hover:border-slate-300'
@@ -337,9 +338,9 @@ export default function CasesPage() {
                         onChange={(e) => setQuickCaseForm({ ...quickCaseForm, appearingFor: e.target.value as any })}
                         className="sr-only"
                       />
-                      <span className="font-medium text-sm">Petitioner</span>
+                      <span className="font-medium text-xs sm:text-sm">Petitioner</span>
                     </label>
-                    <label className={`flex items-center justify-center gap-2 cursor-pointer rounded-lg border-2 p-3 transition-all ${
+                    <label className={`flex items-center justify-center gap-2 cursor-pointer rounded-lg border-2 p-2 sm:p-3 transition-all ${
                       quickCaseForm.appearingFor === 'RESPONDENT'
                         ? 'border-purple-600 bg-purple-50 text-purple-900'
                         : 'border-slate-200 bg-white hover:border-slate-300'
@@ -351,13 +352,13 @@ export default function CasesPage() {
                         onChange={(e) => setQuickCaseForm({ ...quickCaseForm, appearingFor: e.target.value as any })}
                         className="sr-only"
                       />
-                      <span className="font-medium text-sm">Respondent</span>
+                      <span className="font-medium text-xs sm:text-sm">Respondent</span>
                     </label>
                   </div>
                 </div>
 
-                <div className="space-y-2 relative">
-                  <Label htmlFor="clientSearch" className="text-sm font-medium text-slate-700">
+                <div className="space-y-1.5 sm:space-y-2 relative">
+                  <Label htmlFor="clientSearch" className="text-xs sm:text-sm font-medium text-slate-700">
                     Client <span className="text-red-500">*</span>
                   </Label>
                   <Input
@@ -379,10 +380,10 @@ export default function CasesPage() {
                         setShowClientDropdown(true)
                       }
                     }}
-                    className="h-11 text-base"
+                    className="h-9 sm:h-11 text-sm sm:text-base"
                   />
                   {clientSearchQuery && showClientDropdown && (
-                    <div className="absolute z-10 w-full border border-slate-200 rounded-xl mt-2 bg-white shadow-lg max-h-64 overflow-auto">
+                    <div className="absolute z-10 w-full border border-slate-200 rounded-lg sm:rounded-xl mt-1 bg-white shadow-lg max-h-48 sm:max-h-64 overflow-auto">
                       {clients.filter(client => {
                         const fullName = client.lastName ? `${client.firstName} ${client.lastName}` : client.firstName
                         return fullName.toLowerCase().includes(clientSearchQuery.toLowerCase())
@@ -402,15 +403,15 @@ export default function CasesPage() {
                                 setQuickCaseForm({ ...quickCaseForm, clientId: client.id })
                                 setShowClientDropdown(false)
                               }}
-                              className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm border-b border-slate-100 last:border-0 transition-colors"
+                              className="w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-slate-50 text-xs sm:text-sm border-b border-slate-100 last:border-0 transition-colors"
                             >
                               {client.firstName} {client.lastName || ''}
                             </button>
                           ))}
                         </>
                       ) : (
-                        <div className="p-6 text-center">
-                          <p className="text-sm text-slate-600 mb-4">No matching clients found</p>
+                        <div className="p-4 sm:p-6 text-center">
+                          <p className="text-xs sm:text-sm text-slate-600 mb-3 sm:mb-4">No matching clients found</p>
                           <Button
                             type="button"
                             size="sm"
@@ -419,9 +420,9 @@ export default function CasesPage() {
                               setShowQuickClientDialog(true)
                               setShowClientDropdown(false)
                             }}
-                            className="gap-2 bg-purple-600 hover:bg-purple-700"
+                            className="gap-2 bg-purple-600 hover:bg-purple-700 h-8 text-xs sm:h-9 sm:text-sm"
                           >
-                            <Plus className="h-4 w-4" />
+                            <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                             Create New Client
                           </Button>
                         </div>
@@ -430,8 +431,8 @@ export default function CasesPage() {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="opponentMainParty" className="text-sm font-medium text-slate-700">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="opponentMainParty" className="text-xs sm:text-sm font-medium text-slate-700">
                     Opponent Main Party <span className="text-red-500">*</span>
                   </Label>
                   <Input
@@ -439,32 +440,33 @@ export default function CasesPage() {
                     value={quickCaseForm.opponentMainParty}
                     onChange={(e) => setQuickCaseForm({ ...quickCaseForm, opponentMainParty: e.target.value })}
                     placeholder="e.g., Union of India"
-                    className="h-11 text-base"
+                    className="h-9 sm:h-11 text-sm sm:text-base"
                   />
                 </div>
 
-                <div className="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-4">
-                  <div className="flex gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
-                      <span className="text-white text-lg">💡</span>
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
+                  <div className="flex gap-2 sm:gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+                      <span className="text-white text-base sm:text-lg">💡</span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-blue-900 mb-1">Quick Entry Mode</p>
-                      <p className="text-xs text-blue-800 leading-relaxed">
+                      <p className="text-xs sm:text-sm font-medium text-blue-900 mb-0.5 sm:mb-1">Quick Entry Mode</p>
+                      <p className="text-[10px] sm:text-xs text-blue-800 leading-relaxed">
                         After creating, you'll be redirected to add court details, hearings, documents, and more information.
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
+              </div>
 
-              <DialogFooter className="gap-3">
+              <DialogFooter className="gap-2 sm:gap-3 px-4 sm:px-6 pb-4 sm:pb-6 pt-3 sm:pt-4 border-t border-slate-100">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setShowQuickCreateDialog(false)}
                   disabled={creating}
-                  className="flex-1"
+                  className="flex-1 h-9 sm:h-10 text-xs sm:text-sm"
                 >
                   Cancel
                 </Button>
@@ -472,9 +474,19 @@ export default function CasesPage() {
                   type="button"
                   onClick={handleQuickCreateCase}
                   disabled={creating}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 h-9 sm:h-10 text-xs sm:text-sm"
                 >
-                  {creating ? 'Creating...' : 'Create Case'}
+                  {creating ? (
+                    <>
+                      <span className="sm:hidden">Creating...</span>
+                      <span className="hidden sm:inline">Creating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="sm:hidden">Create</span>
+                      <span className="hidden sm:inline">Create Case</span>
+                    </>
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>
