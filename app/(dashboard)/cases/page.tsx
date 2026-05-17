@@ -57,10 +57,10 @@ interface Case {
 }
 
 const statusColors = {
-  ACTIVE: 'bg-green-100 text-green-700 border-green-200',
-  PENDING: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  CLOSED: 'bg-blue-100 text-blue-700 border-blue-200',
-  ARCHIVED: 'bg-gray-100 text-gray-600 border-gray-200',
+  ACTIVE: 'bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0',
+  PENDING: 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0',
+  CLOSED: 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0',
+  ARCHIVED: 'bg-gradient-to-r from-gray-400 to-gray-500 text-white border-0',
 }
 
 export default function CasesPage() {
@@ -280,24 +280,31 @@ export default function CasesPage() {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6 max-w-7xl px-4 md:px-0">
+    <div className="space-y-6 max-w-7xl px-4 md:px-0">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Cases</h1>
-          <p className="text-sm md:text-base text-slate-600 mt-1">
-            {filteredCases.length} {filteredCases.length === 1 ? 'case' : 'cases'}
-          </p>
-        </div>
-        {canCreateCase && (
-          <Dialog open={showQuickCreateDialog} onOpenChange={setShowQuickCreateDialog}>
-            <DialogTrigger render={<Button className="gap-2 h-9 md:h-10 text-sm md:text-base" />} onClick={handleOpenQuickCreate}>
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">New Case</span>
-            </DialogTrigger>
-            <DialogContent className="w-[calc(100vw-2rem)] max-w-[540px] rounded-xl sm:rounded-2xl max-h-[95vh] p-0 gap-0 overflow-hidden flex flex-col">
-              <div className="flex-1 overflow-y-auto px-4 sm:px-6 pt-4 sm:pt-6" style={{ maxHeight: 'calc(95vh - 80px)' }}>
-                <DialogHeader className="space-y-2 sm:space-y-3">
+      <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-white to-purple-50/30">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-md">
+                <Briefcase className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Cases</h1>
+                <p className="text-sm md:text-base text-slate-600 mt-0.5">
+                  {filteredCases.length} {filteredCases.length === 1 ? 'case' : 'cases'}
+                </p>
+              </div>
+            </div>
+            {canCreateCase && (
+            <Dialog open={showQuickCreateDialog} onOpenChange={setShowQuickCreateDialog}>
+                <DialogTrigger render={<Button className="gap-2 h-9 md:h-10 text-sm md:text-base" />} onClick={handleOpenQuickCreate}>
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">New Case</span>
+                </DialogTrigger>
+                <DialogContent className="w-[calc(100vw-2rem)] max-w-[540px] rounded-xl sm:rounded-2xl max-h-[95vh] p-0 gap-0 overflow-hidden flex flex-col">
+                  <div className="flex-1 overflow-y-auto px-4 sm:px-6 pt-4 sm:pt-6" style={{ maxHeight: 'calc(95vh - 80px)' }}>
+                    <DialogHeader className="space-y-2 sm:space-y-3">
                   <div className="mx-auto w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
                     <Briefcase className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
                   </div>
@@ -305,10 +312,10 @@ export default function CasesPage() {
                   <DialogDescription className="text-center text-sm sm:text-base">
                     Create case quickly. Add more details later.
                   </DialogDescription>
-                </DialogHeader>
+                    </DialogHeader>
 
-                <div className="space-y-3 sm:space-y-5 py-3 sm:py-4">
-                <div className="space-y-1.5 sm:space-y-2">
+                    <div className="space-y-3 sm:space-y-5 py-3 sm:py-4">
+                      <div className="space-y-1.5 sm:space-y-2">
                   <Label htmlFor="caseNumber" className="text-xs sm:text-sm font-medium text-slate-700">
                     Case Number <span className="text-red-500">*</span>
                   </Label>
@@ -458,147 +465,153 @@ export default function CasesPage() {
                   </div>
                 </div>
               </div>
-              </div>
-
-              <DialogFooter className="gap-2 sm:gap-3 px-4 sm:px-6 pb-4 sm:pb-6 pt-3 sm:pt-4 border-t border-slate-100">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowQuickCreateDialog(false)}
-                  disabled={creating}
-                  className="flex-1 h-9 sm:h-10 text-xs sm:text-sm"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleQuickCreateCase}
-                  disabled={creating}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 h-9 sm:h-10 text-xs sm:text-sm"
-                >
-                  {creating ? (
-                    <>
-                      <span className="sm:hidden">Creating...</span>
-                      <span className="hidden sm:inline">Creating...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="sm:hidden">Create</span>
-                      <span className="hidden sm:inline">Create Case</span>
-                    </>
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
-
-        {/* Quick Client Creation Dialog */}
-        <Dialog open={showQuickClientDialog} onOpenChange={setShowQuickClientDialog}>
-          <DialogContent className="sm:max-w-[440px] rounded-2xl">
-            <DialogHeader className="space-y-3">
-              <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                <Plus className="h-7 w-7 text-white" />
-              </div>
-              <DialogTitle className="text-2xl font-semibold text-center">Create New Client</DialogTitle>
-              <DialogDescription className="text-center text-base">
-                Enter basic client details to create a new record.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-5 py-6">
-              <div className="space-y-2">
-                <Label htmlFor="quickClientName" className="text-sm font-medium text-slate-700">
-                  Client Name <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="quickClientName"
-                  value={quickClientName}
-                  onChange={(e) => setQuickClientName(e.target.value)}
-                  placeholder="Enter full name"
-                  className="h-11 text-base"
-                />
-                <p className="text-xs text-slate-500">
-                  First word will be first name, rest will be last name
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="quickClientPhone" className="text-sm font-medium text-slate-700">
-                  Phone Number <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="quickClientPhone"
-                  value={quickClientPhone}
-                  onChange={(e) => setQuickClientPhone(e.target.value)}
-                  placeholder="Enter phone number"
-                  className="h-11 text-base"
-                />
-              </div>
             </div>
 
-            <DialogFooter className="gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowQuickClientDialog(false)}
-                disabled={isCreatingClient}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={handleQuickClientCreate}
-                disabled={isCreatingClient}
-                className="flex-1 bg-green-600 hover:bg-green-700"
-              >
-                {isCreatingClient ? 'Creating...' : 'Create Client'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+          <DialogFooter className="gap-2 sm:gap-3 px-4 sm:px-6 pb-4 sm:pb-6 pt-3 sm:pt-4 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowQuickCreateDialog(false)}
+              disabled={creating}
+              className="flex-1 h-9 sm:h-10 text-xs sm:text-sm"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleQuickCreateCase}
+              disabled={creating}
+              className="flex-1 bg-purple-600 hover:bg-purple-700 h-9 sm:h-10 text-xs sm:text-sm"
+            >
+              {creating ? (
+                <>
+                  <span className="sm:hidden">Creating...</span>
+                  <span className="hidden sm:inline">Creating...</span>
+                </>
+              ) : (
+                <>
+                  <span className="sm:hidden">Create</span>
+                  <span className="hidden sm:inline">Create Case</span>
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Client Creation Dialog */}
+      <Dialog open={showQuickClientDialog} onOpenChange={setShowQuickClientDialog}>
+        <DialogContent className="sm:max-w-[440px] rounded-2xl">
+          <DialogHeader className="space-y-3">
+            <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+              <Plus className="h-7 w-7 text-white" />
+            </div>
+            <DialogTitle className="text-2xl font-semibold text-center">Create New Client</DialogTitle>
+            <DialogDescription className="text-center text-base">
+              Enter basic client details to create a new record.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 py-6">
+            <div className="space-y-2">
+              <Label htmlFor="quickClientName" className="text-sm font-medium text-slate-700">
+                Client Name <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="quickClientName"
+                value={quickClientName}
+                onChange={(e) => setQuickClientName(e.target.value)}
+                placeholder="Enter full name"
+                className="h-11 text-base"
+              />
+              <p className="text-xs text-slate-500">
+                First word will be first name, rest will be last name
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="quickClientPhone" className="text-sm font-medium text-slate-700">
+                Phone Number <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="quickClientPhone"
+                value={quickClientPhone}
+                onChange={(e) => setQuickClientPhone(e.target.value)}
+                placeholder="Enter phone number"
+                className="h-11 text-base"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowQuickClientDialog(false)}
+              disabled={isCreatingClient}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleQuickClientCreate}
+              disabled={isCreatingClient}
+              className="flex-1 bg-green-600 hover:bg-green-700"
+            >
+              {isCreatingClient ? 'Creating...' : 'Create Client'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 md:left-4 top-1/2 h-4 w-4 md:h-5 md:w-5 -translate-y-1/2 text-slate-400" />
+        <Search className="absolute left-3 md:left-4 top-1/2 h-4 w-4 md:h-5 md:w-5 -translate-y-1/2 text-purple-400" />
         <Input
           placeholder="Search cases..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 md:pl-12 h-10 md:h-11 text-sm md:text-base border-slate-300 focus:border-slate-900 focus:ring-slate-900"
+          className="pl-10 md:pl-12 h-11 md:h-12 text-sm md:text-base border-slate-300 rounded-xl focus:border-purple-600 focus:ring-purple-600 shadow-sm"
         />
       </div>
 
       {/* Status Filter Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200 -mx-4 px-4 md:mx-0 md:px-0">
-        {statusTabs.map((status) => {
-          const isSelected = statusFilter === status
-          return (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              style={isSelected ? {
-                backgroundColor: '#7c3aed',
-                color: '#ffffff'
-              } : {}}
-              className="px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-xs md:text-sm whitespace-nowrap transition-all text-slate-600 hover:bg-slate-100"
-            >
-              {status}
-              <span
-                style={isSelected ? {
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  color: '#ffffff'
-                } : {}}
-                className="ml-1.5 md:ml-2 px-1.5 md:px-2 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-700"
-              >
-                {statusCounts[status as keyof typeof statusCounts]}
-              </span>
-            </button>
-          )
-        })}
-      </div>
+      <Card className="border-slate-200 shadow-sm">
+        <CardContent className="p-3 md:p-4">
+          <div className="flex gap-2 overflow-x-auto">
+            {statusTabs.map((status) => {
+              const isSelected = statusFilter === status
+              return (
+                <button
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  className={`px-4 md:px-5 py-2 md:py-2.5 rounded-lg font-semibold text-xs md:text-sm whitespace-nowrap transition-all shadow-sm ${
+                    isSelected
+                      ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
+                      : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                  }`}
+                >
+                  {status}
+                  <span
+                    className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+                      isSelected
+                        ? 'bg-white/20 text-white'
+                        : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {statusCounts[status as keyof typeof statusCounts]}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Cases List */}
       {loading ? (
@@ -633,15 +646,18 @@ export default function CasesPage() {
         <div className="space-y-3">
           {filteredCases.map((caseItem) => (
             <Link key={caseItem.id} href={`/cases/${caseItem.id}`}>
-              <Card className="hover:shadow-lg hover:scale-[1.01] transition-all duration-200 cursor-pointer group border-slate-200">
-                <CardHeader className="pb-3">
+              <Card className="hover:shadow-xl hover:border-purple-200 transition-all duration-200 cursor-pointer group border-slate-200 bg-gradient-to-br from-white to-slate-50/50">
+                <CardHeader className="pb-3 md:pb-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <CardTitle className="text-base truncate group-hover:text-primary transition-colors font-normal tracking-wide">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center flex-shrink-0 shadow-sm">
+                          <Briefcase className="h-4 w-4 md:h-5 md:w-5 text-white" />
+                        </div>
+                        <CardTitle className="text-base md:text-lg truncate group-hover:text-purple-700 transition-colors font-bold">
                           {caseItem.caseNumber}
                         </CardTitle>
-                        <Badge className={`${statusColors[caseItem.status as keyof typeof statusColors]} text-xs font-medium px-2 py-0.5 border`}>
+                        <Badge className={`${statusColors[caseItem.status as keyof typeof statusColors]} text-xs font-semibold px-3 py-1 shadow-sm`}>
                           {caseItem.status}
                         </Badge>
                       </div>
@@ -672,27 +688,27 @@ export default function CasesPage() {
                         </div>
                       </div>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors flex-shrink-0 mt-1" />
+                    <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-purple-600 transition-colors flex-shrink-0 mt-1" />
                   </div>
-                  <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-100">
-                    <div className="flex items-center gap-1.5 text-sm">
-                      <Calendar className="h-3.5 w-3.5 text-purple-600" />
-                      <span className="text-xs text-slate-500">Next:</span>
-                      <span className="font-medium text-slate-900">
+                  <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-200">
+                    <div className="flex items-center gap-2 text-sm bg-purple-50 px-3 py-1.5 rounded-lg">
+                      <Calendar className="h-4 w-4 text-purple-600" />
+                      <span className="text-xs font-medium text-purple-600">Next:</span>
+                      <span className="font-semibold text-purple-700">
                         {caseItem.nextHearingDate
                           ? format(new Date(caseItem.nextHearingDate), 'MMM d, yyyy')
                           : 'Not scheduled'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                       <div className="text-center">
-                        <p className="text-base font-bold text-primary">{caseItem._count.hearings}</p>
-                        <p className="text-xs text-slate-500">Hearings</p>
+                        <p className="text-base md:text-lg font-bold text-purple-600">{caseItem._count.hearings}</p>
+                        <p className="text-xs text-slate-500 font-medium">Hearings</p>
                       </div>
-                      <div className="w-px h-8 bg-slate-200"></div>
+                      <div className="w-px h-10 bg-slate-200"></div>
                       <div className="text-center">
-                        <p className="text-base font-bold text-primary">{caseItem._count.documents}</p>
-                        <p className="text-xs text-slate-500">Docs</p>
+                        <p className="text-base md:text-lg font-bold text-purple-600">{caseItem._count.documents}</p>
+                        <p className="text-xs text-slate-500 font-medium">Docs</p>
                       </div>
                     </div>
                   </div>

@@ -8,7 +8,19 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ChevronLeft, Phone, Mail, MapPin, Plus, FileText, Calendar, Building2, ChevronRight, Briefcase } from 'lucide-react'
+import { ChevronLeft, Phone, Mail, MapPin, Plus, FileText, Calendar, Building2, ChevronRight, Briefcase, MessageCircle, User, Smartphone, PhoneCall, Scale } from 'lucide-react'
+
+// WhatsApp SVG Icon
+const WhatsAppIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+  </svg>
+)
 import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
 import {
@@ -170,105 +182,208 @@ export default function ClientDetailPage() {
   }
 
   const statusColors = {
-    ACTIVE: 'bg-green-100 text-green-700 border-green-200',
-    PENDING: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    CLOSED: 'bg-blue-100 text-blue-700 border-blue-200',
-    ARCHIVED: 'bg-gray-100 text-gray-600 border-gray-200',
+    ACTIVE: 'bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0',
+    PENDING: 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0',
+    CLOSED: 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0',
+    ARCHIVED: 'bg-gradient-to-r from-gray-400 to-gray-500 text-white border-0',
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 px-4 md:px-0">
       {/* Header */}
       <div>
         <Button
           variant="ghost"
           onClick={() => router.push('/clients')}
-          className="mb-4"
+          className="mb-4 hover:bg-purple-50"
         >
           <ChevronLeft className="mr-2 h-5 w-5" />
           Back to Clients
         </Button>
 
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">
-              {client.firstName} {client.lastName || ''}
-            </h1>
-            <div className="flex items-center gap-2 mt-2">
-              {client.gender && <Badge variant="secondary">{client.gender}</Badge>}
-              {client.age && <span className="text-slate-600">{client.age} years old</span>}
-            </div>
-          </div>
+        <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-white to-purple-50/30">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-md flex-shrink-0">
+                  <User className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
+                    {client.firstName} {client.lastName || ''}
+                  </h1>
+                  <div className="flex items-center gap-2 mt-2">
+                    {client.gender && (
+                      <Badge className="bg-purple-100 text-purple-700 border-purple-200">
+                        {client.gender}
+                      </Badge>
+                    )}
+                    {client.age && (
+                      <span className="text-slate-600 text-sm">{client.age} years old</span>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-          <Button onClick={() => router.push(`/clients/${client.id}/edit`)}>
-            Edit Client
-          </Button>
-        </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="gap-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:text-purple-800 hover:border-purple-400 transition-all"
+                  onClick={() => window.location.href = `tel:${client.phone}`}
+                >
+                  <Phone className="h-4 w-4" />
+                  <span className="hidden sm:inline">Call</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="gap-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:text-purple-800 hover:border-purple-400 transition-all"
+                  onClick={() => {
+                    const cleanPhone = client.phone.replace(/\D/g, '')
+                    window.open(`https://wa.me/${cleanPhone}`, '_blank')
+                  }}
+                >
+                  <WhatsAppIcon className="h-4 w-4" />
+                  <span className="hidden sm:inline">WhatsApp</span>
+                </Button>
+                <Button
+                  className="bg-purple-600 hover:bg-purple-700"
+                  onClick={() => router.push(`/clients/${client.id}/edit`)}
+                >
+                  Edit Client
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Client Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Contact Information</CardTitle>
+      <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-sm">
+              <User className="h-5 w-5 text-white" />
+            </div>
+            <CardTitle className="text-xl">Contact Information</CardTitle>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center gap-3">
-              <Phone className="h-5 w-5 text-slate-400" />
-              <div>
-                <p className="text-sm text-slate-500">Primary Phone</p>
-                <p className="font-medium text-slate-900">{client.phone}</p>
+        <CardContent className="pt-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-gradient-to-br from-blue-50/50 to-white border border-blue-100">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+                <Smartphone className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-slate-500 mb-1">Primary Phone</p>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`tel:${client.phone}`}
+                    className="text-slate-900 hover:text-purple-600 transition-colors"
+                  >
+                    {client.phone}
+                  </a>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-md"
+                    onClick={() => {
+                      const cleanPhone = client.phone.replace(/\D/g, '')
+                      window.open(`https://wa.me/${cleanPhone}`, '_blank')
+                    }}
+                  >
+                    <WhatsAppIcon className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             </div>
 
             {client.otherPhone && (
-              <div className="flex items-center gap-3">
-                <Phone className="h-5 w-5 text-slate-400" />
-                <div>
-                  <p className="text-sm text-slate-500">Other Phone</p>
-                  <p className="font-medium text-slate-900">{client.otherPhone}</p>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-gradient-to-br from-blue-50/50 to-white border border-blue-100">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <PhoneCall className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-slate-500 mb-1">Other Phone</p>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`tel:${client.otherPhone}`}
+                      className="text-slate-900 hover:text-purple-600 transition-colors"
+                    >
+                      {client.otherPhone}
+                    </a>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-md"
+                      onClick={() => {
+                        const cleanPhone = client.otherPhone!.replace(/\D/g, '')
+                        window.open(`https://wa.me/${cleanPhone}`, '_blank')
+                      }}
+                    >
+                      <WhatsAppIcon className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
 
             {client.email && (
-              <div className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-slate-400" />
-                <div>
-                  <p className="text-sm text-slate-500">Email</p>
-                  <p className="font-medium text-slate-900">{client.email}</p>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-gradient-to-br from-teal-50/50 to-white border border-teal-100">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <Mail className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-slate-500 mb-1">Email</p>
+                  <a
+                    href={`mailto:${client.email}`}
+                    className="text-slate-900 hover:text-purple-600 transition-colors break-all"
+                  >
+                    {client.email}
+                  </a>
                 </div>
               </div>
             )}
 
             {client.address && (
-              <div className="flex items-start gap-3 md:col-span-2">
-                <MapPin className="h-5 w-5 text-slate-400 mt-0.5" />
-                <div>
-                  <p className="text-sm text-slate-500">Address</p>
-                  <p className="font-medium text-slate-900">{client.address}</p>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-gradient-to-br from-slate-50/50 to-white border border-slate-200 md:col-span-2">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <MapPin className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-slate-500 mb-1">Address</p>
+                  <p className="text-slate-900">{client.address}</p>
                 </div>
               </div>
             )}
           </div>
 
           {client.lawyerNotes && (
-            <div className="pt-4 border-t border-slate-200">
-              <p className="text-sm text-slate-500 mb-2">Lawyer's Notes</p>
-              <p className="text-slate-900 whitespace-pre-wrap">{client.lawyerNotes}</p>
+            <div className="p-4 rounded-lg bg-gradient-to-br from-purple-50/50 to-white border border-purple-100">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-sm">
+                  <FileText className="h-4 w-4 text-white" />
+                </div>
+                <p className="text-sm font-semibold text-slate-700">Lawyer's Notes</p>
+              </div>
+              <p className="text-slate-900 whitespace-pre-wrap leading-relaxed">{client.lawyerNotes}</p>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Cases */}
-      <Card>
-        <CardHeader>
+      <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
           <div className="flex items-center justify-between">
-            <CardTitle>Cases ({cases.length})</CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-sm">
+                <Briefcase className="h-5 w-5 text-white" />
+              </div>
+              <CardTitle className="text-xl">Cases ({cases.length})</CardTitle>
+            </div>
             <Button
               size="sm"
-              className="gap-2 bg-slate-900 hover:bg-slate-800"
+              className="gap-2 bg-purple-600 hover:bg-purple-700"
               onClick={() => setShowQuickCreateDialog(true)}
             >
               <Plus className="h-4 w-4" />
@@ -276,13 +391,16 @@ export default function ClientDetailPage() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {cases.length === 0 ? (
             <div className="text-center py-12">
-              <FileText className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-600 text-lg mb-4">No cases found for this client</p>
+              <div className="p-4 bg-gradient-to-br from-purple-100 to-purple-50 rounded-full w-fit mx-auto mb-4">
+                <Briefcase className="h-12 w-12 text-purple-600" />
+              </div>
+              <p className="text-slate-900 text-lg font-medium mb-1">No cases found for this client</p>
+              <p className="text-slate-600 text-sm mb-4">Create the first case to get started</p>
               <Button
-                className="gap-2 bg-slate-900 hover:bg-slate-800"
+                className="gap-2 bg-purple-600 hover:bg-purple-700"
                 onClick={() => setShowQuickCreateDialog(true)}
               >
                 <Plus className="h-4 w-4" />
@@ -293,20 +411,24 @@ export default function ClientDetailPage() {
             <div className="space-y-3">
               {cases.map((caseItem) => (
                 <Link key={caseItem.id} href={`/cases/${caseItem.id}`}>
-                  <Card className="hover:shadow-lg hover:scale-[1.01] transition-all duration-200 cursor-pointer group border-slate-200">
+                  <Card className="hover:shadow-lg hover:scale-[1.01] transition-all duration-200 cursor-pointer group border-slate-200 bg-gradient-to-br from-white to-slate-50/50">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-base truncate group-hover:text-primary transition-colors font-normal tracking-wide">
-                              {caseItem.caseNumber}
-                              {caseItem.year && ` / ${caseItem.year}`}
-                            </h3>
-                            <Badge className={`${statusColors[caseItem.status as keyof typeof statusColors]} text-xs font-medium px-2 py-0.5 border`}>
-                              {caseItem.status}
-                            </Badge>
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-sm flex-shrink-0">
+                            <Scale className="h-5 w-5 text-white" />
                           </div>
-                          <div className="space-y-1.5 mt-1">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-base truncate group-hover:text-purple-600 transition-colors font-semibold">
+                                {caseItem.caseNumber}
+                                {caseItem.year && ` / ${caseItem.year}`}
+                              </h3>
+                              <Badge className={`${statusColors[caseItem.status as keyof typeof statusColors]} text-xs font-semibold px-3 py-1 shadow-sm`}>
+                                {caseItem.status}
+                              </Badge>
+                            </div>
+                            <div className="space-y-1.5 mt-1">
                             <div className="flex items-center gap-2 text-base">
                               <span className="text-slate-400 font-normal">vs</span>
                               <span className="font-medium text-slate-700">{caseItem.opponentMainParty}</span>
@@ -330,9 +452,10 @@ export default function ClientDetailPage() {
                                 </Badge>
                               )}
                             </div>
+                            </div>
                           </div>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors flex-shrink-0 mt-1" />
+                        <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-purple-600 transition-colors flex-shrink-0 mt-1" />
                       </div>
                       <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-100">
                         <div className="flex items-center gap-1.5 text-sm">
