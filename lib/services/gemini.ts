@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 
 export interface GeminiMessage {
   role: 'user' | 'model';
@@ -152,14 +152,14 @@ export class GeminiService {
         name: 'updateNextHearingDate',
         description: 'Update the next hearing date for this case. Use when user asks to change, update, or set the next hearing date.',
         parameters: {
-          type: 'object',
+          type: SchemaType.OBJECT,
           properties: {
             date: {
-              type: 'string',
+              type: SchemaType.STRING,
               description: 'The new hearing date in YYYY-MM-DD format'
             },
             reason: {
-              type: 'string',
+              type: SchemaType.STRING,
               description: 'Optional reason for the change'
             }
           },
@@ -170,15 +170,15 @@ export class GeminiService {
         name: 'updateCaseStatus',
         description: 'Update the status of this case. Use when user asks to change case status, close case, mark as pending, etc.',
         parameters: {
-          type: 'object',
+          type: SchemaType.OBJECT,
           properties: {
             status: {
-              type: 'string',
+              type: SchemaType.STRING,
               enum: ['ACTIVE', 'PENDING', 'CLOSED', 'ARCHIVED'],
               description: 'The new status for the case'
             },
             reason: {
-              type: 'string',
+              type: SchemaType.STRING,
               description: 'Optional reason for status change'
             }
           },
@@ -189,16 +189,15 @@ export class GeminiService {
         name: 'addHearingNote',
         description: 'Add a note to the most recent hearing. Use when user asks to add notes, record observations, or document hearing details.',
         parameters: {
-          type: 'object',
+          type: SchemaType.OBJECT,
           properties: {
             note: {
-              type: 'string',
+              type: SchemaType.STRING,
               description: 'The note content to add'
             },
             isPrivate: {
-              type: 'boolean',
-              description: 'Whether this note should be private (only visible to creator)',
-              default: false
+              type: SchemaType.BOOLEAN,
+              description: 'Whether this note should be private (only visible to creator)'
             }
           },
           required: ['note']
@@ -208,10 +207,10 @@ export class GeminiService {
         name: 'updateCaseSynopsis',
         description: 'Update the case synopsis/summary. Use when user asks to update case summary, change description, or revise case overview.',
         parameters: {
-          type: 'object',
+          type: SchemaType.OBJECT,
           properties: {
             synopsis: {
-              type: 'string',
+              type: SchemaType.STRING,
               description: 'The new synopsis/summary for the case'
             }
           },
