@@ -85,7 +85,7 @@ export class GeminiService {
     const model = this.genAI.getGenerativeModel({
       model: 'gemini-flash-latest',
       tools: [{
-        functionDeclarations: this.getCaseFunctionDeclarations()
+        functionDeclarations: this.getCaseFunctionDeclarations() as any
       }]
     });
 
