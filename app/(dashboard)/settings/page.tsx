@@ -371,21 +371,15 @@ export default function SettingsPage() {
 
   async function handleRemoveGeminiKey() {
     if (!confirm('Are you sure you want to remove your Gemini API key? You will not be able to use the AI Assistant.')) return
-    if (!user?.email) return
 
     try {
-      const response = await fetch(`/api/user/gemini-key?email=${encodeURIComponent(user.email)}`, {
-        method: 'DELETE',
-      })
+      // Remove from localStorage (since we're storing there temporarily)
+      localStorage.removeItem('gemini_api_key')
 
-      if (response.ok) {
-        setHasGeminiKey(false)
-        setGeminiKeyPreview(null)
-        alert('Gemini API key removed successfully')
-      } else {
-        const error = await response.json()
-        alert(error.error || 'Failed to remove API key')
-      }
+      setHasGeminiKey(false)
+      setGeminiKeyPreview(null)
+      alert('Gemini API key removed successfully')
+      window.location.reload()
     } catch (error) {
       console.error('Error removing Gemini key:', error)
       alert('Failed to remove API key')
