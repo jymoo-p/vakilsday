@@ -165,6 +165,17 @@ export async function POST(request: NextRequest) {
     const gemini = new GeminiService(geminiApiKey);
     const response = await gemini.chatWithCaseContext(message, caseContext, history);
 
+    // Check if AI wants to perform actions
+    if (response.functionCalls && response.functionCalls.length > 0) {
+      // Return function call request to frontend for confirmation
+      return NextResponse.json({
+        sessionId: chatSession.id,
+        message: response.text,
+        functionCalls: response.functionCalls,
+        requiresConfirmation: true,
+      });
+    }
+
     // Save messages
     await prisma.chatMessage.createMany({
       data: [
@@ -176,14 +187,14 @@ export async function POST(request: NextRequest) {
         {
           sessionId: chatSession.id,
           role: 'assistant',
-          content: response,
+          content: response.text,
         },
       ],
     });
 
     return NextResponse.json({
       sessionId: chatSession.id,
-      message: response,
+      message: response.text,
     });
   } catch (error: any) {
     console.error('Case chat error:', error);

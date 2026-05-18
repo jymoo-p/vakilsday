@@ -81,8 +81,13 @@ export class GeminiService {
     message: string,
     caseContext: CaseContext,
     history: GeminiMessage[] = []
-  ): Promise<string> {
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+  ): Promise<{ text: string; functionCalls?: any[] }> {
+    const model = this.genAI.getGenerativeModel({
+      model: 'gemini-flash-latest',
+      tools: [{
+        functionDeclarations: this.getCaseFunctionDeclarations()
+      }]
+    });
 
     const contextPrompt = this.buildCaseContextPrompt(caseContext);
 
@@ -104,7 +109,18 @@ export class GeminiService {
 
     const result = await chat.sendMessage(fullMessage);
     const response = await result.response;
-    return response.text();
+
+    // Check if AI wants to call functions
+    const functionCalls = response.functionCalls();
+
+    if (functionCalls && functionCalls.length > 0) {
+      return {
+        text: response.text() || 'I can help you update this case. Please confirm the changes.',
+        functionCalls: functionCalls
+      };
+    }
+
+    return { text: response.text() };
   }
 
   /**
@@ -127,12 +143,91 @@ export class GeminiService {
     return response.text();
   }
 
+  /**
+   * Get function declarations for case updates
+   */
+  private getCaseFunctionDeclarations() {
+    return [
+      {
+        name: 'updateNextHearingDate',
+        description: 'Update the next hearing date for this case. Use when user asks to change, update, or set the next hearing date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            date: {
+              type: 'string',
+              description: 'The new hearing date in YYYY-MM-DD format'
+            },
+            reason: {
+              type: 'string',
+              description: 'Optional reason for the change'
+            }
+          },
+          required: ['date']
+        }
+      },
+      {
+        name: 'updateCaseStatus',
+        description: 'Update the status of this case. Use when user asks to change case status, close case, mark as pending, etc.',
+        parameters: {
+          type: 'object',
+          properties: {
+            status: {
+              type: 'string',
+              enum: ['ACTIVE', 'PENDING', 'CLOSED', 'ARCHIVED'],
+              description: 'The new status for the case'
+            },
+            reason: {
+              type: 'string',
+              description: 'Optional reason for status change'
+            }
+          },
+          required: ['status']
+        }
+      },
+      {
+        name: 'addHearingNote',
+        description: 'Add a note to the most recent hearing. Use when user asks to add notes, record observations, or document hearing details.',
+        parameters: {
+          type: 'object',
+          properties: {
+            note: {
+              type: 'string',
+              description: 'The note content to add'
+            },
+            isPrivate: {
+              type: 'boolean',
+              description: 'Whether this note should be private (only visible to creator)',
+              default: false
+            }
+          },
+          required: ['note']
+        }
+      },
+      {
+        name: 'updateCaseSynopsis',
+        description: 'Update the case synopsis/summary. Use when user asks to update case summary, change description, or revise case overview.',
+        parameters: {
+          type: 'object',
+          properties: {
+            synopsis: {
+              type: 'string',
+              description: 'The new synopsis/summary for the case'
+            }
+          },
+          required: ['synopsis']
+        }
+      }
+    ];
+  }
+
   private getSystemPrompt(): string {
     return `You are an AI legal assistant for Indian litigation lawyers. You help with:
 - Answering legal questions about Indian law
 - Drafting legal documents (petitions, applications, replies, etc.)
 - Analyzing case strategy
 - Providing relevant case law and statutory references
+- Updating case details when instructed (use the provided functions)
 
 Guidelines:
 - Follow Indian legal procedures and citation formats
@@ -140,6 +235,7 @@ Guidelines:
 - Cite relevant sections of Indian acts and precedents
 - Be accurate and conservative in legal advice
 - Always remind users to verify with a qualified lawyer before filing
+- When user asks to update case details (dates, status, notes), use the appropriate function
 
 When drafting documents:
 - Use proper legal formatting

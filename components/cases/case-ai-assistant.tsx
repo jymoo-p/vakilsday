@@ -44,6 +44,8 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
   const [additionalInstructions, setAdditionalInstructions] = useState('')
   const [generatingDraft, setGeneratingDraft] = useState(false)
   const [generatedDraft, setGeneratedDraft] = useState<string | null>(null)
+  const [pendingAction, setPendingAction] = useState<any>(null)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -120,15 +122,35 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
 
       const data = await response.json()
 
-      // Add assistant message
-      const assistantMsg: Message = {
-        id: `temp-${Date.now() + 1}`,
-        role: 'assistant',
-        content: data.message,
-        createdAt: new Date().toISOString(),
-      }
+      // Check if AI wants to perform actions
+      if (data.requiresConfirmation && data.functionCalls) {
+        setPendingAction({
+          message: userMessage,
+          sessionId: data.sessionId,
+          functionCalls: data.functionCalls,
+          responseText: data.message,
+        })
+        setShowConfirmDialog(true)
 
-      setMessages((prev) => [...prev, assistantMsg])
+        // Add AI's request message
+        const assistantMsg: Message = {
+          id: `temp-${Date.now() + 1}`,
+          role: 'assistant',
+          content: data.message + '\n\n*Waiting for your confirmation...*',
+          createdAt: new Date().toISOString(),
+        }
+        setMessages((prev) => [...prev, assistantMsg])
+      } else {
+        // Add assistant message
+        const assistantMsg: Message = {
+          id: `temp-${Date.now() + 1}`,
+          role: 'assistant',
+          content: data.message,
+          createdAt: new Date().toISOString(),
+        }
+
+        setMessages((prev) => [...prev, assistantMsg])
+      }
 
       // Update session ID if new
       if (!sessionId) {
@@ -139,6 +161,67 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
     } finally {
       setSending(false)
     }
+  }
+
+  async function handleConfirmAction() {
+    if (!pendingAction || !user?.email) return
+
+    setShowConfirmDialog(false)
+    setSending(true)
+
+    try {
+      // Execute each function call
+      for (const functionCall of pendingAction.functionCalls) {
+        const response = await fetch(`/api/cases/${caseId}/ai-update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            functionName: functionCall.name,
+            parameters: functionCall.args,
+            userEmail: user.email,
+          }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to update case')
+        }
+
+        const result = await response.json()
+
+        // Add confirmation message
+        const confirmMsg: Message = {
+          id: `temp-${Date.now()}`,
+          role: 'assistant',
+          content: `✅ ${result.changeDescription}`,
+          createdAt: new Date().toISOString(),
+        }
+        setMessages((prev) => [...prev, confirmMsg])
+      }
+
+      setPendingAction(null)
+
+      // Refresh the page to show updated data
+      setTimeout(() => window.location.reload(), 1500)
+    } catch (error: any) {
+      setError(error.message)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  function handleCancelAction() {
+    setShowConfirmDialog(false)
+    setPendingAction(null)
+
+    // Add cancellation message
+    const cancelMsg: Message = {
+      id: `temp-${Date.now()}`,
+      role: 'assistant',
+      content: '❌ Action cancelled. The case was not updated.',
+      createdAt: new Date().toISOString(),
+    }
+    setMessages((prev) => [...prev, cancelMsg])
   }
 
   async function handleGenerateDraft() {
@@ -452,6 +535,77 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
           </form>
         </div>
       </Card>
+
+      {/* Confirmation Dialog for AI Actions */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm AI Action</DialogTitle>
+            <DialogDescription>
+              The AI wants to make changes to this case. Please review and confirm.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {pendingAction?.functionCalls?.map((call: any, index: number) => (
+              <div key={index} className="border rounded-lg p-4 bg-slate-50">
+                <h4 className="font-semibold mb-2">
+                  {call.name === 'updateNextHearingDate' && '📅 Update Hearing Date'}
+                  {call.name === 'updateCaseStatus' && '📊 Update Case Status'}
+                  {call.name === 'addHearingNote' && '📝 Add Hearing Note'}
+                  {call.name === 'updateCaseSynopsis' && '📋 Update Synopsis'}
+                </h4>
+                <div className="text-sm space-y-1">
+                  {call.name === 'updateNextHearingDate' && (
+                    <>
+                      <p><strong>New Date:</strong> {new Date(call.args.date).toLocaleDateString()}</p>
+                      {call.args.reason && <p><strong>Reason:</strong> {call.args.reason}</p>}
+                    </>
+                  )}
+                  {call.name === 'updateCaseStatus' && (
+                    <>
+                      <p><strong>New Status:</strong> {call.args.status}</p>
+                      {call.args.reason && <p><strong>Reason:</strong> {call.args.reason}</p>}
+                    </>
+                  )}
+                  {call.name === 'addHearingNote' && (
+                    <>
+                      <p><strong>Note:</strong> {call.args.note}</p>
+                      <p><strong>Private:</strong> {call.args.isPrivate ? 'Yes' : 'No'}</p>
+                    </>
+                  )}
+                  {call.name === 'updateCaseSynopsis' && (
+                    <p><strong>New Synopsis:</strong> {call.args.synopsis}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                This action will modify the case record. You can always undo changes manually.
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={handleCancelAction}>
+                Cancel
+              </Button>
+              <Button onClick={handleConfirmAction} disabled={sending}>
+                {sending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Confirm & Update'
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
