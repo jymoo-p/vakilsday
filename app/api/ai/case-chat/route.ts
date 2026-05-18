@@ -165,12 +165,20 @@ export async function POST(request: NextRequest) {
     const gemini = new GeminiService(geminiApiKey);
     const response = await gemini.chatWithCaseContext(message, caseContext, history);
 
+    console.log('Gemini response:', {
+      hasText: !!response.text,
+      hasFunctionCalls: !!response.functionCalls,
+      functionCallsCount: response.functionCalls?.length
+    });
+
     // Check if AI wants to perform actions
     if (response.functionCalls && response.functionCalls.length > 0) {
+      console.log('Function calls detected:', JSON.stringify(response.functionCalls, null, 2));
+
       // Return function call request to frontend for confirmation
       return NextResponse.json({
         sessionId: chatSession.id,
-        message: response.text,
+        message: response.text || 'I can help you update this case. Please confirm the changes.',
         functionCalls: response.functionCalls,
         requiresConfirmation: true,
       });

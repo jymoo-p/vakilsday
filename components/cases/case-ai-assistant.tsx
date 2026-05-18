@@ -122,8 +122,16 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
 
       const data = await response.json()
 
+      console.log('API Response:', {
+        requiresConfirmation: data.requiresConfirmation,
+        hasFunctionCalls: !!data.functionCalls,
+        functionCallsCount: data.functionCalls?.length
+      });
+
       // Check if AI wants to perform actions
       if (data.requiresConfirmation && data.functionCalls) {
+        console.log('Showing confirmation dialog for:', data.functionCalls);
+
         setPendingAction({
           message: userMessage,
           sessionId: data.sessionId,
