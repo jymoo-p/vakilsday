@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface Message {
   id: string
@@ -292,8 +294,10 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
                     </Button>
                   ) : (
                     <div className="space-y-4">
-                      <div className="bg-slate-50 p-4 rounded-lg max-h-96 overflow-y-auto">
-                        <pre className="whitespace-pre-wrap text-sm">{generatedDraft}</pre>
+                      <div className="bg-slate-50 p-4 rounded-lg max-h-96 overflow-y-auto prose prose-sm max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {generatedDraft}
+                        </ReactMarkdown>
                       </div>
                       <div className="flex gap-2">
                         <Button onClick={handleCopyDraft} variant="outline">
@@ -390,7 +394,15 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
                         : 'bg-slate-100 text-slate-900'
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    {msg.role === 'user' ? (
+                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    ) : (
+                      <div className="text-sm prose prose-sm max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {msg.content}
+                        </ReactMarkdown>
+                      </div>
+                    )}
                     <p className={`text-xs mt-2 ${msg.role === 'user' ? 'text-purple-200' : 'text-muted-foreground'}`}>
                       {new Date(msg.createdAt).toLocaleTimeString()}
                     </p>

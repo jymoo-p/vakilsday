@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge'
 import { Sparkles, Send, Plus, Trash2, AlertCircle, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface ChatMessage {
   id: string
@@ -395,7 +397,15 @@ export default function AIAssistantPage() {
                             : 'bg-slate-100 text-slate-900'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                        {msg.role === 'user' ? (
+                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                        ) : (
+                          <div className="text-sm prose prose-sm max-w-none">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {msg.content}
+                            </ReactMarkdown>
+                          </div>
+                        )}
                         <p className={`text-xs mt-2 ${msg.role === 'user' ? 'text-purple-200' : 'text-muted-foreground'}`}>
                           {new Date(msg.createdAt).toLocaleTimeString()}
                         </p>
