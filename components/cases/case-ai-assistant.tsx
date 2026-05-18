@@ -176,28 +176,44 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
   async function handleConfirmAction() {
     if (!pendingAction || !user?.email) return
 
+    console.log('=== CONFIRM ACTION START ===')
+    console.log('Pending action:', pendingAction)
+    console.log('Case ID:', caseId)
+    console.log('User email:', user.email)
+
     setShowConfirmDialog(false)
     setSending(true)
 
     try {
       // Execute each function call
       for (const functionCall of pendingAction.functionCalls) {
+        console.log('Executing function call:', functionCall)
+
+        const requestBody = {
+          functionName: functionCall.name,
+          parameters: functionCall.args,
+          userEmail: user.email,
+        }
+        console.log('Request URL:', `/api/cases/${caseId}/ai-update`)
+        console.log('Request body:', requestBody)
+
         const response = await fetch(`/api/cases/${caseId}/ai-update`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            functionName: functionCall.name,
-            parameters: functionCall.args,
-            userEmail: user.email,
-          }),
+          body: JSON.stringify(requestBody),
         })
+
+        console.log('Response status:', response.status)
+        console.log('Response ok:', response.ok)
 
         if (!response.ok) {
           const errorData = await response.json()
+          console.error('API error response:', errorData)
           throw new Error(errorData.error || 'Failed to update case')
         }
 
         const result = await response.json()
+        console.log('API success response:', result)
 
         // Add confirmation message
         const confirmMsg: Message = {
@@ -211,9 +227,12 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
 
       setPendingAction(null)
 
-      // Show success message
-      alert('Case updated successfully! Please refresh the page to see changes.')
+      console.log('=== CONFIRM ACTION COMPLETE ===')
+
+      // Show success message with details
+      alert(`✅ API returned success!\n\nCase ID: ${caseId}\nFunction: ${pendingAction.functionCalls[0].name}\n\nIf you don't see changes, this is a database commit issue (likely Supabase pooler cache).`)
     } catch (error: any) {
+      console.error('=== CONFIRM ACTION ERROR ===', error)
       setError(error.message)
     } finally {
       setSending(false)

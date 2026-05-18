@@ -3,9 +3,14 @@ import { prisma } from '@/lib/prisma';
 import { GeminiService, CaseContext } from '@/lib/services/gemini';
 
 export async function POST(request: NextRequest) {
+  console.log('=== CASE CHAT API START ===')
+  const startTime = Date.now()
+
   try {
     const body = await request.json();
     const { message, caseId, sessionId, userEmail, apiKey } = body;
+
+    console.log('Request:', { message, caseId, sessionId, userEmail, hasApiKey: !!apiKey })
 
     if (!userEmail) {
       return NextResponse.json(
@@ -162,8 +167,10 @@ export async function POST(request: NextRequest) {
     }));
 
     // Call Gemini with case context
+    console.log('Calling Gemini AI...')
     const gemini = new GeminiService(geminiApiKey);
     const response = await gemini.chatWithCaseContext(message, caseContext, history);
+    console.log('Gemini responded in', Date.now() - startTime, 'ms')
 
     console.log('Gemini response:', {
       hasText: !!response.text,
@@ -200,12 +207,16 @@ export async function POST(request: NextRequest) {
       ],
     });
 
-    return NextResponse.json({
+    const responseData = {
       sessionId: chatSession.id,
       message: response.text,
-    });
+    };
+    console.log('=== CASE CHAT API COMPLETE ===', Date.now() - startTime, 'ms')
+    return NextResponse.json(responseData);
   } catch (error: any) {
-    console.error('Case chat error:', error);
+    console.error('=== CASE CHAT API ERROR ===');
+    console.error('Error:', error);
+    console.error('Time elapsed:', Date.now() - startTime, 'ms');
     return NextResponse.json(
       { error: error.message || 'Failed to process case chat' },
       { status: 500 }

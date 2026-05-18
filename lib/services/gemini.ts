@@ -70,7 +70,7 @@ export class GeminiService {
       : message;
 
     const result = await chat.sendMessage(fullMessage);
-    const response = await result.response;
+    const response = result.response;
     return response.text();
   }
 
@@ -82,6 +82,10 @@ export class GeminiService {
     caseContext: CaseContext,
     history: GeminiMessage[] = []
   ): Promise<{ text: string; functionCalls?: any[] }> {
+    console.log('[GeminiService] Starting chatWithCaseContext')
+    console.log('[GeminiService] History length:', history.length)
+    console.log('[GeminiService] Message:', message.substring(0, 100))
+
     const model = this.genAI.getGenerativeModel({
       model: 'gemini-flash-latest',
       tools: [{
@@ -90,6 +94,7 @@ export class GeminiService {
     });
 
     const contextPrompt = this.buildCaseContextPrompt(caseContext);
+    console.log('[GeminiService] Context built, size:', contextPrompt.length, 'chars')
 
     const chat = model.startChat({
       history: history.map((msg) => ({
@@ -107,8 +112,11 @@ export class GeminiService {
       ? `${systemPrompt}\n\n${contextPrompt}\n\nUser: ${message}`
       : message;
 
+    console.log('[GeminiService] Sending message to Gemini...')
     const result = await chat.sendMessage(fullMessage);
-    const response = await result.response;
+    console.log('[GeminiService] Got result from Gemini')
+    const response = result.response;
+    console.log('[GeminiService] Parsed response')
 
     // Check if AI wants to call functions
     const functionCalls = response.functionCalls();
@@ -139,7 +147,7 @@ export class GeminiService {
     const fullPrompt = `${this.getSystemPrompt()}\n\n${contextPrompt}\n\n${draftPrompt}`;
 
     const result = await model.generateContent(fullPrompt);
-    const response = await result.response;
+    const response = result.response;
     return response.text();
   }
 

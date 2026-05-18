@@ -10,6 +10,12 @@ export async function POST(
     const body = await request.json();
     const { functionName, parameters, userEmail } = body;
 
+    console.log('=== AI UPDATE ENDPOINT HIT ===')
+    console.log('Case ID:', id)
+    console.log('Function name:', functionName)
+    console.log('Parameters:', parameters)
+    console.log('User email:', userEmail)
+
     if (!userEmail) {
       return NextResponse.json(
         { error: 'User email is required' },
@@ -70,22 +76,35 @@ export async function POST(
     let result;
     let changeDescription;
 
+    console.log('Executing function:', functionName)
+
     switch (functionName) {
       case 'updateNextHearingDate':
+        console.log('Updating next hearing date...')
         const newDate = new Date(parameters.date);
-        await prisma.case.update({
-          where: { id },
-          data: { nextHearingDate: newDate },
-        });
+        console.log('New date object:', newDate)
+
+        // Use raw SQL to bypass pooler cache (same issue as geminiApiKey)
+        await prisma.$executeRaw`
+          UPDATE "cases"
+          SET "nextHearingDate" = ${newDate}
+          WHERE id = ${id}
+        `;
+        console.log('Raw SQL executed for next hearing date update')
+
         changeDescription = `Updated next hearing date to ${newDate.toLocaleDateString()}`;
         result = { success: true, newDate: parameters.date };
         break;
 
       case 'updateCaseStatus':
-        await prisma.case.update({
-          where: { id },
-          data: { status: parameters.status },
-        });
+        // Use raw SQL to bypass pooler cache
+        await prisma.$executeRaw`
+          UPDATE "cases"
+          SET status = ${parameters.status}
+          WHERE id = ${id}
+        `;
+        console.log('Raw SQL executed for status update')
+
         changeDescription = `Changed case status to ${parameters.status}`;
         result = { success: true, newStatus: parameters.status };
         break;
@@ -111,10 +130,14 @@ export async function POST(
         break;
 
       case 'updateCaseSynopsis':
-        await prisma.case.update({
-          where: { id },
-          data: { synopsis: parameters.synopsis },
-        });
+        // Use raw SQL to bypass pooler cache
+        await prisma.$executeRaw`
+          UPDATE "cases"
+          SET synopsis = ${parameters.synopsis}
+          WHERE id = ${id}
+        `;
+        console.log('Raw SQL executed for synopsis update')
+
         changeDescription = `Updated case synopsis`;
         result = { success: true, synopsis: parameters.synopsis };
         break;
@@ -129,13 +152,20 @@ export async function POST(
     // Log the AI action (optional - you could create an audit log table)
     console.log(`AI Update: ${changeDescription} by user ${user.id} on case ${id}`);
 
-    return NextResponse.json({
+    const responseData = {
       success: true,
       result,
       changeDescription,
-    });
+    };
+    console.log('Returning success response:', responseData)
+    console.log('=== AI UPDATE ENDPOINT COMPLETE ===')
+
+    return NextResponse.json(responseData);
   } catch (error: any) {
-    console.error('AI update error:', error);
+    console.error('=== AI UPDATE ENDPOINT ERROR ===');
+    console.error('Error:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
     return NextResponse.json(
       { error: error.message || 'Failed to update case' },
       { status: 500 }

@@ -7,6 +7,10 @@ export async function GET(request: NextRequest) {
     const userEmail = searchParams.get('email');
     const caseId = searchParams.get('caseId');
 
+    console.log('=== GET SESSIONS API ===')
+    console.log('Email:', userEmail)
+    console.log('Case ID:', caseId)
+
     if (!userEmail) {
       return NextResponse.json(
         { error: 'User email is required' },
@@ -19,6 +23,8 @@ export async function GET(request: NextRequest) {
       where: { email: decodeURIComponent(userEmail) },
       select: { id: true },
     });
+
+    console.log('User found:', !!user)
 
     if (!user) {
       return NextResponse.json(
