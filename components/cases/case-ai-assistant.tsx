@@ -122,11 +122,13 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
 
       const data = await response.json()
 
-      console.log('API Response:', {
-        requiresConfirmation: data.requiresConfirmation,
-        hasFunctionCalls: !!data.functionCalls,
-        functionCallsCount: data.functionCalls?.length
-      });
+      // DEBUG: Show what we got from API
+      if (data.functionCalls) {
+        alert(`DEBUG: AI wants to call ${data.functionCalls.length} function(s). Check console for details.`);
+        console.log('Function calls:', data.functionCalls);
+      } else {
+        console.log('No function calls detected. AI just responded with text.');
+      }
 
       // Check if AI wants to perform actions
       if (data.requiresConfirmation && data.functionCalls) {
@@ -144,7 +146,7 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
         const assistantMsg: Message = {
           id: `temp-${Date.now() + 1}`,
           role: 'assistant',
-          content: data.message + '\n\n*Waiting for your confirmation...*',
+          content: data.message + '\n\n*⚠️ Waiting for your confirmation to update case...*',
           createdAt: new Date().toISOString(),
         }
         setMessages((prev) => [...prev, assistantMsg])
@@ -209,8 +211,8 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
 
       setPendingAction(null)
 
-      // Refresh the page to show updated data
-      setTimeout(() => window.location.reload(), 1500)
+      // Show success message
+      alert('Case updated successfully! Please refresh the page to see changes.')
     } catch (error: any) {
       setError(error.message)
     } finally {
