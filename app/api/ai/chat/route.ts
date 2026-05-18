@@ -76,9 +76,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Build history for Gemini
+    // Build history for Gemini (map 'assistant' to 'model')
     const history = chatSession.messages.map((msg) => ({
-      role: msg.role as 'user' | 'model',
+      role: (msg.role === 'assistant' ? 'model' : msg.role) as 'user' | 'model',
       parts: msg.content,
     }));
 
