@@ -40,6 +40,7 @@ import {
 import Link from 'next/link'
 import { HearingTimeline } from '@/components/cases/hearing-timeline'
 import { HearingForm } from '@/components/cases/hearing-form'
+import { CaseAIAssistant } from '@/components/cases/case-ai-assistant'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -675,6 +676,13 @@ export default function CaseDetailPage() {
             >
               Documents
               <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-600 hover:bg-slate-100 text-xs px-1.5 py-0">{caseData.documents.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger
+              value="ai"
+              className="relative bg-transparent border-0 px-4 sm:px-6 py-3 text-sm md:text-base font-semibold text-slate-500 hover:text-slate-900 data-[state=active]:text-purple-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-t-lg after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-gradient-to-r data-[state=active]:after:from-purple-600 data-[state=active]:after:to-purple-700 transition-all whitespace-nowrap flex-1 sm:flex-initial"
+            >
+              <Sparkles className="h-4 w-4 mr-1.5 inline" />
+              AI Assistant
             </TabsTrigger>
           </TabsList>
         </div>
@@ -1383,6 +1391,11 @@ export default function CaseDetailPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* AI Assistant Tab */}
+        <TabsContent value="ai">
+          <CaseAIAssistant caseId={caseData.id} />
         </TabsContent>
       </Tabs>
     </div>

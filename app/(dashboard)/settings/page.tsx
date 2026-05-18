@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { User, Shield, Calendar, Building2, Plus, Users, Mail, Trash2, HardDrive } from 'lucide-react'
+import { User, Shield, Calendar, Building2, Plus, Users, Mail, Trash2, HardDrive, Sparkles, Eye, EyeOff } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -52,6 +52,11 @@ export default function SettingsPage() {
   const [connectingCalendar, setConnectingCalendar] = useState(false)
   const [calendarSyncEnabled, setCalendarSyncEnabled] = useState<boolean>(false)
   const [togglingCalendar, setTogglingCalendar] = useState(false)
+  const [geminiApiKey, setGeminiApiKey] = useState('')
+  const [showGeminiKey, setShowGeminiKey] = useState(false)
+  const [savingGeminiKey, setSavingGeminiKey] = useState(false)
+  const [hasGeminiKey, setHasGeminiKey] = useState(false)
+  const [geminiKeyPreview, setGeminiKeyPreview] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchData() {
@@ -97,6 +102,20 @@ export default function SettingsPage() {
         if (calendarResponse.ok) {
           const calendarData = await calendarResponse.json()
           setCalendarConnected(calendarData.connected)
+        }
+
+        // Check Gemini API key status (check localStorage first)
+        const localKey = localStorage.getItem('gemini_api_key')
+        if (localKey) {
+          setHasGeminiKey(true)
+          setGeminiKeyPreview(`${localKey.substring(0, 8)}...${localKey.substring(localKey.length - 4)}`)
+        } else {
+          const geminiResponse = await fetch(`/api/user/gemini-key?email=${encodeURIComponent(user.email)}`)
+          if (geminiResponse.ok) {
+            const geminiData = await geminiResponse.json()
+            setHasGeminiKey(geminiData.hasKey)
+            setGeminiKeyPreview(geminiData.keyPreview)
+          }
         }
       } catch (error) {
         console.error('Error fetching settings data:', error)
@@ -307,6 +326,69 @@ export default function SettingsPage() {
       alert('Failed to update calendar sync')
     } finally {
       setTogglingCalendar(false)
+    }
+  }
+
+  async function handleSaveGeminiKey(e: React.FormEvent) {
+    e.preventDefault()
+    if (!user?.email) return
+
+    setSavingGeminiKey(true)
+
+    try {
+      const response = await fetch('/api/user/gemini-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: geminiApiKey, userEmail: user.email }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+
+        // TEMPORARY: Store in localStorage due to pooler cache issue
+        if (data.tempStorage) {
+          localStorage.setItem('gemini_api_key', geminiApiKey)
+          alert(data.message + ' (Stored locally until database cache refreshes)')
+        } else {
+          alert(data.message)
+        }
+
+        setHasGeminiKey(true)
+        setGeminiApiKey('')
+        setShowGeminiKey(false)
+        window.location.reload()
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Failed to save API key')
+      }
+    } catch (error) {
+      console.error('Error saving Gemini key:', error)
+      alert('Failed to save API key')
+    } finally {
+      setSavingGeminiKey(false)
+    }
+  }
+
+  async function handleRemoveGeminiKey() {
+    if (!confirm('Are you sure you want to remove your Gemini API key? You will not be able to use the AI Assistant.')) return
+    if (!user?.email) return
+
+    try {
+      const response = await fetch(`/api/user/gemini-key?email=${encodeURIComponent(user.email)}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        setHasGeminiKey(false)
+        setGeminiKeyPreview(null)
+        alert('Gemini API key removed successfully')
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Failed to remove API key')
+      }
+    } catch (error) {
+      console.error('Error removing Gemini key:', error)
+      alert('Failed to remove API key')
     }
   }
 
@@ -648,6 +730,95 @@ export default function SettingsPage() {
             <p>• Documents are organized by case in your Drive</p>
             <p>• Files are automatically shared with your team</p>
             <p>• You maintain full control of your data</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Gemini AI Integration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            Gemini AI Assistant
+          </CardTitle>
+          <CardDescription>
+            Connect your Gemini API key to use AI features (legal chat and document drafting)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">API Key Status</p>
+              <p className="text-sm text-muted-foreground">
+                {hasGeminiKey
+                  ? `Configured: ${geminiKeyPreview}`
+                  : 'Not configured - Add your API key to enable AI features'}
+              </p>
+            </div>
+            <Badge
+              variant="outline"
+              className={
+                hasGeminiKey
+                  ? 'bg-green-50 text-green-700 border-green-200'
+                  : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+              }
+            >
+              {hasGeminiKey ? 'Active' : 'Inactive'}
+            </Badge>
+          </div>
+
+          {!hasGeminiKey ? (
+            <form onSubmit={handleSaveGeminiKey} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="geminiKey">Gemini API Key</Label>
+                <div className="relative">
+                  <Input
+                    id="geminiKey"
+                    type={showGeminiKey ? 'text' : 'password'}
+                    placeholder="AIzaSy..."
+                    value={geminiApiKey}
+                    onChange={(e) => setGeminiApiKey(e.target.value)}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    onClick={() => setShowGeminiKey(!showGeminiKey)}
+                  >
+                    {showGeminiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Get your free API key at{' '}
+                  <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Google AI Studio
+                  </a>
+                </p>
+              </div>
+              <Button type="submit" disabled={savingGeminiKey}>
+                <Sparkles className="h-4 w-4 mr-2" />
+                {savingGeminiKey ? 'Saving...' : 'Save API Key'}
+              </Button>
+            </form>
+          ) : (
+            <Button variant="outline" onClick={handleRemoveGeminiKey}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Remove API Key
+            </Button>
+          )}
+
+          <div className="text-sm text-muted-foreground space-y-1 pt-2 border-t">
+            <p>• Your API key is stored securely and never shared</p>
+            <p>• Each user brings their own key for complete data privacy</p>
+            <p>• Free tier includes 15 requests per minute</p>
+            <p>• Used for legal chat and document drafting features</p>
           </div>
         </CardContent>
       </Card>

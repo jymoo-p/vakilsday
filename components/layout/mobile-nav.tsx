@@ -14,6 +14,7 @@ import {
   Users,
   Shield,
   X,
+  Sparkles,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -31,6 +32,7 @@ const primaryNavigation = [
 ]
 
 const moreNavigation = [
+  { name: 'AI Assistant', href: '/ai-assistant', icon: Sparkles },
   { name: 'Research', href: '/research', icon: Search },
   { name: 'My Team', href: '/team', icon: Users },
   { name: 'Admin', href: '/admin', icon: Shield },

@@ -1,0 +1,284 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+export interface GeminiMessage {
+  role: 'user' | 'model';
+  parts: string;
+}
+
+export interface CaseContext {
+  caseNumber: string;
+  year?: number;
+  appearingFor: string;
+  clientName?: string;
+  otherParties: string[];
+  opponentParty: string;
+  court?: string;
+  caseType?: string;
+  judgeName?: string;
+  status: string;
+  filingDate: string;
+  nextHearingDate?: string;
+  synopsis?: string;
+  hearings: {
+    date: string;
+    outcome?: string;
+    notes: string[];
+  }[];
+  documents: {
+    title: string;
+    type: string;
+  }[];
+  research: {
+    title: string;
+    type: string;
+  }[];
+}
+
+export class GeminiService {
+  private genAI: GoogleGenerativeAI;
+
+  constructor(apiKey: string) {
+    if (!apiKey) {
+      throw new Error('Gemini API key is required');
+    }
+    this.genAI = new GoogleGenerativeAI(apiKey);
+  }
+
+  /**
+   * General legal chat without case context
+   */
+  async chat(
+    message: string,
+    history: GeminiMessage[] = []
+  ): Promise<string> {
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+
+    const chat = model.startChat({
+      history: history.map((msg) => ({
+        role: msg.role,
+        parts: [{ text: msg.parts }],
+      })),
+      generationConfig: {
+        maxOutputTokens: 2048,
+        temperature: 0.7,
+      },
+    });
+
+    const systemPrompt = this.getSystemPrompt();
+    const fullMessage = history.length === 0
+      ? `${systemPrompt}\n\nUser: ${message}`
+      : message;
+
+    const result = await chat.sendMessage(fullMessage);
+    const response = await result.response;
+    return response.text();
+  }
+
+  /**
+   * Case-specific chat with full context
+   */
+  async chatWithCaseContext(
+    message: string,
+    caseContext: CaseContext,
+    history: GeminiMessage[] = []
+  ): Promise<string> {
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+
+    const contextPrompt = this.buildCaseContextPrompt(caseContext);
+
+    const chat = model.startChat({
+      history: history.map((msg) => ({
+        role: msg.role,
+        parts: [{ text: msg.parts }],
+      })),
+      generationConfig: {
+        maxOutputTokens: 4096,
+        temperature: 0.7,
+      },
+    });
+
+    const systemPrompt = this.getSystemPrompt();
+    const fullMessage = history.length === 0
+      ? `${systemPrompt}\n\n${contextPrompt}\n\nUser: ${message}`
+      : message;
+
+    const result = await chat.sendMessage(fullMessage);
+    const response = await result.response;
+    return response.text();
+  }
+
+  /**
+   * Generate legal draft for a case
+   */
+  async generateDraft(
+    draftType: string,
+    caseContext: CaseContext,
+    additionalInstructions?: string
+  ): Promise<string> {
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+
+    const contextPrompt = this.buildCaseContextPrompt(caseContext);
+    const draftPrompt = this.getDraftPrompt(draftType, additionalInstructions);
+
+    const fullPrompt = `${this.getSystemPrompt()}\n\n${contextPrompt}\n\n${draftPrompt}`;
+
+    const result = await model.generateContent(fullPrompt);
+    const response = await result.response;
+    return response.text();
+  }
+
+  private getSystemPrompt(): string {
+    return `You are an AI legal assistant for Indian litigation lawyers. You help with:
+- Answering legal questions about Indian law
+- Drafting legal documents (petitions, applications, replies, etc.)
+- Analyzing case strategy
+- Providing relevant case law and statutory references
+
+Guidelines:
+- Follow Indian legal procedures and citation formats
+- Use formal legal language appropriate for Indian courts
+- Cite relevant sections of Indian acts and precedents
+- Be accurate and conservative in legal advice
+- Always remind users to verify with a qualified lawyer before filing
+
+When drafting documents:
+- Use proper legal formatting
+- Include appropriate headings and sections
+- Follow Indian court conventions
+- Leave placeholders like [DATE], [SIGNATURE] where needed`;
+  }
+
+  private buildCaseContextPrompt(context: CaseContext): string {
+    let prompt = `CASE INFORMATION:\n`;
+    prompt += `Case Number: ${context.caseNumber}${context.year ? `/${context.year}` : ''}\n`;
+    prompt += `Client: ${context.clientName || 'Not specified'}\n`;
+
+    if (context.otherParties.length > 0) {
+      prompt += `Other Parties (Our Side): ${context.otherParties.join(', ')}\n`;
+    }
+
+    prompt += `Appearing For: ${context.appearingFor}\n`;
+    prompt += `Opponent: ${context.opponentParty}\n`;
+
+    if (context.court) prompt += `Court: ${context.court}\n`;
+    if (context.caseType) prompt += `Case Type: ${context.caseType}\n`;
+    if (context.judgeName) prompt += `Judge: ${context.judgeName}\n`;
+
+    prompt += `Status: ${context.status}\n`;
+    prompt += `Filing Date: ${context.filingDate}\n`;
+
+    if (context.nextHearingDate) {
+      prompt += `Next Hearing: ${context.nextHearingDate}\n`;
+    }
+
+    if (context.synopsis) {
+      prompt += `\nSYNOPSIS:\n${context.synopsis}\n`;
+    }
+
+    if (context.hearings.length > 0) {
+      prompt += `\nHEARING HISTORY:\n`;
+      context.hearings.forEach((h, i) => {
+        prompt += `${i + 1}. ${h.date}\n`;
+        if (h.outcome) prompt += `   Outcome: ${h.outcome}\n`;
+        if (h.notes.length > 0) {
+          prompt += `   Notes:\n`;
+          h.notes.forEach(note => prompt += `   - ${note}\n`);
+        }
+      });
+    }
+
+    if (context.documents.length > 0) {
+      prompt += `\nDOCUMENTS ON RECORD:\n`;
+      context.documents.forEach((d, i) => {
+        prompt += `${i + 1}. ${d.title} (${d.type})\n`;
+      });
+    }
+
+    if (context.research.length > 0) {
+      prompt += `\nRELEVANT RESEARCH:\n`;
+      context.research.forEach((r, i) => {
+        prompt += `${i + 1}. ${r.title} (${r.type})\n`;
+      });
+    }
+
+    return prompt;
+  }
+
+  private getDraftPrompt(draftType: string, additionalInstructions?: string): string {
+    const draftPrompts: Record<string, string> = {
+      petition: `Draft a petition for this case. Include:
+- Title/heading with court name and case details
+- List of parties
+- Facts of the case
+- Grounds/prayers
+- Proper legal citations
+- Verification clause`,
+
+      application: `Draft an application for this case. Include:
+- Application heading
+- Grounds for the application
+- Legal basis
+- Prayer/relief sought
+- Verification`,
+
+      reply: `Draft a reply/response for this case. Include:
+- Opening paragraph
+- Point-by-point response to opponent's claims
+- Counter-arguments with legal backing
+- Conclusion and prayer`,
+
+      arguments: `Prepare written arguments for this case. Include:
+- Summary of facts
+- Issues for consideration
+- Arguments on each issue with case law
+- Conclusion and prayer`,
+
+      affidavit: `Draft an affidavit for this case. Include:
+- Deponent details
+- Statement of facts in numbered paragraphs
+- Verification and jurat clause`,
+
+      notice: `Draft a legal notice for this case. Include:
+- Sender and recipient details
+- Facts of the case
+- Legal basis for the claim
+- Demand/relief sought
+- Consequences of non-compliance`,
+    };
+
+    const basePrompt = draftPrompts[draftType] ||
+      `Draft a ${draftType} document for this case following Indian legal conventions.`;
+
+    return additionalInstructions
+      ? `${basePrompt}\n\nAdditional Instructions: ${additionalInstructions}`
+      : basePrompt;
+  }
+}
+
+export async function testGeminiKey(apiKey: string): Promise<boolean> {
+  try {
+    // Basic validation - check if it looks like a valid API key
+    if (!apiKey || apiKey.trim().length < 20) {
+      console.error('API key is too short or empty');
+      return false;
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+
+    // Test with a simple prompt
+    const result = await model.generateContent('Hello');
+    const response = await result.response;
+    const text = response.text();
+
+    console.log('API key validation successful, response:', text.substring(0, 50));
+    return true;
+  } catch (error: any) {
+    console.error('Gemini API key test failed:', {
+      message: error.message,
+      status: error.status,
+      statusText: error.statusText,
+    });
+    return false;
+  }
+}

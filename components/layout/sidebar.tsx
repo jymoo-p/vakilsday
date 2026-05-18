@@ -12,6 +12,7 @@ import {
   Shield,
   UserCircle,
   Calendar,
+  Sparkles,
 } from 'lucide-react'
 
 const navigation = [
@@ -19,6 +20,7 @@ const navigation = [
   { name: 'Cases', href: '/cases', icon: Briefcase },
   { name: 'Clients', href: '/clients', icon: UserCircle },
   { name: 'Calendar', href: '/calendar', icon: Calendar },
+  { name: 'AI Assistant', href: '/ai-assistant', icon: Sparkles },
   { name: 'Research', href: '/research', icon: Search },
   { name: 'My Team', href: '/team', icon: Users },
   { name: 'Admin', href: '/admin', icon: Shield },
