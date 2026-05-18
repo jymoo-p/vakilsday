@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { testGeminiKey } from '@/lib/services/gemini';
-import { Pool } from 'pg';
 
 export async function POST(request: NextRequest) {
   try {
