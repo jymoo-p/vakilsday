@@ -167,7 +167,23 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
         setSessionId(data.sessionId)
       }
     } catch (error: any) {
-      setError(error.message)
+      // Make error messages more user-friendly and empathetic
+      let friendlyError = error.message
+
+      // Rate limit / quota errors
+      if (error.message.includes('429') || error.message.includes('quota') || error.message.includes('Too Many Requests')) {
+        friendlyError = "🌟 You're making great use of the AI Assistant! You've reached the free tier limit for today (20 requests). This happens to everyone on the free plan.\n\n💡 Good news: You can upgrade to Google's paid Gemini API plan for unlimited requests at very affordable rates (just a few cents per request).\n\n⏰ Or, your quota will reset automatically in a few hours. Take a coffee break and come back soon! ☕"
+      }
+      // Service overload errors (503)
+      else if (error.message.includes('503') || error.message.includes('overload') || error.message.includes('GEMINI_OVERLOAD')) {
+        friendlyError = "🌟 Google's AI is experiencing high demand right now - you're not alone! This is a temporary spike that happens to everyone. Please try again in a minute or two. We'll be back to normal soon! ☕"
+      }
+      // Network/timeout errors
+      else if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('timeout')) {
+        friendlyError = "📡 Looks like there's a connection hiccup. Please check your internet connection and try again. If the problem persists, it might be a temporary service issue - give it a minute and retry!"
+      }
+
+      setError(friendlyError)
     } finally {
       setSending(false)
     }
@@ -522,9 +538,26 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
 
         <div className="border-t p-4">
           {error && (
-            <Alert variant="destructive" className="mb-4">
+            <Alert
+              variant={error.includes('quota') || error.includes('free tier') ? 'default' : 'destructive'}
+              className={`mb-4 ${error.includes('quota') || error.includes('free tier') ? 'bg-blue-50 border-blue-200' : ''}`}
+            >
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="whitespace-pre-line">
+                {error}
+                {(error.includes('quota') || error.includes('free tier')) && (
+                  <div className="mt-3">
+                    <a
+                      href="https://ai.google.dev/pricing"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium underline"
+                    >
+                      View Gemini API Pricing & Upgrade →
+                    </a>
+                  </div>
+                )}
+              </AlertDescription>
             </Alert>
           )}
           <form onSubmit={handleSendMessage} className="flex gap-2">
