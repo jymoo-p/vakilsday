@@ -130,6 +130,8 @@ export async function POST(request: NextRequest) {
       assignedUserIds,
     } = body
 
+    console.log('[POST /api/cases] Request body:', JSON.stringify(body, null, 2))
+
     if (!userEmail) {
       return NextResponse.json({ error: 'User email required' }, { status: 401 })
     }
@@ -138,6 +140,8 @@ export async function POST(request: NextRequest) {
       where: { email: userEmail },
       select: { id: true, role: true, organizationId: true },
     })
+
+    console.log('[POST /api/cases] User found:', user)
 
     if (!user || !user.organizationId) {
       return NextResponse.json({ error: 'User not found or no organization' }, { status: 404 })
@@ -155,6 +159,23 @@ export async function POST(request: NextRequest) {
         { error: 'Missing required fields: caseNumber, appearingFor, opponentMainParty, filingDate' },
         { status: 400 }
       )
+    }
+
+    // Validate clientId if provided
+    if (clientId) {
+      const clientExists = await prisma.client.findFirst({
+        where: {
+          id: clientId,
+          organizationId: user.organizationId,
+        },
+      })
+
+      if (!clientExists) {
+        return NextResponse.json(
+          { error: 'Client not found or does not belong to your organization' },
+          { status: 400 }
+        )
+      }
     }
 
     // Check if case number already exists in this organization
@@ -180,18 +201,27 @@ export async function POST(request: NextRequest) {
       assignedUserIds.forEach((id: string) => assignmentUserIds.add(id))
     }
 
+    console.log('[POST /api/cases] Creating case with data:', {
+      caseNumber,
+      appearingFor,
+      clientId,
+      opponentMainParty,
+      organizationId: user.organizationId,
+      filingDate: new Date(filingDate),
+    })
+
     const newCase = await prisma.case.create({
       data: {
         caseNumber,
         year,
         appearingFor,
-        clientId,
+        clientId: clientId || null, // Ensure it's null if empty string
         otherParties: otherParties || [],
         opponentMainParty,
         opponentOtherParties: opponentOtherParties || [],
-        courtId,
+        courtId: courtId || null,
         courtNumber,
-        caseTypeId,
+        caseTypeId: caseTypeId || null,
         filingDate: new Date(filingDate),
         nextHearingDate: nextHearingDate ? new Date(nextHearingDate) : null,
         synopsis,
@@ -213,6 +243,8 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    console.log('[POST /api/cases] Case created successfully:', newCase.id)
+
     // If next hearing date is provided, create a hearing entry
     if (nextHearingDate) {
       await prisma.hearing.create({
@@ -232,8 +264,37 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ case: newCase }, { status: 201 })
-  } catch (error) {
-    console.error('Error creating case:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  } catch (error: any) {
+    console.error('[POST /api/cases] Error creating case:', error)
+    console.error('[POST /api/cases] Error details:', {
+      name: error?.name,
+      message: error?.message,
+      code: error?.code,
+      meta: error?.meta,
+    })
+
+    // Handle Prisma-specific errors
+    if (error?.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Case number already exists in your organization' },
+        { status: 409 }
+      )
+    }
+
+    if (error?.code === 'P2003') {
+      return NextResponse.json(
+        { error: 'Invalid reference: Please check client, court, or case type IDs' },
+        { status: 400 }
+      )
+    }
+
+    return NextResponse.json(
+      {
+        error: 'Failed to create case',
+        details: error?.message || 'Unknown error',
+        code: error?.code
+      },
+      { status: 500 }
+    )
   }
 }

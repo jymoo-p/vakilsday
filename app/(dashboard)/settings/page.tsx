@@ -339,7 +339,11 @@ export default function SettingsPage() {
       const response = await fetch('/api/user/gemini-key', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: geminiApiKey, userEmail: user.email }),
+        body: JSON.stringify({
+          apiKey: geminiApiKey,
+          userEmail: user.email,
+          skipValidation: true  // Skip validation to avoid 503 errors when Google API is overloaded
+        }),
       })
 
       if (response.ok) {

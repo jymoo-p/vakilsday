@@ -232,7 +232,11 @@ export default function CasesPage() {
 
       if (!caseResponse.ok) {
         const errorData = await caseResponse.json()
-        throw new Error(errorData.error || 'Failed to create case')
+        console.error('API Error Response:', errorData)
+        const errorMessage = errorData.details
+          ? `${errorData.error}: ${errorData.details}`
+          : errorData.error || 'Failed to create case'
+        throw new Error(errorMessage)
       }
 
       const caseData = await caseResponse.json()
@@ -243,7 +247,8 @@ export default function CasesPage() {
       router.push(`/cases/${caseData.case.id}?newCase=true`)
     } catch (error) {
       console.error('Error creating case:', error)
-      toast.error(error instanceof Error ? error.message : 'Something went wrong. Try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Something went wrong. Try again.'
+      toast.error(errorMessage)
     } finally {
       setCreating(false)
     }
