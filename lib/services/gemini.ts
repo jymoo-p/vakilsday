@@ -269,18 +269,14 @@ export class GeminiService {
             },
             outcome: {
               type: SchemaType.STRING,
-              description: 'The outcome of the hearing (e.g., "Postponed", "Arguments heard", "Order reserved", "Judgment delivered")'
-            },
-            notes: {
-              type: SchemaType.STRING,
-              description: 'Additional notes or comments about the hearing (e.g., "Posted for hearing", "Next date for arguments")'
+              description: 'The full outcome/notes/comments about the hearing. This is the MAIN field that gets displayed. Include ALL details the user mentions - outcome (Postponed, Adjourned, etc.) AND any comments, notes, judge remarks, observations. Phrases like "with comments", "with note", "judge noted", "remarks", should ALL go here. Example: "Postponed. Posted for hearing." or "Arguments heard. Matter kept for orders."'
             },
             nextDate: {
               type: SchemaType.STRING,
               description: 'Optional next hearing date if the case was postponed, in YYYY-MM-DD format'
             }
           },
-          required: ['hearingDate']
+          required: ['hearingDate', 'outcome']
         }
       }
     ];
@@ -312,11 +308,12 @@ When the user asks to:
 
 You MUST call these functions, not just respond with text. The functions will actually update the database.
 
-When adding a hearing, extract:
+When adding a hearing, extract ALL details into the outcome field:
 - The hearing date from phrases like "today", "tomorrow", "Monday", specific dates
-- The outcome if mentioned (e.g., "postponed", "adjourned", "arguments heard")
-- Any notes/comments the user provides
-- Next date if mentioned (e.g., "postponed to Monday")
+- The outcome AND any notes/comments combined (e.g., "Postponed. Posted for hearing.", "Adjourned. Matter fixed for evidence.")
+- Put EVERYTHING the user mentions about what happened into the outcome field - this is what gets displayed
+- Phrases like "with comments", "with note", "judge noted", "remarks", "observations" mean you should include those details in the outcome
+- Next date if mentioned (e.g., "postponed to Monday" → nextDate: "2024-MM-DD")
 
 When drafting documents:
 - Use proper legal formatting

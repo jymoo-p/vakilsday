@@ -67,18 +67,6 @@ export async function POST(request: NextRequest) {
               },
             });
 
-            // Add notes if provided
-            if (args.notes) {
-              await prisma.hearingNote.create({
-                data: {
-                  hearingId: hearing.id,
-                  userId: user.id,
-                  content: args.notes,
-                  isPrivate: false,
-                },
-              });
-            }
-
             // Update case next hearing date if provided
             if (args.nextDate) {
               await prisma.case.update({
@@ -90,7 +78,7 @@ export async function POST(request: NextRequest) {
             results.push({
               function: name,
               success: true,
-              message: `Added hearing for ${args.hearingDate}`,
+              message: `Added hearing for ${args.hearingDate}${args.outcome ? ': ' + args.outcome : ''}`,
             });
             break;
           }
