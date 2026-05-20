@@ -37,6 +37,7 @@ export default function AIAssistantPage() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loadingSessions, setLoadingSessions] = useState(true)
+  const [userContext, setUserContext] = useState<any>(null) // Cases and clients data
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -69,6 +70,36 @@ export default function AIAssistantPage() {
       }
     }
     checkApiKey()
+  }, [user])
+
+  // Fetch user's cases and clients for context
+  useEffect(() => {
+    async function fetchUserContext() {
+      if (!user?.email) return
+
+      try {
+        // Fetch cases
+        const casesResponse = await fetch(`/api/cases?email=${encodeURIComponent(user.email)}`)
+        let cases = []
+        if (casesResponse.ok) {
+          const casesData = await casesResponse.json()
+          cases = casesData.cases || []
+        }
+
+        // Fetch clients
+        const clientsResponse = await fetch(`/api/clients?email=${encodeURIComponent(user.email)}`)
+        let clients = []
+        if (clientsResponse.ok) {
+          const clientsData = await clientsResponse.json()
+          clients = clientsData.clients || []
+        }
+
+        setUserContext({ cases, clients })
+      } catch (error) {
+        console.error('Error fetching user context:', error)
+      }
+    }
+    fetchUserContext()
   }, [user])
 
   useEffect(() => {
@@ -161,6 +192,7 @@ export default function AIAssistantPage() {
           sessionId: currentSessionId,
           userEmail: user?.email,
           apiKey,
+          userContext, // Include cases and clients data
         }),
       })
 

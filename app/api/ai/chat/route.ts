@@ -5,7 +5,7 @@ import { GeminiService } from '@/lib/services/gemini';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { message, sessionId, userEmail, apiKey } = body;
+    const { message, sessionId, userEmail, apiKey, userContext } = body;
 
     if (!userEmail) {
       return NextResponse.json(
@@ -82,9 +82,9 @@ export async function POST(request: NextRequest) {
       parts: msg.content,
     }));
 
-    // Call Gemini
+    // Call Gemini with user context
     const gemini = new GeminiService(geminiApiKey);
-    const response = await gemini.chat(message, history);
+    const response = await gemini.chatWithContext(message, history, userContext);
 
     // Save messages
     await prisma.chatMessage.createMany({

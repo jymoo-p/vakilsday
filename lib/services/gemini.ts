@@ -75,6 +75,38 @@ export class GeminiService {
   }
 
   /**
+   * Chat with user's full context (cases and clients)
+   */
+  async chatWithContext(
+    message: string,
+    history: GeminiMessage[] = [],
+    userContext: any = null
+  ): Promise<string> {
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+
+    const chat = model.startChat({
+      history: history.map((msg) => ({
+        role: msg.role,
+        parts: [{ text: msg.parts }],
+      })),
+      generationConfig: {
+        maxOutputTokens: 4096,
+        temperature: 0.7,
+      },
+    });
+
+    const systemPrompt = this.getSystemPrompt();
+    const contextPrompt = this.buildUserContextPrompt(userContext);
+    const fullMessage = history.length === 0
+      ? `${systemPrompt}\n\n${contextPrompt}\n\nUser: ${message}`
+      : message;
+
+    const result = await chat.sendMessage(fullMessage);
+    const response = result.response;
+    return response.text();
+  }
+
+  /**
    * Case-specific chat with full context
    */
   async chatWithCaseContext(
@@ -312,6 +344,53 @@ When drafting documents:
         prompt += `${i + 1}. ${r.title} (${r.type})\n`;
       });
     }
+
+    return prompt;
+  }
+
+  private buildUserContextPrompt(userContext: any): string {
+    if (!userContext || (!userContext.cases && !userContext.clients)) {
+      return '';
+    }
+
+    let prompt = `\n=== YOUR PRACTICE CONTEXT ===\n`;
+
+    // Add cases summary
+    if (userContext.cases && userContext.cases.length > 0) {
+      prompt += `\nYOUR CASES (${userContext.cases.length} total):\n`;
+
+      userContext.cases.slice(0, 20).forEach((c: any, i: number) => {
+        const clientName = c.client ? `${c.client.firstName} ${c.client.lastName}` : (c.otherParties[0] || 'Unknown');
+        prompt += `${i + 1}. ${c.caseNumber} - ${clientName} vs ${c.opponentMainParty}\n`;
+        prompt += `   Status: ${c.status}`;
+        if (c.court?.name) prompt += ` | Court: ${c.court.name}`;
+        if (c.nextHearingDate) prompt += ` | Next: ${new Date(c.nextHearingDate).toLocaleDateString()}`;
+        prompt += `\n`;
+        if (c.synopsis) prompt += `   Synopsis: ${c.synopsis.substring(0, 150)}...\n`;
+      });
+
+      if (userContext.cases.length > 20) {
+        prompt += `... and ${userContext.cases.length - 20} more cases\n`;
+      }
+    }
+
+    // Add clients summary
+    if (userContext.clients && userContext.clients.length > 0) {
+      prompt += `\nYOUR CLIENTS (${userContext.clients.length} total):\n`;
+
+      userContext.clients.slice(0, 15).forEach((client: any, i: number) => {
+        prompt += `${i + 1}. ${client.firstName} ${client.lastName || ''}`;
+        if (client.phone) prompt += ` (${client.phone})`;
+        prompt += `\n`;
+      });
+
+      if (userContext.clients.length > 15) {
+        prompt += `... and ${userContext.clients.length - 15} more clients\n`;
+      }
+    }
+
+    prompt += `\nWhen the user asks about "my cases", "my clients", or refers to specific case numbers or client names, use this information to provide relevant, personalized responses.\n`;
+    prompt += `=== END CONTEXT ===\n`;
 
     return prompt;
   }
