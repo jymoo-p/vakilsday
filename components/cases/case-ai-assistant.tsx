@@ -52,6 +52,22 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const formatErrorMessage = (errorMessage: string): string => {
+    // Rate limit / quota errors
+    if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('Too Many Requests')) {
+      return "🌟 You're making great use of the AI Assistant! You've reached the free tier limit for today (20 requests). This happens to everyone on the free plan.\n\n💡 Good news: You can upgrade to Google's paid Gemini API plan for unlimited requests at very affordable rates (just a few cents per request).\n\n⏰ Or, your quota will reset automatically in a few hours. Take a coffee break and come back soon! ☕"
+    }
+    // Service overload errors (503)
+    else if (errorMessage.includes('503') || errorMessage.includes('overload') || errorMessage.includes('GEMINI_OVERLOAD')) {
+      return "🌟 Google's AI is experiencing high demand right now - you're not alone! This is a temporary spike that happens to everyone. Please try again in a minute or two. We'll be back to normal soon! ☕"
+    }
+    // Network/timeout errors
+    else if (errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('timeout')) {
+      return "📡 Looks like there's a connection hiccup. Please check your internet connection and try again. If the problem persists, it might be a temporary service issue - give it a minute and retry!"
+    }
+    return errorMessage
+  }
+
   useEffect(() => {
     scrollToBottom()
   }, [messages])
@@ -167,23 +183,7 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
         setSessionId(data.sessionId)
       }
     } catch (error: any) {
-      // Make error messages more user-friendly and empathetic
-      let friendlyError = error.message
-
-      // Rate limit / quota errors
-      if (error.message.includes('429') || error.message.includes('quota') || error.message.includes('Too Many Requests')) {
-        friendlyError = "🌟 You're making great use of the AI Assistant! You've reached the free tier limit for today (20 requests). This happens to everyone on the free plan.\n\n💡 Good news: You can upgrade to Google's paid Gemini API plan for unlimited requests at very affordable rates (just a few cents per request).\n\n⏰ Or, your quota will reset automatically in a few hours. Take a coffee break and come back soon! ☕"
-      }
-      // Service overload errors (503)
-      else if (error.message.includes('503') || error.message.includes('overload') || error.message.includes('GEMINI_OVERLOAD')) {
-        friendlyError = "🌟 Google's AI is experiencing high demand right now - you're not alone! This is a temporary spike that happens to everyone. Please try again in a minute or two. We'll be back to normal soon! ☕"
-      }
-      // Network/timeout errors
-      else if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('timeout')) {
-        friendlyError = "📡 Looks like there's a connection hiccup. Please check your internet connection and try again. If the problem persists, it might be a temporary service issue - give it a minute and retry!"
-      }
-
-      setError(friendlyError)
+      setError(formatErrorMessage(error.message))
     } finally {
       setSending(false)
     }
@@ -238,7 +238,7 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
       setTimeout(() => window.location.reload(), 1500)
     } catch (error: any) {
       console.error('Confirm action error:', error)
-      setError(error.message)
+      setError(formatErrorMessage(error.message))
     } finally {
       setSending(false)
     }
@@ -288,7 +288,7 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
       const data = await response.json()
       setGeneratedDraft(data.draft)
     } catch (error: any) {
-      setError(error.message)
+      setError(formatErrorMessage(error.message))
     } finally {
       setGeneratingDraft(false)
     }
