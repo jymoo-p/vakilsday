@@ -188,9 +188,10 @@ export default function AIAssistantPage() {
 
   async function handleDeleteSession(sessionId: string) {
     if (!confirm('Delete this chat session?')) return
+    if (!user?.email) return
 
     try {
-      const response = await fetch(`/api/ai/chat/${sessionId}`, {
+      const response = await fetch(`/api/ai/chat/${sessionId}?email=${encodeURIComponent(user.email)}`, {
         method: 'DELETE',
       })
 
@@ -199,9 +200,14 @@ export default function AIAssistantPage() {
         if (currentSessionId === sessionId) {
           handleNewChat()
         }
+      } else {
+        const error = await response.json()
+        console.error('Delete failed:', error)
+        alert(error.error || 'Failed to delete chat session')
       }
     } catch (error) {
       console.error('Error deleting session:', error)
+      alert('Failed to delete chat session')
     }
   }
 
