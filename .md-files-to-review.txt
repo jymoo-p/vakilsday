@@ -1,0 +1,24 @@
+# Markdown Files to Review/Delete
+
+These files may contain secrets or temporary documentation that should not be committed:
+
+## Files with potential secrets (CHECK BEFORE COMMIT):
+- TEAM_SETUP_GUIDE.md (contains Google OAuth credentials)
+- FIREBASE_DRIVE_SETUP.md (may contain Firebase config)
+
+## Temporary/Status files (safe to delete):
+- FINAL_STATUS.md
+- MIGRATION_FIX_SUMMARY.md
+- MIGRATION-CHECKLIST.md
+- NEXT_STEPS.md
+
+## Keep these:
+- README.md (project readme)
+- CLAUDE.md (project instructions for Claude)
+- SETUP_GUIDE.md (general setup)
+- AI_PRODUCTION_STRATEGY.md (AI strategy docs)
+
+## Action needed:
+1. Review TEAM_SETUP_GUIDE.md and FIREBASE_DRIVE_SETUP.md for secrets
+2. Delete or gitignore temporary status files
+3. Consider adding *.md pattern to .gitignore except for essential docs

@@ -176,63 +176,52 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
   async function handleConfirmAction() {
     if (!pendingAction || !user?.email) return
 
-    console.log('=== CONFIRM ACTION START ===')
-    console.log('Pending action:', pendingAction)
-    console.log('Case ID:', caseId)
-    console.log('User email:', user.email)
-
     setShowConfirmDialog(false)
     setSending(true)
 
     try {
-      // Execute each function call
-      for (const functionCall of pendingAction.functionCalls) {
-        console.log('Executing function call:', functionCall)
-
-        const requestBody = {
-          functionName: functionCall.name,
-          parameters: functionCall.args,
+      const response = await fetch('/api/ai/case-chat/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          caseId,
           userEmail: user.email,
-        }
-        console.log('Request URL:', `/api/cases/${caseId}/ai-update`)
-        console.log('Request body:', requestBody)
+          functionCalls: pendingAction.functionCalls,
+        }),
+      })
 
-        const response = await fetch(`/api/cases/${caseId}/ai-update`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
-        })
-
-        console.log('Response status:', response.status)
-        console.log('Response ok:', response.ok)
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error('API error response:', errorData)
-          throw new Error(errorData.error || 'Failed to update case')
-        }
-
-        const result = await response.json()
-        console.log('API success response:', result)
-
-        // Add confirmation message
-        const confirmMsg: Message = {
-          id: `temp-${Date.now()}`,
-          role: 'assistant',
-          content: `✅ ${result.changeDescription}`,
-          createdAt: new Date().toISOString(),
-        }
-        setMessages((prev) => [...prev, confirmMsg])
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to execute actions')
       }
+
+      const data = await response.json()
+
+      // Add success messages
+      const successMessages = data.results
+        .filter((r: any) => r.success)
+        .map((r: any) => `✅ ${r.message}`)
+        .join('\n')
+
+      const failedMessages = data.results
+        .filter((r: any) => !r.success)
+        .map((r: any) => `❌ ${r.message}`)
+        .join('\n')
+
+      const confirmMsg: Message = {
+        id: `temp-${Date.now()}`,
+        role: 'assistant',
+        content: [successMessages, failedMessages].filter(Boolean).join('\n\n') || '✅ Actions completed',
+        createdAt: new Date().toISOString(),
+      }
+      setMessages((prev) => [...prev, confirmMsg])
 
       setPendingAction(null)
 
-      console.log('=== CONFIRM ACTION COMPLETE ===')
-
-      // Show success message with details
-      alert(`✅ API returned success!\n\nCase ID: ${caseId}\nFunction: ${pendingAction.functionCalls[0].name}\n\nIf you don't see changes, this is a database commit issue (likely Supabase pooler cache).`)
+      // Reload page to show updated data
+      setTimeout(() => window.location.reload(), 1500)
     } catch (error: any) {
-      console.error('=== CONFIRM ACTION ERROR ===', error)
+      console.error('Confirm action error:', error)
       setError(error.message)
     } finally {
       setSending(false)

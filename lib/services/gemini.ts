@@ -256,6 +256,32 @@ export class GeminiService {
           },
           required: ['synopsis']
         }
+      },
+      {
+        name: 'addHearing',
+        description: 'Add a new hearing record to the case. Use when user asks to add/create a hearing, schedule a hearing, or record a hearing that happened.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            hearingDate: {
+              type: SchemaType.STRING,
+              description: 'The date of the hearing in YYYY-MM-DD format. Can be past or future date.'
+            },
+            outcome: {
+              type: SchemaType.STRING,
+              description: 'The outcome of the hearing (e.g., "Postponed", "Arguments heard", "Order reserved", "Judgment delivered")'
+            },
+            notes: {
+              type: SchemaType.STRING,
+              description: 'Additional notes or comments about the hearing (e.g., "Posted for hearing", "Next date for arguments")'
+            },
+            nextDate: {
+              type: SchemaType.STRING,
+              description: 'Optional next hearing date if the case was postponed, in YYYY-MM-DD format'
+            }
+          },
+          required: ['hearingDate']
+        }
       }
     ];
   }
@@ -277,6 +303,7 @@ Guidelines:
 
 **CRITICAL - Function Calling:**
 When the user asks to:
+- "Add a hearing for [date]" or "Create hearing" → CALL addHearing function
 - "Set next hearing to [date]" → CALL updateNextHearingDate function
 - "Change status to [status]" → CALL updateCaseStatus function
 - "Mark as closed/pending/archived" → CALL updateCaseStatus function
@@ -284,6 +311,12 @@ When the user asks to:
 - "Update synopsis/summary to [text]" → CALL updateCaseSynopsis function
 
 You MUST call these functions, not just respond with text. The functions will actually update the database.
+
+When adding a hearing, extract:
+- The hearing date from phrases like "today", "tomorrow", "Monday", specific dates
+- The outcome if mentioned (e.g., "postponed", "adjourned", "arguments heard")
+- Any notes/comments the user provides
+- Next date if mentioned (e.g., "postponed to Monday")
 
 When drafting documents:
 - Use proper legal formatting
