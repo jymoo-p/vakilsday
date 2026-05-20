@@ -51,7 +51,7 @@ export class GeminiService {
     message: string,
     history: GeminiMessage[] = []
   ): Promise<string> {
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const chat = model.startChat({
       history: history.map((msg) => ({
@@ -87,7 +87,7 @@ export class GeminiService {
     console.log('[GeminiService] Message:', message.substring(0, 100))
 
     const model = this.genAI.getGenerativeModel({
-      model: 'gemini-flash-latest',
+      model: 'gemini-1.5-flash',
       tools: [{
         functionDeclarations: this.getCaseFunctionDeclarations() as any
       }]
@@ -139,7 +139,7 @@ export class GeminiService {
     caseContext: CaseContext,
     additionalInstructions?: string
   ): Promise<string> {
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const contextPrompt = this.buildCaseContextPrompt(caseContext);
     const draftPrompt = this.getDraftPrompt(draftType, additionalInstructions);
@@ -376,7 +376,7 @@ export async function testGeminiKey(apiKey: string): Promise<boolean> {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     // Test with a simple prompt
     const result = await model.generateContent('Hello');
