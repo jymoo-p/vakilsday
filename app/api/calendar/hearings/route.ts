@@ -84,6 +84,17 @@ export async function GET(request: NextRequest) {
                 name: true,
               },
             },
+            caseType: {
+              select: {
+                name: true,
+              },
+            },
+            _count: {
+              select: {
+                hearings: true,
+                documents: true,
+              },
+            },
           },
         },
       },

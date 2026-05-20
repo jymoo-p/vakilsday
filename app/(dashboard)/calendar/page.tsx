@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, User } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, User, Briefcase, Building2, FileText } from 'lucide-react'
 import Link from 'next/link'
 import {
   format,
@@ -30,6 +30,7 @@ type HearingEvent = {
     id: string
     caseNumber: string
     courtNumber: string | null
+    status: string
     client: {
       firstName: string
       lastName: string
@@ -39,6 +40,13 @@ type HearingEvent = {
     court: {
       name: string
     } | null
+    caseType: {
+      name: string
+    } | null
+    _count: {
+      hearings: number
+      documents: number
+    }
   }
 }
 
@@ -56,6 +64,13 @@ type AppointmentEvent = {
 }
 
 type ViewMode = 'month' | 'week' | 'day'
+
+const statusColors = {
+  ACTIVE: 'bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0',
+  PENDING: 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0',
+  CLOSED: 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0',
+  ARCHIVED: 'bg-gradient-to-r from-gray-400 to-gray-500 text-white border-0',
+}
 
 export default function CalendarPage() {
   const { user } = useAuth()
@@ -379,48 +394,93 @@ export default function CalendarPage() {
               {/* Hearings */}
               {(selectedDate ? selectedDateHearings : todayHearings).map((hearing) => (
                 <Link key={hearing.id} href={`/cases/${hearing.case.id}`}>
-                  <Card className="border border-slate-200 hover:shadow-md hover:border-purple-200 transition-all cursor-pointer group">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        {/* Time Block */}
-                        <div className="flex flex-col items-center justify-center bg-slate-50 rounded-lg px-3 py-2 min-w-[80px]">
-                          <Clock className="h-4 w-4 text-slate-400 mb-1" />
-                          <span className="text-sm font-semibold text-slate-900">
+                  <Card className="hover:shadow-xl hover:border-purple-200 transition-all duration-200 cursor-pointer group border-slate-200 bg-gradient-to-br from-white to-slate-50/50">
+                    <CardHeader className="pb-3 md:pb-4">
+                      {/* Time Block - Mobile Only */}
+                      <div className="flex md:hidden items-center gap-2 mb-3 bg-purple-50 px-3 py-2 rounded-lg w-fit">
+                        <Clock className="h-4 w-4 text-purple-600" />
+                        <span className="text-sm font-semibold text-purple-700">
+                          {format(parseISO(hearing.hearingDate), 'h:mm a')}
+                        </span>
+                      </div>
+
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center flex-shrink-0 shadow-sm">
+                              <Briefcase className="h-4 w-4 md:h-5 md:w-5 text-white" />
+                            </div>
+                            <h4 className="text-base md:text-lg font-bold text-slate-900 group-hover:text-purple-700 transition-colors truncate">
+                              {hearing.case.caseNumber}
+                            </h4>
+                            <Badge className={`${statusColors[hearing.case.status as keyof typeof statusColors]} text-xs font-semibold px-3 py-1 shadow-sm`}>
+                              {hearing.case.status}
+                            </Badge>
+                          </div>
+
+                          <div className="space-y-1.5 mt-1">
+                            <div className="flex items-center gap-2 text-sm md:text-base">
+                              <span className="font-medium text-slate-700">{getClientName(hearing)}</span>
+                              <span className="text-slate-400 font-normal">vs</span>
+                              <span className="font-medium text-slate-700 truncate">{hearing.case.opponentMainParty}</span>
+                            </div>
+
+                            <div className="flex items-center gap-2 flex-wrap text-sm">
+                              {hearing.case.court && (
+                                <div className="flex items-center gap-1.5 text-slate-600">
+                                  <Building2 className="h-4 w-4 text-slate-400" />
+                                  <span>{hearing.case.court.name}</span>
+                                  {hearing.case.courtNumber && (
+                                    <>
+                                      <span className="text-slate-300">•</span>
+                                      <span>Court {hearing.case.courtNumber}</span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                              {hearing.itemNumber && (
+                                <Badge variant="outline" className="text-xs">
+                                  Item #{hearing.itemNumber}
+                                </Badge>
+                              )}
+                              {hearing.case.caseType && (
+                                <Badge variant="outline" className="text-xs">
+                                  {hearing.case.caseType.name}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer with Time and Counts */}
+                      <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-200">
+                        {/* Time - Desktop Only */}
+                        <div className="hidden md:flex items-center gap-2 text-sm bg-purple-50 px-3 py-1.5 rounded-lg">
+                          <Clock className="h-4 w-4 text-purple-600" />
+                          <span className="text-xs font-medium text-purple-600">Time:</span>
+                          <span className="font-semibold text-purple-700">
                             {format(parseISO(hearing.hearingDate), 'h:mm a')}
                           </span>
                         </div>
 
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-base md:text-lg font-semibold text-slate-900 group-hover:text-purple-700 transition-colors mb-1">
-                            {hearing.case.caseNumber}
-                          </h4>
-                          <p className="text-sm text-slate-600 mb-2 truncate">
-                            {getClientName(hearing)} <span className="text-slate-400">vs</span> {hearing.case.opponentMainParty}
-                          </p>
+                        {/* Spacer for mobile */}
+                        <div className="md:hidden"></div>
 
-                          <div className="flex flex-wrap gap-3 text-xs text-slate-500">
-                            {hearing.case.court && (
-                              <span className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                {hearing.case.court.name}
-                              </span>
-                            )}
-                            {hearing.case.courtNumber && (
-                              <span>Court {hearing.case.courtNumber}</span>
-                            )}
-                            {hearing.itemNumber && (
-                              <span>Item #{hearing.itemNumber}</span>
-                            )}
+                        {/* Counts */}
+                        <div className="flex items-center gap-4">
+                          <div className="text-center">
+                            <p className="text-base md:text-lg font-bold text-purple-600">{hearing.case._count.hearings}</p>
+                            <p className="text-xs text-slate-500 font-medium">Hearings</p>
+                          </div>
+                          <div className="w-px h-10 bg-slate-200"></div>
+                          <div className="text-center">
+                            <p className="text-base md:text-lg font-bold text-purple-600">{hearing.case._count.documents}</p>
+                            <p className="text-xs text-slate-500 font-medium">Docs</p>
                           </div>
                         </div>
-
-                        {/* Status Indicator */}
-                        <div className="flex-shrink-0">
-                          <div className="w-2 h-2 rounded-full bg-purple-600"></div>
-                        </div>
                       </div>
-                    </CardContent>
+                    </CardHeader>
                   </Card>
                 </Link>
               ))}
