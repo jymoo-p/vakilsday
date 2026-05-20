@@ -566,12 +566,24 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
             {pendingAction?.functionCalls?.map((call: any, index: number) => (
               <div key={index} className="border rounded-lg p-4 bg-slate-50">
                 <h4 className="font-semibold mb-2">
+                  {call.name === 'addHearing' && '➕ Add New Hearing'}
                   {call.name === 'updateNextHearingDate' && '📅 Update Hearing Date'}
                   {call.name === 'updateCaseStatus' && '📊 Update Case Status'}
                   {call.name === 'addHearingNote' && '📝 Add Hearing Note'}
                   {call.name === 'updateCaseSynopsis' && '📋 Update Synopsis'}
                 </h4>
                 <div className="text-sm space-y-1">
+                  {call.name === 'addHearing' && (
+                    <>
+                      <p><strong>Hearing Date:</strong> {new Date(call.args.hearingDate).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                      {call.args.outcome && (
+                        <p><strong>Outcome:</strong> {call.args.outcome}</p>
+                      )}
+                      {call.args.nextDate && (
+                        <p><strong>Next Hearing Date:</strong> {new Date(call.args.nextDate).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                      )}
+                    </>
+                  )}
                   {call.name === 'updateNextHearingDate' && (
                     <>
                       <p><strong>New Date:</strong> {new Date(call.args.date).toLocaleDateString()}</p>
