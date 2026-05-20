@@ -335,11 +335,9 @@ export function CaseAIAssistant({ caseId }: CaseAIAssistantProps) {
               </p>
             </div>
             <Dialog open={showDraftDialog} onOpenChange={setShowDraftDialog}>
-              <DialogTrigger>
-                <Button>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Generate Draft
-                </Button>
+              <DialogTrigger render={<Button />}>
+                <FileText className="h-4 w-4 mr-2" />
+                Generate Draft
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
