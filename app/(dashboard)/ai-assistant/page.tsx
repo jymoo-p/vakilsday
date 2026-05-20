@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { toast } from 'sonner'
 
 interface ChatMessage {
   id: string
@@ -188,7 +189,10 @@ export default function AIAssistantPage() {
 
   async function handleDeleteSession(sessionId: string) {
     if (!confirm('Delete this chat session?')) return
-    if (!user?.email) return
+    if (!user?.email) {
+      toast.error('User not authenticated')
+      return
+    }
 
     try {
       const response = await fetch(`/api/ai/chat/${sessionId}?email=${encodeURIComponent(user.email)}`, {
@@ -196,18 +200,31 @@ export default function AIAssistantPage() {
       })
 
       if (response.ok) {
+        // Remove from local state
         setSessions(sessions.filter((s) => s.id !== sessionId))
+
+        // If deleting current session, start a new chat
         if (currentSessionId === sessionId) {
           handleNewChat()
         }
+
+        toast.success('Chat session deleted successfully')
       } else {
         const error = await response.json()
         console.error('Delete failed:', error)
-        alert(error.error || 'Failed to delete chat session')
+
+        // Show specific error message
+        if (response.status === 401) {
+          toast.error('Unauthorized: Please sign in again')
+        } else if (response.status === 404) {
+          toast.error('Chat session not found')
+        } else {
+          toast.error(error.error || 'Failed to delete chat session')
+        }
       }
     } catch (error) {
       console.error('Error deleting session:', error)
-      alert('Failed to delete chat session')
+      toast.error('Network error: Failed to delete chat session')
     }
   }
 
