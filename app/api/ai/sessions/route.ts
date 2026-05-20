@@ -52,10 +52,16 @@ export async function GET(request: NextRequest) {
           orderBy: { createdAt: 'desc' },
           take: 1,
         },
+        _count: {
+          select: { messages: true },
+        },
       },
     });
 
-    return NextResponse.json(sessions);
+    // Filter out sessions with no messages
+    const sessionsWithMessages = sessions.filter(s => s._count.messages > 0);
+
+    return NextResponse.json(sessionsWithMessages);
   } catch (error: any) {
     console.error('Get chat sessions error:', error);
     return NextResponse.json(

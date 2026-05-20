@@ -98,18 +98,37 @@ export default function AIAssistantPage() {
         return
       }
 
+      if (!user?.email) {
+        console.error('No user email available')
+        return
+      }
+
       try {
-        const response = await fetch(`/api/ai/chat/${currentSessionId}`)
+        console.log('[AI Assistant] Loading session:', currentSessionId)
+        const response = await fetch(`/api/ai/chat/${currentSessionId}?email=${encodeURIComponent(user.email)}`)
+        console.log('[AI Assistant] Response status:', response.status)
+
         if (response.ok) {
           const session = await response.json()
+          console.log('[AI Assistant] Loaded session data:', {
+            id: session.id,
+            messagesCount: session.messages?.length || 0,
+            messages: session.messages
+          })
           setMessages(session.messages || [])
+          console.log('[AI Assistant] Messages state updated')
+        } else {
+          const error = await response.json()
+          console.error('Failed to load session:', error)
+          toast.error('Failed to load chat history')
         }
       } catch (error) {
         console.error('Error loading session:', error)
+        toast.error('Failed to load chat history')
       }
     }
     loadSession()
-  }, [currentSessionId])
+  }, [currentSessionId, user?.email])
 
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault()

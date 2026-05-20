@@ -8,17 +8,24 @@ export async function GET(
   context: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    // Try to get email from query params first (for client-side calls)
+    const { searchParams } = new URL(request.url);
+    let userEmail = searchParams.get('email');
 
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    // Fallback to NextAuth session if no email in params
+    if (!userEmail) {
+      const session = await getServerSession(authOptions);
+      if (!session?.user?.email) {
+        return NextResponse.json(
+          { error: 'Unauthorized - no email provided' },
+          { status: 401 }
+        );
+      }
+      userEmail = session.user.email;
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: userEmail },
     });
 
     if (!user) {
@@ -47,7 +54,7 @@ export async function GET(
 
     if (!chatSession || chatSession.userId !== user.id) {
       return NextResponse.json(
-        { error: 'Chat session not found' },
+        { error: 'Chat session not found or unauthorized' },
         { status: 404 }
       );
     }
