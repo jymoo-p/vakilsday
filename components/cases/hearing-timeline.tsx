@@ -1,11 +1,23 @@
 'use client'
 
+import { useState } from 'react'
 import { format } from 'date-fns'
-import { Calendar, FileText, Clock } from 'lucide-react'
+import { Calendar, FileText, Clock, Trash2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { HearingForm } from './hearing-form'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { toast } from 'sonner'
 
 // WhatsApp SVG Icon
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -45,6 +57,40 @@ interface HearingTimelineProps {
 }
 
 export function HearingTimeline({ hearings, userEmail, caseId, caseNumber, client, onUpdate }: HearingTimelineProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [hearingToDelete, setHearingToDelete] = useState<Hearing | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDeleteClick = (hearing: Hearing) => {
+    setHearingToDelete(hearing)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!hearingToDelete) return
+
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/hearings/${hearingToDelete.id}?email=${encodeURIComponent(userEmail)}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to delete hearing')
+      }
+
+      toast.success('Hearing deleted successfully')
+      setDeleteDialogOpen(false)
+      setHearingToDelete(null)
+      onUpdate?.()
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete hearing')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const handleWhatsAppShare = (hearing: Hearing) => {
     if (!client || !client.phone) {
       alert('Client phone number not available')
@@ -158,6 +204,16 @@ export function HearingTimeline({ hearings, userEmail, caseId, caseNumber, clien
                         mode="edit"
                         onSuccess={() => onUpdate?.()}
                       />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteClick(hearing)}
+                        className="h-7 w-7 md:h-8 md:w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+                        title="Delete hearing"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                      </Button>
                     </div>
                   </div>
 
@@ -201,6 +257,36 @@ export function HearingTimeline({ hearings, userEmail, caseId, caseNumber, clien
           )
         })}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Hearing?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this hearing record?
+              {hearingToDelete && (
+                <span className="block mt-2 font-medium text-slate-900">
+                  {format(new Date(hearingToDelete.hearingDate), 'MMMM d, yyyy')} at {format(new Date(hearingToDelete.hearingDate), 'h:mm a')}
+                </span>
+              )}
+              <span className="block mt-2 text-red-600">
+                This action cannot be undone.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

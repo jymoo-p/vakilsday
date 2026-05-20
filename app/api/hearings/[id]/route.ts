@@ -86,3 +86,75 @@ export async function PATCH(
     )
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params
+    const { searchParams } = new URL(request.url)
+    const userEmail = searchParams.get('email')
+
+    if (!userEmail) {
+      return NextResponse.json({ error: 'User email required' }, { status: 401 })
+    }
+
+    // Verify user has access
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail },
+      select: { id: true, role: true, organizationId: true },
+    })
+
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Get the hearing with case info
+    const hearing = await prisma.hearing.findUnique({
+      where: { id },
+      include: {
+        case: {
+          select: {
+            organizationId: true,
+            assignments: {
+              where: { userId: user.id },
+              select: { id: true },
+            },
+          },
+        },
+      },
+    })
+
+    if (!hearing) {
+      return NextResponse.json({ error: 'Hearing not found' }, { status: 404 })
+    }
+
+    // Check access
+    const hasAccess =
+      hearing.case.organizationId === user.organizationId &&
+      (user.role === 'ADMIN' || hearing.case.assignments.length > 0)
+
+    if (!hasAccess) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+    }
+
+    // Delete hearing notes first (foreign key constraint)
+    await prisma.hearingNote.deleteMany({
+      where: { hearingId: id },
+    })
+
+    // Delete the hearing
+    await prisma.hearing.delete({
+      where: { id },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error deleting hearing:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
