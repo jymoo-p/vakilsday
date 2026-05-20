@@ -1248,12 +1248,10 @@ export default function CaseDetailPage() {
             <CardHeader className="flex flex-col md:flex-row md:items-center justify-between space-y-2 md:space-y-0 pb-4">
               <CardTitle className="text-lg md:text-xl">Documents</CardTitle>
               <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-                <DialogTrigger>
-                  <Button size="sm" className="gap-2">
-                    <Upload className="h-4 w-4" />
-                    <span className="hidden md:inline">Upload Document</span>
-                    <span className="md:hidden">Upload</span>
-                  </Button>
+                <DialogTrigger render={<Button size="sm" className="gap-2" />}>
+                  <Upload className="h-4 w-4" />
+                  <span className="hidden md:inline">Upload Document</span>
+                  <span className="md:hidden">Upload</span>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
