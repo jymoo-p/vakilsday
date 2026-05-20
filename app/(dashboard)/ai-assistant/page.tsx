@@ -166,6 +166,12 @@ export default function AIAssistantPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
+
+        // Check if it's a Gemini API overload error (503)
+        if (response.status === 500 && errorData.error?.includes('503')) {
+          throw new Error('GEMINI_OVERLOAD')
+        }
+
         throw new Error(errorData.error || 'Failed to send message')
       }
 
@@ -194,7 +200,14 @@ export default function AIAssistantPage() {
         }
       }
     } catch (error: any) {
-      setError(error.message)
+      // Show friendly message for Gemini overload
+      if (error.message === 'GEMINI_OVERLOAD') {
+        setError(
+          "🌟 Google's AI is experiencing high demand right now - you're not alone! This is a temporary spike that happens to everyone. Please try again in a minute or two. We'll be back to normal soon! ☕"
+        )
+      } else {
+        setError(error.message)
+      }
     } finally {
       setSending(false)
     }
@@ -468,9 +481,14 @@ export default function AIAssistantPage() {
 
             <div className="border-t p-4">
               {error && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
+                <Alert
+                  variant={error.includes('high demand') ? 'default' : 'destructive'}
+                  className={`mb-4 ${error.includes('high demand') ? 'bg-blue-50 border-blue-200 text-blue-900' : ''}`}
+                >
+                  <AlertCircle className={`h-4 w-4 ${error.includes('high demand') ? 'text-blue-600' : ''}`} />
+                  <AlertDescription className="text-sm leading-relaxed">
+                    {error}
+                  </AlertDescription>
                 </Alert>
               )}
               <form onSubmit={handleSendMessage} className="flex gap-2">
