@@ -36,6 +36,7 @@ import {
   Plus,
   X,
   Sparkles,
+  LayoutDashboard,
 } from 'lucide-react'
 import Link from 'next/link'
 import { HearingTimeline } from '@/components/cases/hearing-timeline'
@@ -654,35 +655,41 @@ export default function CaseDetailPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="border-b border-slate-200 bg-white rounded-t-xl px-2">
-          <TabsList className="inline-flex h-auto bg-transparent p-0 gap-1 w-full sm:w-auto">
+        <div className="border-b border-slate-200 bg-white rounded-t-xl overflow-x-auto">
+          <TabsList className="inline-flex h-auto bg-transparent p-0 gap-0 sm:gap-2 min-w-full sm:min-w-0 justify-evenly sm:justify-start">
             <TabsTrigger
               value="overview"
-              className="relative bg-transparent border-0 px-4 sm:px-6 py-3 text-sm md:text-base font-semibold text-slate-500 hover:text-slate-900 data-[state=active]:text-purple-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-t-lg after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-gradient-to-r data-[state=active]:after:from-purple-600 data-[state=active]:after:to-purple-700 transition-all flex-1 sm:flex-initial"
+              className="relative border-0 px-4 sm:px-6 py-3 text-sm md:text-base font-semibold text-slate-600 hover:text-purple-700 hover:bg-purple-50 data-active:!text-purple-700 data-active:!bg-purple-100 data-active:border-purple-200 rounded-lg transition-all duration-200 flex-shrink-0 border-r border-slate-100 sm:border-r-0"
             >
-              Overview
+              <LayoutDashboard className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1.5">Overview</span>
             </TabsTrigger>
             <TabsTrigger
               value="timeline"
-              className="relative bg-transparent border-0 px-4 sm:px-6 py-3 text-sm md:text-base font-semibold text-slate-500 hover:text-slate-900 data-[state=active]:text-purple-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-t-lg after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-gradient-to-r data-[state=active]:after:from-purple-600 data-[state=active]:after:to-purple-700 transition-all whitespace-nowrap flex-1 sm:flex-initial"
+              className="relative border-0 px-4 sm:px-6 py-3 text-sm md:text-base font-semibold text-slate-600 hover:text-purple-700 hover:bg-purple-50 data-active:!text-purple-700 data-active:!bg-purple-100 data-active:border-purple-200 rounded-lg transition-all duration-200 whitespace-nowrap flex-shrink-0 border-r border-slate-100 sm:border-r-0"
             >
-              <span className="hidden md:inline">Case History</span>
-              <span className="md:hidden">History</span>
-              <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-600 hover:bg-slate-100 text-xs px-1.5 py-0">{caseData.hearings.length}</Badge>
+              <History className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1.5">Case History</span>
+              <span className="hidden md:inline">
+                <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-600 hover:bg-slate-100 text-xs px-1.5 py-0">{caseData.hearings.length}</Badge>
+              </span>
             </TabsTrigger>
             <TabsTrigger
               value="documents"
-              className="relative bg-transparent border-0 px-4 sm:px-6 py-3 text-sm md:text-base font-semibold text-slate-500 hover:text-slate-900 data-[state=active]:text-purple-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-t-lg after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-gradient-to-r data-[state=active]:after:from-purple-600 data-[state=active]:after:to-purple-700 transition-all whitespace-nowrap flex-1 sm:flex-initial"
+              className="relative border-0 px-4 sm:px-6 py-3 text-sm md:text-base font-semibold text-slate-600 hover:text-purple-700 hover:bg-purple-50 data-active:!text-purple-700 data-active:!bg-purple-100 data-active:border-purple-200 rounded-lg transition-all duration-200 whitespace-nowrap flex-shrink-0 border-r border-slate-100 sm:border-r-0"
             >
-              Documents
-              <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-600 hover:bg-slate-100 text-xs px-1.5 py-0">{caseData.documents.length}</Badge>
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1.5">Documents</span>
+              <span className="hidden md:inline">
+                <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-600 hover:bg-slate-100 text-xs px-1.5 py-0">{caseData.documents.length}</Badge>
+              </span>
             </TabsTrigger>
             <TabsTrigger
               value="ai"
-              className="relative bg-transparent border-0 px-4 sm:px-6 py-3 text-sm md:text-base font-semibold text-slate-500 hover:text-slate-900 data-[state=active]:text-purple-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-t-lg after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-gradient-to-r data-[state=active]:after:from-purple-600 data-[state=active]:after:to-purple-700 transition-all whitespace-nowrap flex-1 sm:flex-initial"
+              className="relative border-0 px-4 sm:px-6 py-3 text-sm md:text-base font-semibold text-slate-600 hover:text-purple-700 hover:bg-purple-50 data-active:!text-purple-700 data-active:!bg-purple-100 data-active:border-purple-200 rounded-lg transition-all duration-200 whitespace-nowrap flex-shrink-0"
             >
-              <Sparkles className="h-4 w-4 mr-1.5 inline" />
-              AI Assistant
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1.5">AI Assistant</span>
             </TabsTrigger>
           </TabsList>
         </div>
