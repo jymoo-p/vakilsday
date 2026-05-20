@@ -72,7 +72,7 @@ export const authOptions: NextAuthOptions = {
             'email',
             'profile',
             'https://www.googleapis.com/auth/calendar',
-            'https://www.googleapis.com/auth/drive.file', // Access to files created by the app
+            'https://www.googleapis.com/auth/drive', // Full Drive access for file management
           ].join(' '),
           access_type: 'offline',
           prompt: 'consent',
