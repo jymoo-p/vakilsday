@@ -472,13 +472,13 @@ export default function CasesPage() {
               </div>
             </div>
 
-          <DialogFooter className="gap-2 sm:gap-3 px-4 sm:px-6 pb-4 sm:pb-6 pt-3 sm:pt-4 border-t border-slate-100">
+          <DialogFooter className="flex-row gap-2 sm:gap-3 px-4 sm:px-6 pb-4 sm:pb-6 pt-3 sm:pt-4 border-t border-slate-100">
             <Button
               type="button"
               variant="outline"
               onClick={() => setShowQuickCreateDialog(false)}
               disabled={creating}
-              className="flex-1 h-9 sm:h-10 text-xs sm:text-sm"
+              className="flex-1 h-11 sm:h-10 text-sm font-medium"
             >
               Cancel
             </Button>
@@ -486,19 +486,9 @@ export default function CasesPage() {
               type="button"
               onClick={handleQuickCreateCase}
               disabled={creating}
-              className="flex-1 bg-purple-600 hover:bg-purple-700 h-9 sm:h-10 text-xs sm:text-sm"
+              className="flex-1 bg-purple-600 hover:bg-purple-700 h-11 sm:h-10 text-sm font-medium"
             >
-              {creating ? (
-                <>
-                  <span className="sm:hidden">Creating...</span>
-                  <span className="hidden sm:inline">Creating...</span>
-                </>
-              ) : (
-                <>
-                  <span className="sm:hidden">Create</span>
-                  <span className="hidden sm:inline">Create Case</span>
-                </>
-              )}
+              {creating ? 'Creating...' : 'Create Case'}
             </Button>
           </DialogFooter>
         </DialogContent>
