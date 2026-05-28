@@ -12,6 +12,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('[SYNC-FIREBASE] Syncing user:', { uid, email, name })
+
     // Check if user exists
     let user = await prisma.user.findUnique({
       where: { email },
@@ -26,6 +28,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!user) {
+      console.log('[SYNC-FIREBASE] Creating new user:', email)
       // Create new user with ADMIN role (will be properly set during onboarding)
       user = await prisma.user.create({
         data: {
@@ -44,7 +47,9 @@ export async function POST(request: NextRequest) {
           organizationId: true,
         },
       })
+      console.log('[SYNC-FIREBASE] User created:', user.id)
     } else {
+      console.log('[SYNC-FIREBASE] Updating existing user:', user.id)
       // Update existing user info if needed
       user = await prisma.user.update({
         where: { email },
@@ -65,6 +70,7 @@ export async function POST(request: NextRequest) {
 
     // Store Google OAuth tokens for Drive access
     if (accessToken) {
+      console.log('[SYNC-FIREBASE] Storing access token for user:', user.id)
       // Check if Account record exists
       const existingAccount = await prisma.account.findFirst({
         where: {
@@ -82,6 +88,7 @@ export async function POST(request: NextRequest) {
             expires_at: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
           },
         })
+        console.log('[SYNC-FIREBASE] Account updated')
       } else {
         // Create new account record
         await prisma.account.create({
@@ -96,9 +103,11 @@ export async function POST(request: NextRequest) {
             expires_at: Math.floor(Date.now() / 1000) + 3600,
           },
         })
+        console.log('[SYNC-FIREBASE] Account created')
       }
     }
 
+    console.log('[SYNC-FIREBASE] Sync successful for user:', user.id)
     return NextResponse.json({
       success: true,
       userId: user.id,
@@ -106,9 +115,11 @@ export async function POST(request: NextRequest) {
       role: user.role,
     })
   } catch (error) {
-    console.error('Sync Firebase error:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('[SYNC-FIREBASE] Error:', errorMessage)
+    console.error('[SYNC-FIREBASE] Full error:', error)
     return NextResponse.json(
-      { error: 'Failed to sync user' },
+      { error: 'Failed to sync user: ' + errorMessage },
       { status: 500 }
     )
   }

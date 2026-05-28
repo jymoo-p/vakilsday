@@ -29,6 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { CNRLookup } from '@/components/cases/cnr-lookup'
 
 const caseSchema = z.object({
   caseNumber: z.string().min(1, 'Case number is required'),
@@ -464,6 +465,42 @@ export default function NewCasePageNew() {
 
         {/* Client & Parties */}
         <Card>
+          <CardHeader>
+            <CardTitle>eCourts CNR Lookup (Optional)</CardTitle>
+            <CardDescription>Fetch case details from eCourtsIndia by CNR</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CNRLookup
+              onDetailsFound={(details) => {
+                // Populate form fields with fetched details where applicable
+                if (details.caseNumber) setValue('caseNumber', details.caseNumber)
+                if (details.year) setValue('year', String(details.year))
+                if (details.courtName) {
+                  // Try to match existing court by name
+                  const match = courts.find(c => c.name.toLowerCase().includes(details.courtName!.toLowerCase()))
+                  if (match) {
+                    setSelectedCourt(match.id)
+                    setValue('courtId', match.id)
+                  } else {
+                    // If no match, leave courtName in a temporary field (courtNumber used for court number)
+                    setValue('courtNumber', details.courtName)
+                  }
+                }
+                if (details.petitioner) setValue('opponentMainParty', details.petitioner)
+                if (details.filingDate) setValue('filingDate', details.filingDate)
+                if (details.caseType) {
+                  const ct = caseTypes.find(t => t.name.toLowerCase().includes(details.caseType!.toLowerCase()))
+                  if (ct) {
+                    setSelectedCaseType(ct.id)
+                    setValue('caseTypeId', ct.id)
+                  }
+                }
+                if (details.actSection) {
+                  setValue('synopsis', (prev => (prev || '') + `\nAct/Section: ${details.actSection}`))
+                }
+              }}
+            />
+          </CardContent>
           <CardHeader>
             <CardTitle>Client & Parties</CardTitle>
             <CardDescription>Select client or add party names manually</CardDescription>

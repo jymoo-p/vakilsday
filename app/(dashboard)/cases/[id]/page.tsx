@@ -42,6 +42,7 @@ import Link from 'next/link'
 import { HearingTimeline } from '@/components/cases/hearing-timeline'
 import { HearingForm } from '@/components/cases/hearing-form'
 import { CaseAIAssistant } from '@/components/cases/case-ai-assistant'
+import { CNRLookup } from '@/components/cases/cnr-lookup'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -171,10 +172,21 @@ export default function CaseDetailPage() {
     try {
       const res = await fetch(`/api/cases/${params.id}?email=${encodeURIComponent(user.email)}`)
       if (!res.ok) {
-        throw new Error('Failed to fetch case')
+        let errMsg = `Failed to fetch case (${res.status})`
+        try {
+          const body = await res.json()
+          if (body && body.error) errMsg = `${body.error} (${res.status})`
+        } catch {}
+        throw new Error(errMsg)
       }
       const data = await res.json()
-      setCaseData(data.case)
+      const normalized = {
+        ...data.case,
+        hearings: data.case?.hearings || [],
+        documents: data.case?.documents || [],
+        otherParties: data.case?.otherParties || [],
+      }
+      setCaseData(normalized)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -476,6 +488,15 @@ export default function CaseDetailPage() {
             <ChevronLeft className="mr-2 h-5 w-5" />
             Back to Cases
           </Button>
+          <div className="mt-6 max-w-xl mx-auto text-left">
+            <p className="text-sm text-slate-600 mb-2">You can still lookup this case on eCourts. If you don't have access to this case, fetched details will not be saved here.</p>
+            <CNRLookup
+              onDetailsFound={(details) => {
+                console.log('CNR details (not saved):', details)
+                toast('Fetched details available in console. Ask an admin to assign this case to you to save changes.')
+              }}
+            />
+          </div>
         </div>
       </div>
     )
@@ -485,7 +506,7 @@ export default function CaseDetailPage() {
     if (caseData.client) {
       return `${caseData.client.firstName} ${caseData.client.lastName}`
     }
-    return caseData.otherParties[0] || 'Unknown'
+    return caseData.otherParties?.[0] || 'Unknown'
   }
 
   return (
@@ -653,6 +674,41 @@ export default function CaseDetailPage() {
         </Card>
       </div>
 
+      {/* eCourts CNR Lookup (manual) */}
+      <div className="mb-4">
+        <CNRLookup
+          onDetailsFound={async (details) => {
+            if (!caseData || !user?.email) return
+            try {
+              const payload: any = { userEmail: user.email }
+              if (details.caseNumber) payload.caseNumber = details.caseNumber
+              if (details.courtName) payload.courtNumber = details.courtName
+              if (details.petitioner) payload.opponentMainParty = details.petitioner
+              if (details.filingDate) payload.filingDate = details.filingDate
+              if (details.actSection) payload.synopsis = `${caseData.synopsis || ''}\nAct/Section: ${details.actSection}`
+
+              const res = await fetch(`/api/cases/${caseData.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+              })
+
+              if (!res.ok) {
+                const err = await res.text()
+                throw new Error(err || 'Failed to update case with eCourts data')
+              }
+
+              const updated = await res.json()
+              setCaseData(updated.case)
+              toast.success('Case updated with eCourts details')
+            } catch (err) {
+              console.error('Failed to update case from eCourts:', err)
+              toast.error(err instanceof Error ? err.message : 'Failed to update case')
+            }
+          }}
+        />
+      </div>
+
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="border-b border-slate-200 bg-white rounded-t-xl overflow-x-auto">
@@ -671,7 +727,7 @@ export default function CaseDetailPage() {
               <History className="h-4 w-4" />
               <span className="hidden sm:inline ml-1.5">Case History</span>
               <span className="hidden md:inline">
-                <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-600 hover:bg-slate-100 text-xs px-1.5 py-0">{caseData.hearings.length}</Badge>
+                <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-600 hover:bg-slate-100 text-xs px-1.5 py-0">{caseData.hearings?.length ?? 0}</Badge>
               </span>
             </TabsTrigger>
             <TabsTrigger
@@ -681,7 +737,7 @@ export default function CaseDetailPage() {
               <FileText className="h-4 w-4" />
               <span className="hidden sm:inline ml-1.5">Documents</span>
               <span className="hidden md:inline">
-                <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-600 hover:bg-slate-100 text-xs px-1.5 py-0">{caseData.documents.length}</Badge>
+                <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-600 hover:bg-slate-100 text-xs px-1.5 py-0">{caseData.documents?.length ?? 0}</Badge>
               </span>
             </TabsTrigger>
             <TabsTrigger
@@ -854,7 +910,7 @@ export default function CaseDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Court Details */}
+                        {/* Court Details */}
             <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-white to-blue-50/30">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-slate-100">
                 <CardTitle className="flex items-center gap-3 text-lg md:text-xl font-bold">
@@ -863,11 +919,13 @@ export default function CaseDetailPage() {
                   </div>
                   Court Details
                 </CardTitle>
-                {!editingCourtDetails && (caseData.court || caseData.courtNumber || caseData.caseType || caseData.judgeName) && (
-                  <Button variant="ghost" size="sm" onClick={handleEditCourtDetails} className="h-8 hover:bg-blue-50">
-                    <Edit className="h-4 w-4 text-blue-600" />
-                  </Button>
-                )}
+                <div className="flex gap-2">
+                  {!editingCourtDetails && (caseData.court || caseData.courtNumber || caseData.caseType || caseData.judgeName) && (
+                    <Button variant="ghost" size="sm" onClick={handleEditCourtDetails} className="h-8 hover:bg-blue-50">
+                      <Edit className="h-4 w-4 text-blue-600" />
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-4 pt-3 md:pt-6">
                 {editingCourtDetails ? (
@@ -1233,7 +1291,7 @@ export default function CaseDetailPage() {
         {/* Timeline Tab */}
         <TabsContent value="timeline">
           <HearingTimeline
-            hearings={caseData.hearings}
+            hearings={caseData.hearings || []}
             userEmail={user?.email || ''}
             caseId={caseData.id}
             caseNumber={caseData.caseNumber}

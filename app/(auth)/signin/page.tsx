@@ -39,7 +39,17 @@ export default function SignInPage() {
         }),
       })
 
-      const data = await response.json()
+      const text = await response.text()
+      let data: any = null
+      try {
+        data = text ? JSON.parse(text) : {}
+      } catch (parseErr) {
+        console.error('[SIGNIN] Non-JSON response from /api/auth/sync-firebase:',
+          text?.slice?.(0, 400))
+        setError('Failed to sync user: unexpected server response')
+        setLoading(false)
+        return
+      }
 
       if (response.ok) {
         // Check if user has organization
@@ -49,7 +59,7 @@ export default function SignInPage() {
           router.push('/onboarding/welcome')
         }
       } else {
-        setError(data.error || 'Failed to sync user')
+        setError(data?.error || 'Failed to sync user')
         setLoading(false)
       }
     } catch (err) {
