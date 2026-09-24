@@ -71,8 +71,8 @@ export function Header() {
         <div className="flex-1 min-w-0">
           {organizationName && (
             <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-md">
-                <span className="text-white font-bold text-xl">
+              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-glow flex items-center justify-center shadow-md shadow-brand/25">
+                <span className="text-white font-heading font-bold text-xl">
                   {organizationName.charAt(0).toUpperCase()}
                 </span>
               </div>

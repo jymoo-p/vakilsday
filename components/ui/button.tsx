@@ -4,20 +4,20 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-base font-semibold whitespace-nowrap transition-all outline-none select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-base font-semibold whitespace-nowrap transition-all duration-150 outline-none select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
   {
     variants: {
       variant: {
-        default: "bg-slate-900 text-white hover:bg-slate-800 shadow-sm",
+        default: "bg-brand text-white hover:bg-brand-dark shadow-sm shadow-brand/25 hover:shadow-md hover:shadow-brand/30",
         outline:
-          "border-2 border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
+          "border-2 border-slate-200 bg-white text-slate-900 hover:border-brand/40 hover:bg-brand-light/60 hover:text-brand",
         secondary:
           "bg-slate-100 text-slate-900 hover:bg-slate-200",
         ghost:
-          "hover:bg-slate-100 text-slate-700",
+          "hover:bg-brand-light/70 text-slate-700 hover:text-brand",
         destructive:
-          "bg-red-500 text-white hover:bg-red-600",
-        link: "text-slate-900 underline-offset-4 hover:underline",
+          "bg-red-500 text-white hover:bg-red-600 shadow-sm shadow-red-500/25",
+        link: "text-brand underline-offset-4 hover:underline",
       },
       size: {
         default:

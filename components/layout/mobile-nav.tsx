@@ -59,21 +59,22 @@ export function MobileNav() {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-all min-w-[64px]',
+                  'flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all min-w-[64px]',
                   isActive
-                    ? 'text-slate-900 bg-purple-50'
+                    ? 'text-brand bg-brand-light'
                     : 'text-slate-500'
                 )}
               >
                 <item.icon
+                  strokeWidth={2.25}
                   className={cn(
                     'h-6 w-6 mb-1',
-                    isActive ? 'text-purple-600' : 'text-purple-400'
+                    isActive ? 'text-brand' : 'text-slate-400'
                   )}
                 />
                 <span className={cn(
                   'text-xs font-medium',
-                  isActive ? 'text-slate-900' : 'text-slate-500'
+                  isActive ? 'text-brand' : 'text-slate-500'
                 )}>
                   {item.name}
                 </span>
@@ -85,19 +86,19 @@ export function MobileNav() {
           <button
             onClick={() => setMoreOpen(true)}
             className={cn(
-              'flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-all min-w-[64px]',
+              'flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all min-w-[64px]',
               isMoreActive
-                ? 'text-slate-900 bg-purple-50'
+                ? 'text-brand bg-brand-light'
                 : 'text-slate-500'
             )}
           >
-            <MoreHorizontal className={cn(
+            <MoreHorizontal strokeWidth={2.25} className={cn(
               'h-6 w-6 mb-1',
-              isMoreActive ? 'text-purple-600' : 'text-purple-400'
+              isMoreActive ? 'text-brand' : 'text-slate-400'
             )} />
             <span className={cn(
               'text-xs font-medium',
-              isMoreActive ? 'text-slate-900' : 'text-slate-500'
+              isMoreActive ? 'text-brand' : 'text-slate-500'
             )}>
               More
             </span>
@@ -120,13 +121,13 @@ export function MobileNav() {
                   href={item.href}
                   onClick={() => setMoreOpen(false)}
                   className={cn(
-                    'flex items-center px-4 py-3 rounded-lg transition-all',
+                    'flex items-center px-4 py-3 rounded-xl transition-all',
                     isActive
-                      ? 'bg-slate-900 text-white'
-                      : 'text-slate-600 hover:bg-slate-100'
+                      ? 'bg-brand text-white shadow-sm shadow-brand/25'
+                      : 'text-slate-600 hover:bg-brand-light hover:text-brand'
                   )}
                 >
-                  <item.icon className="h-5 w-5 mr-3" />
+                  <item.icon strokeWidth={2.25} className="h-5 w-5 mr-3" />
                   <span className="font-medium">{item.name}</span>
                 </Link>
               )
