@@ -38,6 +38,7 @@ import { toast } from 'sonner'
 
 const caseSchema = z.object({
   caseNumber: z.string().min(1, 'Case number is required'),
+  cnrNumber: z.string().optional(),
   year: z.string().optional(),
   appearingFor: z.enum(['PETITIONER', 'RESPONDENT']),
   clientId: z.string().optional(),
@@ -50,11 +51,17 @@ const caseSchema = z.object({
   judgeName: z.string().optional(),
   opposingCounselName: z.string().optional(),
   opposingCounselPhone: z.string().optional(),
+  opposingCounselStrategy: z.string().optional(),
   status: z.enum(['ACTIVE', 'PENDING', 'CLOSED', 'ARCHIVED']),
   filingDate: z.string().min(1, 'Filing date is required'),
   nextHearingDate: z.string().optional(),
   nextHearingTime: z.string().optional(),
   synopsis: z.string().optional(),
+  cruxOfDispute: z.string().optional(),
+  prayerRelief: z.string().optional(),
+  keyIssues: z.string().optional(),
+  interimOrders: z.string().optional(),
+  interimOrderValidUntil: z.string().optional(),
   assignedUserIds: z.array(z.string()).optional(),
 })
 
@@ -123,6 +130,7 @@ export default function EditCasePage() {
       setCaseStatus(c.status)
       setHearingCount(c.hearings?.length || 0)
       setValue('caseNumber', c.caseNumber)
+      setValue('cnrNumber', c.cnrNumber || '')
       setValue('year', c.year?.toString() || '')
       setValue('appearingFor', c.appearingFor)
       setValue('clientId', c.clientId || '')
@@ -143,6 +151,7 @@ export default function EditCasePage() {
       setValue('judgeName', c.judgeName || '')
       setValue('opposingCounselName', c.opposingCounselName || '')
       setValue('opposingCounselPhone', c.opposingCounselPhone || '')
+      setValue('opposingCounselStrategy', c.opposingCounselStrategy || '')
       setValue('status', c.status)
       setValue('filingDate', c.filingDate ? c.filingDate.split('T')[0] : '')
       setValue('nextHearingDate', c.nextHearingDate ? c.nextHearingDate.split('T')[0] : '')
@@ -155,7 +164,15 @@ export default function EditCasePage() {
       } else {
         setValue('nextHearingTime', '11:00')
       }
+      const fallbackCrux = c.synopsis
+        ? c.synopsis.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+        : ''
       setValue('synopsis', c.synopsis || '')
+      setValue('cruxOfDispute', c.cruxOfDispute || fallbackCrux)
+      setValue('prayerRelief', c.prayerRelief || '')
+      setValue('keyIssues', c.keyIssues || '')
+      setValue('interimOrders', c.interimOrders || '')
+      setValue('interimOrderValidUntil', c.interimOrderValidUntil || '')
 
       // Set assigned users
       const assignedIds = c.assignments?.map((a: any) => a.user.id) || []
@@ -351,6 +368,16 @@ export default function EditCasePage() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="cnrNumber">CNR Number</Label>
+                <Input
+                  id="cnrNumber"
+                  placeholder="e.g., DLHC010123452024"
+                  className="font-mono uppercase"
+                  {...register('cnrNumber')}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="year">Year</Label>
                 <Input id="year" type="number" {...register('year')} />
               </div>
@@ -518,13 +545,83 @@ export default function EditCasePage() {
               </div>
             </div>
 
-            <div className="space-y-2" id="synopsis">
-              <Label htmlFor="synopsis">Synopsis</Label>
-              <RichTextEditor
-                content={watch('synopsis') || ''}
-                onChange={(html) => setValue('synopsis', html)}
-                placeholder="Provide a brief summary of the case..."
-              />
+            <div className="pt-4 border-t border-slate-200 space-y-4" id="synopsis">
+              <div>
+                <h4 className="text-base font-semibold text-slate-900">Case Synopsis</h4>
+                <p className="text-xs text-slate-500">
+                  Structured summary of the factual matrix, relief claimed, legal issues, and active interim orders
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="cruxOfDispute">Crux of the Dispute</Label>
+                  <p className="text-xs text-slate-500">
+                    A 2–3 sentence distillation of the factual matrix.
+                  </p>
+                  <textarea
+                    id="cruxOfDispute"
+                    rows={4}
+                    placeholder="Distill the core factual matrix in 2–3 sentences..."
+                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
+                    {...register('cruxOfDispute')}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="prayerRelief">Prayer / Relief Claimed</Label>
+                  <p className="text-xs text-slate-500">
+                    Exactly what has been demanded from the court (e.g., Quashing of FIR No. 12/2025, Specific performance, Interim injunction).
+                  </p>
+                  <textarea
+                    id="prayerRelief"
+                    rows={4}
+                    placeholder="e.g., Quashing of FIR No. 12/2025, Specific performance of sale agreement dated 14.02.2023..."
+                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
+                    {...register('prayerRelief')}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="keyIssues">Key Issues / Question of Law</Label>
+                  <p className="text-xs text-slate-500">
+                    The 2–3 fundamental points framed for adjudication.
+                  </p>
+                  <textarea
+                    id="keyIssues"
+                    rows={4}
+                    placeholder="1. Whether the statutory notice was served within limitation?&#10;2. Whether there exists a legally enforceable debt?"
+                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
+                    {...register('keyIssues')}
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="interimOrders">Interim Orders in Force</Label>
+                    <p className="text-xs text-slate-500">
+                      Any active interim protection, ad-interim injunction, stay on proceedings, or bail conditions.
+                    </p>
+                    <textarea
+                      id="interimOrders"
+                      rows={2}
+                      placeholder="e.g., Ad-interim stay on coercive proceedings granted..."
+                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
+                      {...register('interimOrders')}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="interimOrderValidUntil" className="text-xs">
+                      Stay / Order Extended Up To (Date)
+                    </Label>
+                    <Input
+                      id="interimOrderValidUntil"
+                      type="date"
+                      {...register('interimOrderValidUntil')}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -611,6 +708,17 @@ export default function EditCasePage() {
                 <Label htmlFor="opposingCounselPhone">Phone</Label>
                 <Input id="opposingCounselPhone" {...register('opposingCounselPhone')} />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="opposingCounselStrategy">Known Advocate Demeanor &amp; Strategy</Label>
+              <textarea
+                id="opposingCounselStrategy"
+                rows={3}
+                placeholder="e.g., Strict on statutory 15-day notice limits. Frequently moves applications for commission examination..."
+                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
+                {...register('opposingCounselStrategy')}
+              />
             </div>
           </CardContent>
         </Card>

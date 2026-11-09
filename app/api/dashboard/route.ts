@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { canViewAllCases } from '@/lib/utils/rbac'
 import { CaseStatus } from '@prisma/client'
 import { getOrganizationTasks } from '@/lib/tasks-db'
+import { getCnrNumbersForCases } from '@/lib/cases-db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -243,10 +244,28 @@ export async function GET(request: NextRequest) {
       getOrganizationTasks(user.organizationId),
     ])
 
+    const allCaseIds = Array.from(
+      new Set([
+        ...todaysHearings.map((h) => h.case.id),
+        ...weekHearings.map((h) => h.case.id),
+        ...upcomingHearings.map((h) => h.case.id),
+      ])
+    )
+    const cnrMap = await getCnrNumbersForCases(allCaseIds)
+
+    const attachCnr = (hearings: typeof todaysHearings) =>
+      hearings.map((h) => ({
+        ...h,
+        case: {
+          ...h.case,
+          cnrNumber: cnrMap[h.case.id] ?? null,
+        },
+      }))
+
     return NextResponse.json({
-      todaysHearings,
-      weekHearings,
-      upcomingHearings,
+      todaysHearings: attachCnr(todaysHearings),
+      weekHearings: attachCnr(weekHearings),
+      upcomingHearings: attachCnr(upcomingHearings),
       activeCasesCount,
       teamMembers,
       courts,

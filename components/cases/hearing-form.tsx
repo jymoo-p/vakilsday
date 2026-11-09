@@ -57,9 +57,19 @@ interface HearingFormProps {
   onSuccess?: () => void
   hearing?: Hearing | null
   mode?: 'create' | 'edit'
+  buttonClassName?: string
+  buttonLabel?: string
 }
 
-export function HearingForm({ caseId, userEmail, onSuccess, hearing, mode = 'create' }: HearingFormProps) {
+export function HearingForm({
+  caseId,
+  userEmail,
+  onSuccess,
+  hearing,
+  mode = 'create',
+  buttonClassName,
+  buttonLabel = 'Add Hearing',
+}: HearingFormProps) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -180,9 +190,19 @@ export function HearingForm({ caseId, userEmail, onSuccess, hearing, mode = 'cre
           <Edit className="h-4 w-4" />
         </DialogTrigger>
       ) : (
-        <DialogTrigger render={<Button size="sm" />}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Hearing
+        <DialogTrigger
+          render={
+            <Button
+              size="sm"
+              className={
+                buttonClassName ||
+                'h-10 px-4 rounded-xl bg-[#004ac6] hover:bg-[#1d4ed8] text-white font-semibold text-sm shadow-xs cursor-pointer'
+              }
+            />
+          }
+        >
+          <Plus className="mr-1.5 h-4 w-4" />
+          {buttonLabel}
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-[600px]">

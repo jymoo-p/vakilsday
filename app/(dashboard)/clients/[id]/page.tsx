@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ChevronLeft, Phone, Mail, MapPin, Plus, FileText, Calendar, Building2, ChevronRight, Briefcase, MessageCircle, User, Smartphone, PhoneCall, Scale } from 'lucide-react'
+import { ChevronLeft, Phone, Mail, MapPin, Plus, FileText, Calendar, Building2, ChevronRight, Briefcase, MessageCircle, User, Smartphone, PhoneCall, Scale, Copy, Check } from 'lucide-react'
 
 // WhatsApp SVG Icon
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -50,6 +50,7 @@ interface Client {
 interface Case {
   id: string
   caseNumber: string
+  cnrNumber?: string | null
   year: number | null
   status: string
   courtNumber: string | null
@@ -82,9 +83,24 @@ export default function ClientDetailPage() {
   const [creating, setCreating] = useState(false)
   const [quickCaseForm, setQuickCaseForm] = useState({
     caseNumber: '',
+    cnrNumber: '',
     opponentMainParty: '',
     appearingFor: 'PETITIONER' as 'PETITIONER' | 'RESPONDENT',
   })
+  const [copiedCaseId, setCopiedCaseId] = useState<string | null>(null)
+
+  const handleCopyCnr = async (e: React.MouseEvent, caseId: string, cnr: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(cnr)
+      setCopiedCaseId(caseId)
+      toast.success('CNR copied to clipboard')
+      setTimeout(() => setCopiedCaseId((prev) => (prev === caseId ? null : prev)), 2000)
+    } catch {
+      toast.error('Failed to copy CNR')
+    }
+  }
 
   useEffect(() => {
     fetchClientData()
@@ -129,6 +145,7 @@ export default function ClientDetailPage() {
         body: JSON.stringify({
           userEmail: user?.email,
           caseNumber: quickCaseForm.caseNumber,
+          cnrNumber: quickCaseForm.cnrNumber.trim() || undefined,
           clientId: client.id,
           opponentMainParty: quickCaseForm.opponentMainParty,
           appearingFor: quickCaseForm.appearingFor,
@@ -147,6 +164,7 @@ export default function ClientDetailPage() {
       setShowQuickCreateDialog(false)
       setQuickCaseForm({
         caseNumber: '',
+        cnrNumber: '',
         opponentMainParty: '',
         appearingFor: 'PETITIONER',
       })
@@ -451,6 +469,23 @@ export default function ClientDetailPage() {
                                   {caseItem.caseType.name}
                                 </Badge>
                               )}
+                              {caseItem.cnrNumber ? (
+                                <div
+                                  onClick={(e) => handleCopyCnr(e, caseItem.id, caseItem.cnrNumber!)}
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-100 hover:bg-purple-50 border border-slate-200 hover:border-purple-200 text-xs text-slate-700 hover:text-purple-700 transition-colors cursor-pointer"
+                                  title="Click to copy CNR"
+                                >
+                                  <span className="font-semibold text-slate-500">CNR:</span>
+                                  <span className="font-mono font-semibold">{caseItem.cnrNumber}</span>
+                                  {copiedCaseId === caseItem.id ? (
+                                    <Check className="h-3 w-3 text-emerald-600" />
+                                  ) : (
+                                    <Copy className="h-3 w-3 text-slate-400" />
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-slate-400">CNR: Not recorded</span>
+                              )}
                             </div>
                             </div>
                           </div>
@@ -513,6 +548,19 @@ export default function ClientDetailPage() {
                   onChange={(e) => setQuickCaseForm({ ...quickCaseForm, caseNumber: e.target.value })}
                   placeholder="e.g., WP(C) 12345/2024"
                   className="h-9 sm:h-11 text-sm sm:text-base"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="cnrNumber" className="text-xs sm:text-sm font-medium text-slate-700">
+                  CNR Number (Optional)
+                </Label>
+                <Input
+                  id="cnrNumber"
+                  value={quickCaseForm.cnrNumber}
+                  onChange={(e) => setQuickCaseForm({ ...quickCaseForm, cnrNumber: e.target.value })}
+                  placeholder="e.g., DLHC010123452024"
+                  className="h-9 sm:h-11 text-sm sm:text-base font-mono uppercase"
                 />
               </div>
 

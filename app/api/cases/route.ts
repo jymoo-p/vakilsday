@@ -3,6 +3,12 @@ import { prisma } from '@/lib/prisma'
 import { canViewAllCases } from '@/lib/utils/rbac'
 import { CaseStatus } from '@prisma/client'
 import { syncHearingToGoogleCalendar } from '@/lib/services/calendar-sync-helper'
+import {
+  getCnrNumbersForCases,
+  setCaseCnrNumber,
+  setCaseOpposingCounselStrategy,
+  setCaseStructuredSynopsis,
+} from '@/lib/cases-db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -90,6 +96,27 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
+        hearings: {
+          take: 1,
+          orderBy: {
+            hearingDate: 'desc',
+          },
+          select: {
+            id: true,
+            hearingDate: true,
+            itemNumber: true,
+            outcome: true,
+            notes: {
+              take: 1,
+              orderBy: {
+                createdAt: 'desc',
+              },
+              select: {
+                content: true,
+              },
+            },
+          },
+        },
         _count: {
           select: {
             hearings: true,
@@ -102,7 +129,13 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ cases })
+    const cnrMap = await getCnrNumbersForCases(cases.map((c) => c.id))
+    const casesWithCnr = cases.map((c) => ({
+      ...c,
+      cnrNumber: cnrMap[c.id] ?? null,
+    }))
+
+    return NextResponse.json({ cases: casesWithCnr })
   } catch (error) {
     console.error('Error fetching cases:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -115,18 +148,27 @@ export async function POST(request: NextRequest) {
     const {
       userEmail,
       caseNumber,
+      cnrNumber,
       year,
       appearingFor,
       clientId,
       otherParties,
       opponentMainParty,
       opponentOtherParties,
+      opposingCounselName,
+      opposingCounselPhone,
+      opposingCounselStrategy,
       courtId,
       courtNumber,
       caseTypeId,
       filingDate,
       nextHearingDate,
       synopsis,
+      cruxOfDispute,
+      prayerRelief,
+      keyIssues,
+      interimOrders,
+      interimOrderValidUntil,
       assignedUserIds,
     } = body
 
@@ -219,6 +261,8 @@ export async function POST(request: NextRequest) {
         otherParties: otherParties || [],
         opponentMainParty,
         opponentOtherParties: opponentOtherParties || [],
+        opposingCounselName: opposingCounselName || null,
+        opposingCounselPhone: opposingCounselPhone || null,
         courtId: courtId || null,
         courtNumber,
         caseTypeId: caseTypeId || null,
@@ -245,6 +289,30 @@ export async function POST(request: NextRequest) {
 
     console.log('[POST /api/cases] Case created successfully:', newCase.id)
 
+    if (cnrNumber !== undefined) {
+      await setCaseCnrNumber(newCase.id, cnrNumber)
+    }
+
+    if (opposingCounselStrategy !== undefined) {
+      await setCaseOpposingCounselStrategy(newCase.id, opposingCounselStrategy)
+    }
+
+    if (
+      cruxOfDispute !== undefined ||
+      prayerRelief !== undefined ||
+      keyIssues !== undefined ||
+      interimOrders !== undefined ||
+      interimOrderValidUntil !== undefined
+    ) {
+      await setCaseStructuredSynopsis(newCase.id, {
+        cruxOfDispute,
+        prayerRelief,
+        keyIssues,
+        interimOrders,
+        interimOrderValidUntil,
+      })
+    }
+
     // If next hearing date is provided, create a hearing entry
     if (nextHearingDate) {
       await prisma.hearing.create({
@@ -263,7 +331,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ case: newCase }, { status: 201 })
+    return NextResponse.json({
+      case: {
+        ...newCase,
+        cnrNumber: cnrNumber && cnrNumber.trim() !== '' ? cnrNumber.trim() : null,
+        opposingCounselStrategy:
+          opposingCounselStrategy && opposingCounselStrategy.trim() !== ''
+            ? opposingCounselStrategy.trim()
+            : null,
+      },
+    }, { status: 201 })
   } catch (error: any) {
     console.error('[POST /api/cases] Error creating case:', error)
     console.error('[POST /api/cases] Error details:', {

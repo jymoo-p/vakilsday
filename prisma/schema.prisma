@@ -191,6 +191,7 @@ model CaseType {
 model Case {
   id              String      @id @default(cuid())
   caseNumber      String
+  cnrNumber       String?
   year            Int?
   appearingFor    AppearingFor
 
@@ -210,14 +211,20 @@ model Case {
   caseType        CaseType?   @relation(fields: [caseTypeId], references: [id], onDelete: SetNull)
 
   judgeName       String?
-  opposingCounselName  String?
-  opposingCounselPhone String?
+  opposingCounselName     String?
+  opposingCounselPhone    String?
+  opposingCounselStrategy String?     @db.Text
 
   status          CaseStatus  @default(ACTIVE)
   filingDate      DateTime
   nextHearingDate DateTime?
 
   synopsis        String?     @db.Text
+  cruxOfDispute   String?     @db.Text
+  prayerRelief    String?     @db.Text
+  keyIssues       String?     @db.Text
+  interimOrders   String?     @db.Text
+  interimOrderValidUntil String?
 
   organizationId  String
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)

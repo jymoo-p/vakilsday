@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { canViewAllCases } from '@/lib/utils/rbac'
+import {
+  getExtraFieldsForCase,
+  setCaseCnrNumber,
+  setCaseOpposingCounselStrategy,
+  setCaseStructuredSynopsis,
+} from '@/lib/cases-db'
 
 export async function GET(
   request: NextRequest,
@@ -34,6 +40,10 @@ export async function GET(
             firstName: true,
             lastName: true,
             phone: true,
+            otherPhone: true,
+            email: true,
+            address: true,
+            lawyerNotes: true,
           },
         },
         court: {
@@ -98,7 +108,39 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({ case: caseData })
+    const extraFields = await getExtraFieldsForCase(id)
+
+    // Find connected matters (other cases for the same client in the organization)
+    let connectedMatters: any[] = []
+    if (caseData.clientId) {
+      const otherCases = await prisma.case.findMany({
+        where: {
+          organizationId: caseData.organizationId,
+          clientId: caseData.clientId,
+          id: { not: id },
+        },
+        select: {
+          id: true,
+          caseNumber: true,
+          status: true,
+          appearingFor: true,
+          opponentMainParty: true,
+          nextHearingDate: true,
+          court: { select: { name: true } },
+          caseType: { select: { name: true } },
+        },
+        take: 10,
+      })
+      connectedMatters = otherCases
+    }
+
+    return NextResponse.json({
+      case: {
+        ...caseData,
+        ...extraFields,
+        connectedMatters,
+      },
+    })
   } catch (error) {
     console.error('Error fetching case:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -154,7 +196,25 @@ export async function PATCH(
     }
 
     // Handle team assignments separately and exclude relation objects
-    const { assignedUserIds, userEmail: _userEmail, client, court, caseType, assignments, hearings, documents, nextHearingTime, ...caseUpdateData } = body
+    const {
+      assignedUserIds,
+      userEmail: _userEmail,
+      client,
+      court,
+      caseType,
+      assignments,
+      hearings,
+      documents,
+      nextHearingTime,
+      cnrNumber,
+      opposingCounselStrategy,
+      cruxOfDispute,
+      prayerRelief,
+      keyIssues,
+      interimOrders,
+      interimOrderValidUntil,
+      ...caseUpdateData
+    } = body
 
     // Clean up the update data - remove empty relation IDs
     const cleanedData: any = { ...caseUpdateData }
@@ -199,13 +259,42 @@ export async function PATCH(
     }
 
     // Update case data
-    await prisma.case.update({
-      where: { id },
-      data: {
-        ...cleanedData,
-        ...relationUpdates,
-      },
-    })
+    if (Object.keys(cleanedData).length > 0 || Object.keys(relationUpdates).length > 0) {
+      await prisma.case.update({
+        where: { id },
+        data: {
+          ...cleanedData,
+          ...relationUpdates,
+        },
+      })
+    }
+
+    // Update CNR number if provided
+    if (cnrNumber !== undefined) {
+      await setCaseCnrNumber(id, cnrNumber)
+    }
+
+    // Update Opposing Counsel Strategy if provided
+    if (opposingCounselStrategy !== undefined) {
+      await setCaseOpposingCounselStrategy(id, opposingCounselStrategy)
+    }
+
+    // Update Structured Synopsis fields if provided
+    if (
+      cruxOfDispute !== undefined ||
+      prayerRelief !== undefined ||
+      keyIssues !== undefined ||
+      interimOrders !== undefined ||
+      interimOrderValidUntil !== undefined
+    ) {
+      await setCaseStructuredSynopsis(id, {
+        cruxOfDispute,
+        prayerRelief,
+        keyIssues,
+        interimOrders,
+        interimOrderValidUntil,
+      })
+    }
 
     // Update team assignments if provided
     if (assignedUserIds && Array.isArray(assignedUserIds)) {
@@ -244,7 +333,16 @@ export async function PATCH(
       },
     })
 
-    return NextResponse.json({ case: finalCase })
+    const extraFields = await getExtraFieldsForCase(id)
+
+    return NextResponse.json({
+      case: finalCase
+        ? {
+            ...finalCase,
+            ...extraFields,
+          }
+        : null,
+    })
   } catch (error: any) {
     console.error('Error updating case:', error)
     console.error('Error details:', {

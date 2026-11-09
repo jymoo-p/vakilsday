@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
-import { Plus, Briefcase, Trash2 } from 'lucide-react'
+import { Plus, Briefcase, Trash2, Copy, Check } from 'lucide-react'
 import { format, parseISO, differenceInCalendarDays, isToday, isTomorrow, isPast } from 'date-fns'
 import {
   Dialog,
@@ -29,6 +29,7 @@ type HearingWithCase = {
   case: {
     id: string
     caseNumber: string
+    cnrNumber?: string | null
     year?: number | null
     status: string
     courtNumber: string | null
@@ -130,10 +131,23 @@ export default function DashboardPageClient() {
   const [allCases, setAllCases] = useState<any[]>([])
   const [quickCaseForm, setQuickCaseForm] = useState({
     caseNumber: '',
+    cnrNumber: '',
     clientId: '',
     opponentMainParty: '',
     appearingFor: 'PETITIONER' as 'PETITIONER' | 'RESPONDENT',
   })
+  const [copiedCnr, setCopiedCnr] = useState(false)
+
+  const handleCopyCnr = async (cnr: string) => {
+    try {
+      await navigator.clipboard.writeText(cnr)
+      setCopiedCnr(true)
+      toast.success('CNR copied to clipboard')
+      setTimeout(() => setCopiedCnr(false), 2000)
+    } catch {
+      toast.error('Failed to copy CNR')
+    }
+  }
   const [clientSearchQuery, setClientSearchQuery] = useState('')
   const [showClientDropdown, setShowClientDropdown] = useState(false)
   const [showQuickClientDialog, setShowQuickClientDialog] = useState(false)
@@ -296,6 +310,7 @@ export default function DashboardPageClient() {
         body: JSON.stringify({
           userEmail: user?.email,
           caseNumber: quickCaseForm.caseNumber,
+          cnrNumber: quickCaseForm.cnrNumber.trim() || undefined,
           clientId: quickCaseForm.clientId || undefined,
           opponentMainParty: quickCaseForm.opponentMainParty,
           appearingFor: quickCaseForm.appearingFor,
@@ -314,6 +329,7 @@ export default function DashboardPageClient() {
       setShowQuickCreateDialog(false)
       setQuickCaseForm({
         caseNumber: '',
+        cnrNumber: '',
         clientId: '',
         opponentMainParty: '',
         appearingFor: 'PETITIONER',
@@ -775,9 +791,21 @@ export default function DashboardPageClient() {
                         ? ` • Court Hall ${featuredHearing.case.courtNumber}`
                         : ''}
                     </span>
-                    <span className="text-xs md:text-sm text-[#737686] font-mono">
-                      CNR: {featuredHearing.case.id.slice(-14).toUpperCase()}
-                    </span>
+                    {featuredHearing.case.cnrNumber ? (
+                      <button
+                        type="button"
+                        onClick={() => handleCopyCnr(featuredHearing.case.cnrNumber!)}
+                        className="inline-flex items-center gap-1.5 text-xs md:text-sm text-[#545f73] hover:text-indigo-700 bg-slate-100 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 px-2.5 py-0.5 rounded font-mono transition-colors cursor-pointer"
+                        title="Click to copy CNR"
+                      >
+                        <span>CNR: {featuredHearing.case.cnrNumber}</span>
+                        {copiedCnr ? (
+                          <Check className="h-3.5 w-3.5 text-emerald-600" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    ) : null}
                   </div>
 
                   <h1 className="text-2xl md:text-3xl font-bold text-[#131b2e] tracking-tight mt-1">
@@ -1577,6 +1605,21 @@ export default function DashboardPageClient() {
                   }
                   placeholder="e.g., WP(C) 4520/2026"
                   className="h-9 sm:h-11 text-sm sm:text-base"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="cnrNumber" className="text-xs sm:text-sm font-medium text-[#131b2e]">
+                  CNR Number (Optional)
+                </Label>
+                <Input
+                  id="cnrNumber"
+                  value={quickCaseForm.cnrNumber}
+                  onChange={(e) =>
+                    setQuickCaseForm({ ...quickCaseForm, cnrNumber: e.target.value })
+                  }
+                  placeholder="e.g., DLHC010123452026"
+                  className="h-9 sm:h-11 text-sm sm:text-base font-mono uppercase"
                 />
               </div>
 
