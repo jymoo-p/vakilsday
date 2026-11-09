@@ -55,6 +55,7 @@ model Organization {
   customRoles      CustomRole[]
   courts           Court[]
   caseTypes        CaseType[]
+  tasks            Task[]
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -100,6 +101,8 @@ model User {
   hearingNotes   HearingNote[]
   researchBookmarks ResearchBookmark[]
   chatSessions   ChatSession[]
+  assignedTasks  Task[]            @relation("AssignedTasks")
+  createdTasks   Task[]            @relation("CreatedTasks")
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -223,6 +226,7 @@ model Case {
   hearings        Hearing[]
   documents       Document[]
   chatSessions    ChatSession[]
+  tasks           Task[]
 
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
@@ -404,4 +408,35 @@ model ChatMessage {
 
   @@index([sessionId])
   @@map("chat_messages")
+}
+
+model Task {
+  id             String       @id @default(cuid())
+  title          String
+  description    String?      @db.Text
+  dueDate        DateTime?
+  completed      Boolean      @default(false)
+  priority       String       @default("HIGH")
+  category       String       @default("DEADLINE")
+
+  caseId         String?
+  case           Case?        @relation(fields: [caseId], references: [id], onDelete: SetNull)
+
+  assignedToId   String?
+  assignedTo     User?        @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  createdById    String
+  createdBy      User         @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: Cascade)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([caseId])
+  @@index([assignedToId])
+  @@index([dueDate])
+  @@map("tasks")
 }

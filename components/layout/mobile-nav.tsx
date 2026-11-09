@@ -5,18 +5,17 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 import {
-  LayoutDashboard,
-  Briefcase,
-  UserCircle,
+  LayoutGrid,
+  Gavel,
+  User,
   Calendar,
   MoreHorizontal,
-  Search,
+  BookOpen,
   Users,
-  Shield,
-  X,
+  SlidersHorizontal,
   Sparkles,
+  CheckSquare,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import {
   Sheet,
   SheetContent,
@@ -25,31 +24,30 @@ import {
 } from '@/components/ui/sheet'
 
 const primaryNavigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Cases', href: '/cases', icon: Briefcase },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
+  { name: 'Cases', href: '/cases', icon: Gavel },
+  { name: 'Tasks', href: '/tasks', icon: CheckSquare },
   { name: 'Calendar', href: '/calendar', icon: Calendar },
-  { name: 'Clients', href: '/clients', icon: UserCircle },
 ]
 
 const moreNavigation = [
+  { name: 'Clients', href: '/clients', icon: User },
   { name: 'AI Assistant', href: '/ai-assistant', icon: Sparkles },
-  { name: 'Research', href: '/research', icon: Search },
+  { name: 'Research', href: '/research', icon: BookOpen },
   { name: 'My Team', href: '/team', icon: Users },
-  { name: 'Admin', href: '/admin', icon: Shield },
+  { name: 'Admin', href: '/admin', icon: SlidersHorizontal },
 ]
 
 export function MobileNav() {
   const pathname = usePathname()
   const [moreOpen, setMoreOpen] = useState(false)
 
-  // Check if current page is in the "More" menu
   const isMoreActive = moreNavigation.some(
     (item) => pathname === item.href || pathname.startsWith(item.href + '/')
   )
 
   return (
     <>
-      {/* Bottom Navigation Bar - Fixed at bottom on mobile */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-lg">
         <nav className="flex items-center justify-around px-2 py-2">
           {primaryNavigation.map((item) => {
@@ -61,20 +59,20 @@ export function MobileNav() {
                 className={cn(
                   'flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all min-w-[64px]',
                   isActive
-                    ? 'text-brand bg-brand-light'
+                    ? 'text-[#1d4ed8] bg-[#eff6ff]'
                     : 'text-slate-500'
                 )}
               >
                 <item.icon
-                  strokeWidth={2.25}
+                  strokeWidth={2.2}
                   className={cn(
-                    'h-6 w-6 mb-1',
-                    isActive ? 'text-brand' : 'text-slate-400'
+                    'h-5 w-5 mb-1',
+                    isActive ? 'text-[#1d4ed8]' : 'text-slate-400'
                   )}
                 />
                 <span className={cn(
                   'text-xs font-medium',
-                  isActive ? 'text-brand' : 'text-slate-500'
+                  isActive ? 'text-[#1d4ed8]' : 'text-slate-500'
                 )}>
                   {item.name}
                 </span>
@@ -82,23 +80,22 @@ export function MobileNav() {
             )
           })}
 
-          {/* More Button */}
           <button
             onClick={() => setMoreOpen(true)}
             className={cn(
               'flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all min-w-[64px]',
               isMoreActive
-                ? 'text-brand bg-brand-light'
+                ? 'text-[#1d4ed8] bg-[#eff6ff]'
                 : 'text-slate-500'
             )}
           >
-            <MoreHorizontal strokeWidth={2.25} className={cn(
-              'h-6 w-6 mb-1',
-              isMoreActive ? 'text-brand' : 'text-slate-400'
+            <MoreHorizontal strokeWidth={2.2} className={cn(
+              'h-5 w-5 mb-1',
+              isMoreActive ? 'text-[#1d4ed8]' : 'text-slate-400'
             )} />
             <span className={cn(
               'text-xs font-medium',
-              isMoreActive ? 'text-brand' : 'text-slate-500'
+              isMoreActive ? 'text-[#1d4ed8]' : 'text-slate-500'
             )}>
               More
             </span>
@@ -106,11 +103,10 @@ export function MobileNav() {
         </nav>
       </div>
 
-      {/* More Menu Sheet */}
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
         <SheetContent side="bottom" className="h-auto max-h-[80vh]">
           <SheetHeader>
-            <SheetTitle>More Options</SheetTitle>
+            <SheetTitle>Workspace Navigation</SheetTitle>
           </SheetHeader>
           <nav className="mt-6 space-y-2">
             {moreNavigation.map((item) => {
@@ -123,11 +119,11 @@ export function MobileNav() {
                   className={cn(
                     'flex items-center px-4 py-3 rounded-xl transition-all',
                     isActive
-                      ? 'bg-brand text-white shadow-sm shadow-brand/25'
-                      : 'text-slate-600 hover:bg-brand-light hover:text-brand'
+                      ? 'bg-[#1d4ed8] text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-[#eff6ff] hover:text-[#1d4ed8]'
                   )}
                 >
-                  <item.icon strokeWidth={2.25} className="h-5 w-5 mr-3" />
+                  <item.icon strokeWidth={2.2} className="h-5 w-5 mr-3" />
                   <span className="font-medium">{item.name}</span>
                 </Link>
               )

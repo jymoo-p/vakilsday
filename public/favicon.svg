@@ -1,6 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
-  <rect width="48" height="48" fill="#0f172a" rx="12"/>
-  <g transform="translate(12, 12)" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <defs>
+    <linearGradient id="vakilGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#004ac6"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" fill="url(#vakilGrad)" rx="12"/>
+  <g transform="translate(12, 12)" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
     <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/>
     <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/>
     <path d="M7 21h10"/>

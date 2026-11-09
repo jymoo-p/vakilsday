@@ -46,26 +46,26 @@ export default function DashboardLayoutClient({
 
   if (loading || checkingOnboarding) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#faf8ff]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-slate-900 mx-auto"></div>
-          <p className="mt-6 text-slate-600 text-lg font-medium">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#004ac6] mx-auto"></div>
+          <p className="mt-4 text-[#545f73] text-sm font-medium">Loading workspace...</p>
         </div>
       </div>
     )
   }
 
   if (!user) {
-    return null // Will redirect
+    return null
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#faf8ff] text-[#131b2e]">
       <Sidebar />
-      <div className="md:pl-72 flex flex-col flex-1">
+      <div className="md:pl-64">
         <Header />
-        <main className="flex-1 pb-20 md:pb-0">
-          <div className="py-8 px-6 sm:px-8 lg:px-12">
+        <main className="w-full pt-20 bg-[#faf8ff] min-h-screen pb-20 md:pb-12">
+          <div className="w-full max-w-[1600px] mx-auto px-6 md:px-10 py-8">
             {children}
           </div>
         </main>
